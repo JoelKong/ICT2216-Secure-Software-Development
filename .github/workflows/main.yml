@@ -1,0 +1,164 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: forum
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Cache dependencies to speed up build
+      - name: Cache Node.js modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+
+      # Setup Node.js for frontend testing
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      # Frontend build and test
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend linting
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test -- --watchAll=false
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # Python setup for backend testing
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8
+
+      - name: Run backend linting
+        run: |
+          cd backend
+          flake8 .
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          pytest --cov=.
+
+      # Security scan with OWASP Dependency-Check
+      - name: OWASP Dependency-Check - Frontend
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "frontend"
+          path: "./frontend"
+          format: "HTML"
+          out: "./reports"
+
+      - name: OWASP Dependency-Check - Backend
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "backend"
+          path: "./backend"
+          format: "HTML"
+          out: "./reports"
+
+      # Upload security reports as artifacts
+      - name: Upload security analysis reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: security-reports
+          path: ./reports
+
+      # SonarQube analysis
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@v1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=your_project_key
+            -Dsonar.organization=your_organization
+            -Dsonar.sources=.
+            -Dsonar.host.url=https://sonarcloud.io
+
+      # Docker build
+      - name: Build Docker images
+        run: |
+          docker-compose build
+
+      # Test nginx # this is the lab version
+      # - name: Checkout code
+      #   uses: actions/checkout@v4
+
+      # - name: Start Nginx with Docker
+      #   run: |
+      #     docker run -d --name test-nginx -p 8080:80 -v ${{ github.workspace }}/index.html:/usr/share/nginx/html/index.html:ro nginx:latest
+
+      # - name: Wait for Nginx to start
+      #   run: sleep 5
+
+      # - name: Test Hello World Page
+      #   run: |
+      #     curl -s -o response.html http://localhost:8080/index.html
+      #     grep "Hello World" response.html
+
+      # - name: Stop Nginx container
+      #   run: docker stop test-nginx
+
+  # Deploy job - only runs on main branch
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/your/project
+            git pull
+            docker-compose down
+            docker-compose up -d
