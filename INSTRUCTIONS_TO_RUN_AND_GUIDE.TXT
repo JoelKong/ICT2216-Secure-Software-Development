@@ -7,7 +7,7 @@ Make sure you have nodejs
 from root folder, cd frontend, npm install (do this everytime u want do in case someone installed new package), then npm run dev to run
 
 BACKEND
-from root folder, cd backend, pip install (do this everytime u want do in case someone installed new package), then python main.py to run
+from root folder, cd backend, pip install -r requirements.txt (do this everytime u want do in case someone installed new package), then python main.py to run
 
 DOCKER
 tbc
