@@ -7,6 +7,9 @@ export default function LoginForm({ setIsSignup, setModal }) {
     password: "",
   });
 
+  // Loading state for processes
+  const [loading, setLoading] = useState(false);
+
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,8 +22,27 @@ export default function LoginForm({ setIsSignup, setModal }) {
   // Login function to send login details to Flask backend
   async function handleLogin(e) {
     e.preventDefault();
+    setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      // Input Validation
+      let error = "";
+      if (!loginFormData.username || !loginFormData.password) {
+        error = "All fields are required";
+      }
+
+      if (error) {
+        setModal({
+          active: true,
+          type: "fail",
+          message: error,
+        });
+        return;
+      }
+
+      const apiUrl = import.meta.env.VITE_API_ENDPOINT;
+      const loginRoute = import.meta.env.VITE_LOGIN_ROUTE;
+
+      const response = await fetch(`${apiUrl}/${loginRoute}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,6 +56,11 @@ export default function LoginForm({ setIsSignup, setModal }) {
         // Handle successful login (e.g., redirect or store token)
       } else {
         console.error("Login failed");
+        setModal({
+          active: true,
+          type: "fail",
+          message: "Login credentials are incorrect.",
+        });
         // Handle login failure (e.g., show error message)
       }
     } catch (error) {
@@ -43,6 +70,8 @@ export default function LoginForm({ setIsSignup, setModal }) {
         message: "Something went wrong. Please try again.",
       });
       console.error("Error during login:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -59,7 +88,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
           <div className="flex md:flex-row flex-col w-full h-full md:items-baseline justify-center mb-6">
             <label
               htmlFor="username"
-              className="font-semibold text-lg w-1/4 text-left"
+              className="font-semibold text-lg md:w-1/4 w-full text-left"
             >
               Username:
             </label>
@@ -75,7 +104,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
           <div className="flex md:flex-row flex-col w-full h-full md:items-baseline justify-center mb-6">
             <label
               htmlFor="password"
-              className="font-semibold text-lg w-1/4 text-left"
+              className="font-semibold text-lg md:w-1/4 w-full text-left"
             >
               Password:
             </label>
@@ -90,17 +119,24 @@ export default function LoginForm({ setIsSignup, setModal }) {
           </div>
           <button
             type="submit"
-            onClick={() => handleLogin(e)}
-            className="w-full p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 cursor-pointer transition duration-200"
+            onClick={(e) => handleLogin(e)}
+            disabled={!loginFormData.username || !loginFormData.password}
+            className="w-full p-2 bg-blue-500 text-white rounded-lg disabled:bg-blue-300 disabled:cursor-not-allowed hover:bg-blue-600 cursor-pointer transition duration-200"
           >
-            Log in
+            {loading ? (
+              <div className="flex justify-center items-center">
+                <div className="w-6 h-6 border-4 border-t-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              "Log in" // Button text when not loading
+            )}
           </button>
         </form>
         <div className="flex flex-row items-center justify-center mt-4">
           <p className="font-semibold text-lg">Don't have an account?</p>
           <p
             onClick={() => setIsSignup(true)}
-            className="font-bold text-lg text-blue-400 hover:underline ml-2 cursor-pointer"
+            className="font-bold text-lg text-blue-500 hover:underline ml-2 cursor-pointer"
           >
             Sign up
           </p>
