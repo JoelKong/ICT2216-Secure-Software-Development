@@ -1,11 +1,10 @@
 import { useState } from "react";
+import LoadingSpinner from "../global/LoadingSpinner";
 
 export default function SignupForm({ setIsSignup, setModal }) {
   // State for login form data
   const [signupFormData, setSignupFormData] = useState({
     email: "",
-    firstName: "",
-    lastName: "",
     username: "",
     password: "",
     confirmPassword: "",
@@ -57,8 +56,6 @@ export default function SignupForm({ setIsSignup, setModal }) {
       let error = "";
       if (
         !signupFormData.email ||
-        !signupFormData.firstName ||
-        !signupFormData.lastName ||
         !signupFormData.username ||
         !signupFormData.password ||
         !signupFormData.confirmPassword
@@ -109,17 +106,20 @@ export default function SignupForm({ setIsSignup, setModal }) {
         },
         body: JSON.stringify(signupFormData),
       });
+      const data = await response.json();
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Signup successful:", data);
+        setModal({
+          active: true,
+          type: "pass",
+          message: data.message,
+        });
         // Handle successful signup (e.g., redirect or store token)
       } else {
-        console.error("Signup failed");
         setModal({
           active: true,
           type: "fail",
-          message: "Signup credentials are incorrect.",
+          message: data.error,
         });
       }
     } catch (error) {
@@ -157,38 +157,6 @@ export default function SignupForm({ setIsSignup, setModal }) {
               value={signupFormData.email}
               onChange={handleChange}
               placeholder="Enter your Email"
-              className="w-full p-2 border-2 rounded-lg tracking-wider"
-            />
-          </div>
-          <div className="flex md:flex-row flex-col w-full h-full md:items-baseline justify-center mb-6">
-            <label
-              htmlFor="firstName"
-              className="font-semibold text-lg md:w-1/4 w-full text-left"
-            >
-              First Name:
-            </label>
-            <input
-              type="text"
-              name="firstName"
-              value={signupFormData.firstName}
-              onChange={handleChange}
-              placeholder="Enter your First Name"
-              className="w-full p-2 border-2 rounded-lg tracking-wider"
-            />
-          </div>
-          <div className="flex md:flex-row flex-col w-full h-full md:items-baseline justify-center mb-6">
-            <label
-              htmlFor="lastName"
-              className="font-semibold text-lg md:w-1/4 w-full text-left"
-            >
-              Last Name:
-            </label>
-            <input
-              type="text"
-              name="lastName"
-              value={signupFormData.lastName}
-              onChange={handleChange}
-              placeholder="Enter your last Name"
               className="w-full p-2 border-2 rounded-lg tracking-wider"
             />
           </div>
@@ -289,21 +257,13 @@ export default function SignupForm({ setIsSignup, setModal }) {
             onClick={(e) => handleSignup(e)}
             disabled={
               !signupFormData.email ||
-              !signupFormData.firstName ||
-              !signupFormData.lastName ||
               !signupFormData.username ||
               !signupFormData.password ||
               !signupFormData.confirmPassword
             }
             className="w-full p-2 bg-blue-500 text-white rounded-lg disabled:bg-blue-300 disabled:cursor-not-allowed hover:bg-blue-600 cursor-pointer transition duration-200"
           >
-            {loading ? (
-              <div className="flex justify-center items-center">
-                <div className="w-6 h-6 border-4 border-t-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              "Sign up"
-            )}
+            {loading ? <LoadingSpinner /> : "Sign up"}
           </button>
         </form>
         <div className="flex flex-row items-center justify-center mt-4">

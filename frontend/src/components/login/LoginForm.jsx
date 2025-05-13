@@ -1,9 +1,10 @@
 import { useState } from "react";
+import LoadingSpinner from "../global/LoadingSpinner";
 
 export default function LoginForm({ setIsSignup, setModal }) {
   // State for login form data and modal
   const [loginFormData, setLoginFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
 
@@ -26,7 +27,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
     try {
       // Input Validation
       let error = "";
-      if (!loginFormData.username || !loginFormData.password) {
+      if (!loginFormData.email || !loginFormData.password) {
         error = "All fields are required";
       }
 
@@ -49,19 +50,20 @@ export default function LoginForm({ setIsSignup, setModal }) {
         },
         body: JSON.stringify(loginFormData),
       });
+      const data = await response.json();
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Login successful:", data);
-        // Handle successful login (e.g., redirect or store token)
+        setModal({
+          active: true,
+          type: "pass",
+          message: data.message,
+        });
       } else {
-        console.error("Login failed");
         setModal({
           active: true,
           type: "fail",
-          message: "Login credentials are incorrect.",
+          message: data.error,
         });
-        // Handle login failure (e.g., show error message)
       }
     } catch (error) {
       setModal({
@@ -72,6 +74,10 @@ export default function LoginForm({ setIsSignup, setModal }) {
       console.error("Error during login:", error);
     } finally {
       setLoading(false);
+      setLoginFormData({
+        email: "",
+        password: "",
+      });
     }
   }
 
@@ -87,17 +93,17 @@ export default function LoginForm({ setIsSignup, setModal }) {
         >
           <div className="flex md:flex-row flex-col w-full h-full md:items-baseline justify-center mb-6">
             <label
-              htmlFor="username"
+              htmlFor="email"
               className="font-semibold text-lg md:w-1/4 w-full text-left"
             >
-              Username:
+              Email:
             </label>
             <input
-              type="text"
-              name="username"
-              value={loginFormData.username}
+              type="email"
+              name="email"
+              value={loginFormData.email}
               onChange={handleChange}
-              placeholder="Enter your Username"
+              placeholder="Enter your Email"
               className="w-full p-2 border-2 rounded-lg tracking-wider"
             />
           </div>
@@ -120,16 +126,10 @@ export default function LoginForm({ setIsSignup, setModal }) {
           <button
             type="submit"
             onClick={(e) => handleLogin(e)}
-            disabled={!loginFormData.username || !loginFormData.password}
+            disabled={!loginFormData.email || !loginFormData.password}
             className="w-full p-2 bg-blue-500 text-white rounded-lg disabled:bg-blue-300 disabled:cursor-not-allowed hover:bg-blue-600 cursor-pointer transition duration-200"
           >
-            {loading ? (
-              <div className="flex justify-center items-center">
-                <div className="w-6 h-6 border-4 border-t-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              "Log in" // Button text when not loading
-            )}
+            {loading ? <LoadingSpinner /> : "Log in"}
           </button>
         </form>
         <div className="flex flex-row items-center justify-center mt-4">

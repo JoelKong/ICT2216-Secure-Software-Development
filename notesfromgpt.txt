@@ -1,5 +1,0 @@
-For deployment on AWS EC2:
-
-Use the deploy job in the GitHub Actions workflow to SSH into the EC2 instance.
-Ensure Docker and Docker Compose are installed on the EC2 instance.
-Pull the latest code and run docker-compose up -d.
