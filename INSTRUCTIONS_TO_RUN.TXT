@@ -1,0 +1,13 @@
+For local development, make sure u have nodejs
+
+cd frontend, npm install, then to run use npm run dev
+
+
+for backend: tbc
+
+for docker: tbc
+
+
+
+
+at the end of the day everything should be automated by github actions including security portions.

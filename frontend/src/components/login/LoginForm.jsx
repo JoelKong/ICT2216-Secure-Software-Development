@@ -47,7 +47,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
   }
 
   return (
-    <section className="flex flex-col items-center w-11/12 md:w-7/12 pb-10 mt-4 border-2 rounded-lg">
+    <section className="flex flex-col items-center w-11/12 md:w-7/12 pb-10 mt-4 border-2 rounded-lg bg-gray-300">
       <div className="font-semibold text-2xl text-center w-1/2 border-b-2 mt-4 p-2 tracking-wider">
         Log in
       </div>
