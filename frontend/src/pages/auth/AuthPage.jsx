@@ -1,8 +1,8 @@
 import { useState } from "react";
-import LoginForm from "../../components/login/LoginForm";
-import SignupForm from "../../components/login/SignupForm";
+import LoginForm from "../../components/auth/LoginForm";
+import SignupForm from "../../components/auth/SignupForm";
 
-export default function LoginPage({ setModal }) {
+export default function AuthPage({ setModal, rateLimit, setRateLimit }) {
   const [isSignup, setIsSignup] = useState(false);
 
   return (
@@ -16,9 +16,19 @@ export default function LoginPage({ setModal }) {
         </h2>
       </div>
       {isSignup ? (
-        <SignupForm setIsSignup={setIsSignup} setModal={setModal} />
+        <SignupForm
+          setIsSignup={setIsSignup}
+          setModal={setModal}
+          rateLimit={rateLimit}
+          setRateLimit={setRateLimit}
+        />
       ) : (
-        <LoginForm setIsSignup={setIsSignup} setModal={setModal} />
+        <LoginForm
+          setIsSignup={setIsSignup}
+          setModal={setModal}
+          rateLimit={rateLimit}
+          setRateLimit={setRateLimit}
+        />
       )}
     </section>
   );

@@ -1,7 +1,14 @@
 import { useState } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
+import { API_ENDPOINT, SIGNUP_ROUTE } from "../../const";
+import checkRateLimit from "../../utils/checkRateLimit";
 
-export default function SignupForm({ setIsSignup, setModal }) {
+export default function SignupForm({
+  setIsSignup,
+  setModal,
+  rateLimit,
+  setRateLimit,
+}) {
   // State for login form data
   const [signupFormData, setSignupFormData] = useState({
     email: "",
@@ -52,8 +59,14 @@ export default function SignupForm({ setIsSignup, setModal }) {
     e.preventDefault();
     setLoading(true);
     try {
-      // Input Validation
       let error = "";
+
+      // Check if rate limit reached
+      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        return;
+      }
+
+      // Input Validation
       if (
         !signupFormData.email ||
         !signupFormData.username ||
@@ -95,11 +108,7 @@ export default function SignupForm({ setIsSignup, setModal }) {
         return;
       }
 
-      // Send request for signup
-      const apiUrl = import.meta.env.VITE_API_ENDPOINT;
-      const signupRoute = import.meta.env.VITE_SIGNUP_ROUTE;
-
-      const response = await fetch(`${apiUrl}/${signupRoute}`, {
+      const response = await fetch(`${API_ENDPOINT}/${SIGNUP_ROUTE}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,6 +162,7 @@ export default function SignupForm({ setIsSignup, setModal }) {
             </label>
             <input
               type="email"
+              id="email"
               name="email"
               value={signupFormData.email}
               onChange={handleChange}
@@ -169,6 +179,7 @@ export default function SignupForm({ setIsSignup, setModal }) {
             </label>
             <input
               type="text"
+              id="username"
               name="username"
               value={signupFormData.username}
               onChange={handleChange}
@@ -186,6 +197,7 @@ export default function SignupForm({ setIsSignup, setModal }) {
               </label>
               <input
                 type="password"
+                id="password"
                 name="password"
                 value={signupFormData.password}
                 onChange={handleChange}
@@ -245,6 +257,7 @@ export default function SignupForm({ setIsSignup, setModal }) {
             </label>
             <input
               type="password"
+              id="confirmPassword"
               name="confirmPassword"
               value={signupFormData.confirmPassword}
               onChange={handleChange}

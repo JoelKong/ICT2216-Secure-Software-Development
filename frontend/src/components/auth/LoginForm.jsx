@@ -1,7 +1,14 @@
 import { useState } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
+import { API_ENDPOINT, LOGIN_ROUTE } from "../../const";
+import checkRateLimit from "../../utils/checkRateLimit";
 
-export default function LoginForm({ setIsSignup, setModal }) {
+export default function LoginForm({
+  setIsSignup,
+  setModal,
+  rateLimit,
+  setRateLimit,
+}) {
   // State for login form data and modal
   const [loginFormData, setLoginFormData] = useState({
     email: "",
@@ -25,8 +32,14 @@ export default function LoginForm({ setIsSignup, setModal }) {
     e.preventDefault();
     setLoading(true);
     try {
-      // Input Validation
       let error = "";
+
+      // Check if rate limit reached
+      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        return;
+      }
+
+      // Input Validation
       if (!loginFormData.email || !loginFormData.password) {
         error = "All fields are required";
       }
@@ -40,10 +53,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
         return;
       }
 
-      const apiUrl = import.meta.env.VITE_API_ENDPOINT;
-      const loginRoute = import.meta.env.VITE_LOGIN_ROUTE;
-
-      const response = await fetch(`${apiUrl}/${loginRoute}`, {
+      const response = await fetch(`${API_ENDPOINT}/${LOGIN_ROUTE}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,6 +98,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
       </div>
       <div className="flex flex-col items-center w-3/4 mt-4">
         <form
+          data-testid="loginform"
           className="flex flex-col items-center w-full mt-4"
           onSubmit={(e) => handleLogin(e)}
         >
@@ -100,6 +111,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
             </label>
             <input
               type="email"
+              id="email"
               name="email"
               value={loginFormData.email}
               onChange={handleChange}
@@ -116,6 +128,7 @@ export default function LoginForm({ setIsSignup, setModal }) {
             </label>
             <input
               type="password"
+              id="password"
               name="password"
               value={loginFormData.password}
               onChange={handleChange}
