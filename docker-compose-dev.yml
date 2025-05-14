@@ -1,6 +1,7 @@
 # this docker is for dev, use for testing ig before pushing to the cloud
 # need set up network and volumes (all this is from gpt)
 
+# for frontend env variables set NODE_ENV=development or production
 services:
   frontend:
     build: ./frontend

@@ -30,10 +30,13 @@ DOCUMENTATION FOR FRONTEND
 /src/components/* is the respective components for that specific page
 /src/pages/* is the respective pages
 /src/styles in case u wan use manual css add folders for each page here
+/src/utils is repeated functions to be used throughout like rate limiting
 /App.css dont touch
 /App.jsx is the second level in the DOM for routing purposes and global states
 /main.jsx is the first level which wraps around browser router
+/const.js is for api routes
 /Dockerfile is the dockerfile for react setup
+To run tests run npm test
 
 DOCUMENTATION FOR BACKEND
 /tests contains all the tests for backend
