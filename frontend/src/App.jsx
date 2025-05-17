@@ -1,8 +1,10 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Modal from "./components/global/Modal";
-import "./App.css";
 import AuthPage from "./pages/auth/AuthPage";
+import HomePage from "./pages/home/Home";
+import PrivateRoute from "./components/global/PrivateRoute";
+import "./App.css";
 
 function App() {
   // Set up global modal
@@ -16,6 +18,13 @@ function App() {
   const [rateLimit, setRateLimit] = useState({
     attempts: 0,
     cooldown: false,
+  });
+
+  // Authenticate user based off token
+  const [auth, setAuth] = useState({
+    isAuthenticated: false,
+    token: null,
+    user: null,
   });
 
   // Turn off modal
@@ -36,6 +45,15 @@ function App() {
     }
   }, [rateLimit.cooldown]);
 
+  // For caching token if we wan do this
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   const user = JSON.parse(localStorage.getItem("user"));
+  //   if (token && user) {
+  //     setAuth({ isAuthenticated: true, token, user });
+  //   }
+  // }, []);
+
   return (
     <>
       {modal.active && <Modal modal={modal} />}
@@ -48,7 +66,16 @@ function App() {
                 setModal={setModal}
                 rateLimit={rateLimit}
                 setRateLimit={setRateLimit}
+                setAuth={setAuth}
               />
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                <HomePage user={auth.user} />
+              </PrivateRoute>
             }
           />
         </Routes>

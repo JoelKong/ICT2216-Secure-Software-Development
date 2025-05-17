@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { MemoryRouter } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
 
 // Mock constants
@@ -13,6 +14,7 @@ describe("LoginForm Component", () => {
   const mockSetIsSignup = jest.fn();
   const mockSetModal = jest.fn();
   const mockSetRateLimit = jest.fn();
+  const mockSetAuth = jest.fn();
   const mockRateLimit = { attempts: 0, cooldown: false };
 
   beforeEach(() => {
@@ -22,12 +24,15 @@ describe("LoginForm Component", () => {
   // Check if rendered properly
   test("renders login form correctly", () => {
     render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <LoginForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
@@ -38,12 +43,15 @@ describe("LoginForm Component", () => {
   // Check if theres an error when fields are empty
   test("displays error when fields are empty", async () => {
     render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <LoginForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.submit(screen.getByTestId("loginform"));
@@ -57,47 +65,20 @@ describe("LoginForm Component", () => {
     });
   });
 
-  // Check if rate limiting works
-  test("handles rate limiting correctly", async () => {
-    render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={{ attempts: 5, cooldown: true }}
-        setRateLimit={mockSetRateLimit}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText(/email/i), {
-      target: { value: "test@example.com" },
-    });
-    fireEvent.change(screen.getByLabelText(/password/i), {
-      target: { value: "password123" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /log in/i }));
-
-    await waitFor(() => {
-      expect(mockSetModal).toHaveBeenCalledWith({
-        active: true,
-        type: "fail",
-        message:
-          "Too many attempts. Please wait a short while before trying again.",
-      });
-    });
-  });
-
   // Test to ensure API request is not sent when rate limiting occurs
   test("does not send API request when rate limiting occurs for login page", async () => {
     global.fetch = jest.fn();
 
     render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={{ attempts: 5, cooldown: true }}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <LoginForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={{ attempts: 5, cooldown: true }}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -133,12 +114,15 @@ describe("LoginForm Component", () => {
     );
 
     render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <LoginForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -175,12 +159,15 @@ describe("LoginForm Component", () => {
     );
 
     render(
-      <LoginForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <LoginForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {

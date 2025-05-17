@@ -1,7 +1,7 @@
 # all this is gpt generated need reserach if secure
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from app.models.user import User
+from app.models.users import User
 from app.db import db
 
 auth_bp = Blueprint('auth', __name__)
@@ -34,7 +34,7 @@ def signup():
     #At least one number
     #At least one special character
     #check if confirm password is same, then generate hash, send OTP, once pass, add to db
-    # create session for user with refresh token all that (use a helper function in utils folder or use library idk)
+    # create session for user with access refresh token all that, idk if we store token in local storage better or yall got more secure idea
     # and return me corresponding success/error message, along with user details and session
 
     # lmk if need create new frontend page for OTP
@@ -50,7 +50,19 @@ def signup():
     try:
         db.session.add(new_user)
         db.session.commit()
-        return jsonify({"message": "Sign up was successful!"}), 201
+        # might need to add last login and posts made
+        return jsonify({
+        "message": "Sign up was successful! Logging in...",
+        "access_token": "",
+        "refresh_token": "",
+        "user": {
+            "user_id": new_user.user_id,
+            "username": new_user.username,
+            "profile_picture": new_user.profile_picture,
+            "membership": new_user.membership,
+            "created_at": new_user.created_at
+            }
+        }), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Something went wrong. Please try again."}), 500
@@ -76,8 +88,17 @@ def login():
     #return session also
     return jsonify({
         "message": "Login successful",
+        "access_token": "",
+        "refresh_token": "",
         "user": {
             "user_id": user.user_id,
             "username": user.username,
-        }
+            "profile_picture": user.profile_picture,
+            "membership": user.membership,
+            "created_at": user.created_at
+            }
     }), 200
+
+
+
+# TODO: add route for refreshing token here from now onwards in every route in home onwards, we check access token whether expire if expire then call refresh route?

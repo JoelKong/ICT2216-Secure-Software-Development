@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import SignupForm from "../../components/auth/SignupForm";
+import { MemoryRouter } from "react-router-dom";
 
 // Mock constants
 jest.mock("../../const", () => ({
@@ -13,6 +14,7 @@ describe("SignupForm Component", () => {
   const mockSetIsSignup = jest.fn();
   const mockSetModal = jest.fn();
   const mockSetRateLimit = jest.fn();
+  const mockSetAuth = jest.fn();
   const mockRateLimit = { attempts: 0, cooldown: false };
 
   beforeEach(() => {
@@ -22,12 +24,15 @@ describe("SignupForm Component", () => {
   // Check if rendered properly
   test("renders signup form correctly", () => {
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
@@ -42,12 +47,15 @@ describe("SignupForm Component", () => {
   // Check if password match validation is successful
   test("displays error when passwords do not match", async () => {
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -78,12 +86,15 @@ describe("SignupForm Component", () => {
   // Test if rate limiting works for signup
   test("handles rate limiting correctly during signup", async () => {
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={{ attempts: 5, cooldown: true }}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={{ attempts: 5, cooldown: true }}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -118,12 +129,15 @@ describe("SignupForm Component", () => {
     global.fetch = jest.fn();
 
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={{ attempts: 5, cooldown: true }}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={{ attempts: 5, cooldown: true }}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -160,12 +174,15 @@ describe("SignupForm Component", () => {
   // Test if email regex validation works
   test("displays error for invalid email format", async () => {
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -192,6 +209,45 @@ describe("SignupForm Component", () => {
     });
   });
 
+  // Test if password format validation works
+  test("displays error for invalid password format", async () => {
+    render(
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: { value: "testuser" },
+    });
+    // Invalid password (e.g., too short or missing special character)
+    fireEvent.change(screen.getByLabelText("Password:"), {
+      target: { value: "pass" },
+    });
+    fireEvent.change(screen.getByLabelText(/confirm password/i), {
+      target: { value: "pass" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign up/i }));
+
+    await waitFor(() => {
+      expect(mockSetModal).toHaveBeenCalledWith({
+        active: true,
+        type: "fail",
+        message:
+          "Password must be at least 8 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+      });
+    });
+  });
+
   // Test if signup sends data to the server
   test("sends signup data to the server", async () => {
     global.fetch = jest.fn(() =>
@@ -202,12 +258,15 @@ describe("SignupForm Component", () => {
     );
 
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {
@@ -252,12 +311,15 @@ describe("SignupForm Component", () => {
     );
 
     render(
-      <SignupForm
-        setIsSignup={mockSetIsSignup}
-        setModal={mockSetModal}
-        rateLimit={mockRateLimit}
-        setRateLimit={mockSetRateLimit}
-      />
+      <MemoryRouter>
+        <SignupForm
+          setIsSignup={mockSetIsSignup}
+          setModal={mockSetModal}
+          rateLimit={mockRateLimit}
+          setRateLimit={mockSetRateLimit}
+          setAuth={mockSetAuth}
+        />
+      </MemoryRouter>
     );
 
     fireEvent.change(screen.getByLabelText(/email/i), {

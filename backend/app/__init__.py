@@ -7,7 +7,7 @@ import os
 # Initialise app
 def create_app():
     app = Flask(__name__)
-    #TODO: dk if need secure this
+    #TODO: dk if need secure this and need adjust origin for cloud
     CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
     
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('SQLALCHEMY_DATABASE_URI')

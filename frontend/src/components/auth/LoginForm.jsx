@@ -2,12 +2,14 @@ import { useState } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
 import { API_ENDPOINT, LOGIN_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm({
   setIsSignup,
   setModal,
   rateLimit,
   setRateLimit,
+  setAuth,
 }) {
   // State for login form data and modal
   const [loginFormData, setLoginFormData] = useState({
@@ -17,6 +19,9 @@ export default function LoginForm({
 
   // Loading state for processes
   const [loading, setLoading] = useState(false);
+
+  // Navigation
+  const navigate = useNavigate();
 
   // Handle input changes
   const handleChange = (e) => {
@@ -68,6 +73,10 @@ export default function LoginForm({
           type: "pass",
           message: data.message,
         });
+        setRateLimit({ attempts: 0, cooldown: false });
+        setAuth({ isAuthenticated: true, token: data.token, user: data.user });
+        // TODO: save token in localstorage
+        navigate("/home");
       } else {
         setModal({
           active: true,

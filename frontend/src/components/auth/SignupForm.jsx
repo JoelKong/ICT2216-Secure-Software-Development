@@ -2,12 +2,14 @@ import { useState } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
 import { API_ENDPOINT, SIGNUP_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupForm({
   setIsSignup,
   setModal,
   rateLimit,
   setRateLimit,
+  setAuth,
 }) {
   // State for login form data
   const [signupFormData, setSignupFormData] = useState({
@@ -19,6 +21,9 @@ export default function SignupForm({
 
   // State for loading processes
   const [loading, setLoading] = useState(false);
+
+  // Navigation
+  const navigate = useNavigate();
 
   // State for password validation
   const [passwordValid, setPasswordValid] = useState({
@@ -123,7 +128,10 @@ export default function SignupForm({
           type: "pass",
           message: data.message,
         });
-        // Handle successful signup (e.g., redirect or store token)
+        setRateLimit({ attempts: 0, cooldown: false });
+        setAuth({ isAuthenticated: true, token: data.token, user: data.user });
+        // TODO: save token in localstorage
+        navigate("/home");
       } else {
         setModal({
           active: true,
