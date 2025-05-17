@@ -76,7 +76,7 @@ export default function LoginForm({
         setRateLimit({ attempts: 0, cooldown: false });
         setAuth({ isAuthenticated: true, token: data.token, user: data.user });
         // TODO: save token in localstorage
-        navigate("/home");
+        navigate("/posts");
       } else {
         setModal({
           active: true,
@@ -101,7 +101,7 @@ export default function LoginForm({
   }
 
   return (
-    <section className="flex flex-col items-center w-11/12 md:w-7/12 pb-10 mt-4 border-2 rounded-lg bg-gray-300">
+    <section className="flex flex-col items-center w-11/12 md:w-7/12 pb-10 mt-4 border-2 rounded-lg bg-white">
       <div className="font-semibold text-2xl text-center w-1/2 border-b-2 mt-4 p-2 tracking-wider">
         Log in
       </div>

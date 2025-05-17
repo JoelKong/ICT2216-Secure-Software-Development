@@ -5,6 +5,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import HomePage from "./pages/home/Home";
 import PrivateRoute from "./components/global/PrivateRoute";
 import "./App.css";
+import NavBar from "./components/global/NavBar";
 
 function App() {
   // Set up global modal
@@ -71,9 +72,10 @@ function App() {
             }
           />
           <Route
-            path="/home"
+            path="/posts"
             element={
               <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                <NavBar user={auth.user} setAuth={setAuth} />
                 <HomePage user={auth.user} />
               </PrivateRoute>
             }
