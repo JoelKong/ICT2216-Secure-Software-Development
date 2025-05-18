@@ -11,21 +11,14 @@ export default function SignupForm({
   setRateLimit,
   setAuth,
 }) {
-  // State for login form data
   const [signupFormData, setSignupFormData] = useState({
     email: "",
     username: "",
     password: "",
     confirmPassword: "",
   });
-
-  // State for loading processes
   const [loading, setLoading] = useState(false);
-
-  // Navigation
   const navigate = useNavigate();
-
-  // State for password validation
   const [passwordValid, setPasswordValid] = useState({
     length: false,
     uppercase: false,

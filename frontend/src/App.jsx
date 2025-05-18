@@ -1,10 +1,11 @@
 import { Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "./components/global/Modal";
 import AuthPage from "./pages/auth/AuthPage";
 import HomePage from "./pages/home/Home";
 import PrivateRoute from "./components/global/PrivateRoute";
 import "./App.css";
+import Profile from "./pages/profile/Profile";
 import NavBar from "./components/global/NavBar";
 
 function App() {
@@ -21,9 +22,15 @@ function App() {
     cooldown: false,
   });
 
+  // Global screen ref to track scroll position
+  const scrollContainerRef = useRef(null);
+
+  // Global search term for navbar
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Authenticate user based off token
   const [auth, setAuth] = useState({
-    isAuthenticated: false,
+    isAuthenticated: true, // TODO: i bypass first till they fix session
     token: null,
     user: null,
   });
@@ -58,7 +65,10 @@ function App() {
   return (
     <>
       {modal.active && <Modal modal={modal} />}
-      <main className="w-screen h-screen fixed bg-gradient-to-b from-blue-500 to-purple-500 overflow-y-auto overflow-x-clip">
+      <main
+        className="w-screen h-screen fixed bg-gradient-to-b from-blue-500 to-purple-500 overflow-y-auto overflow-x-clip"
+        ref={scrollContainerRef}
+      >
         <Routes>
           <Route
             path="/"
@@ -75,8 +85,33 @@ function App() {
             path="/posts"
             element={
               <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                <NavBar user={auth.user} setAuth={setAuth} />
-                <HomePage user={auth.user} />
+                <NavBar
+                  user={auth.user}
+                  setAuth={setAuth}
+                  setSearchTerm={setSearchTerm}
+                />
+                <HomePage
+                  user={auth.user}
+                  searchTerm={searchTerm}
+                  scrollContainerRef={scrollContainerRef}
+                />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                <NavBar
+                  user={auth.user}
+                  setAuth={setAuth}
+                  setSearchTerm={setSearchTerm}
+                />
+                <Profile
+                  scrollContainerRef={scrollContainerRef}
+                  searchTerm={searchTerm}
+                  userId={auth.user?.user_id}
+                />
               </PrivateRoute>
             }
           />

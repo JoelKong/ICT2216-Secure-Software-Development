@@ -60,7 +60,9 @@ def signup():
             "username": new_user.username,
             "profile_picture": new_user.profile_picture,
             "membership": new_user.membership,
-            "created_at": new_user.created_at
+            "created_at": new_user.created_at,
+            "last_login": new_user.last_login,
+            "post_limit": new_user.post_limit
             }
         }), 201
     except Exception as e:
@@ -95,7 +97,9 @@ def login():
             "username": user.username,
             "profile_picture": user.profile_picture,
             "membership": user.membership,
-            "created_at": user.created_at
+            "created_at": user.created_at,
+            "last_login": user.last_login,
+            "post_limit": user.post_limit
             }
     }), 200
 

@@ -9,6 +9,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255), nullable=True)
     likes = db.Column(db.Integer, default=0)
+    comments = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=True)
 

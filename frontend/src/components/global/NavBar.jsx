@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
 
-export default function NavBar({ user, setAuth }) {
+export default function NavBar({ user, setAuth, setSearchTerm }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -19,10 +19,6 @@ export default function NavBar({ user, setAuth }) {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
-      }
-
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsSearchFocused(false);
       }
     }
 
@@ -45,7 +41,7 @@ export default function NavBar({ user, setAuth }) {
             </a>
           </div>
 
-          <SearchBar />
+          <SearchBar setSearchTerm={setSearchTerm} />
 
           <div className="relative" ref={dropdownRef}>
             <button
@@ -69,16 +65,22 @@ export default function NavBar({ user, setAuth }) {
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5">
                 <a
                   href="/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block px-4 py-2 text-sm text-center text-gray-700 hover:bg-gray-100"
                 >
                   View my profile
                 </a>
-                <p
+                <button
                   onClick={() => logout()}
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                >
+                  Upgrade to premium
+                </button>
+                <button
+                  onClick={() => logout()}
+                  className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                 >
                   Logout
-                </p>
+                </button>
               </div>
             )}
           </div>
