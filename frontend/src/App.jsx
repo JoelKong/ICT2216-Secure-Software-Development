@@ -32,7 +32,7 @@ function App() {
   const [auth, setAuth] = useState({
     isAuthenticated: true, // TODO: i bypass first till they fix session
     token: null,
-    user: null,
+    user: { user_id: 1 },
   });
 
   // Turn off modal
@@ -61,6 +61,10 @@ function App() {
   //     setAuth({ isAuthenticated: true, token, user });
   //   }
   // }, []);
+
+  useEffect(() => {
+    console.log(auth);
+  }, []);
 
   return (
     <>
@@ -94,6 +98,9 @@ function App() {
                   user={auth.user}
                   searchTerm={searchTerm}
                   scrollContainerRef={scrollContainerRef}
+                  setModal={setModal}
+                  rateLimit={rateLimit}
+                  setRateLimit={setRateLimit}
                 />
               </PrivateRoute>
             }

@@ -4,7 +4,14 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NavBar from "../../components/global/NavBar";
 
-export default function HomePage({ user, searchTerm, scrollContainerRef }) {
+export default function HomePage({
+  user,
+  searchTerm,
+  scrollContainerRef,
+  rateLimit,
+  setRateLimit,
+  setModal,
+}) {
   const navigate = useNavigate();
 
   // Need to useeffect to grab posts check token maybe on simplifiedpost
@@ -44,6 +51,9 @@ export default function HomePage({ user, searchTerm, scrollContainerRef }) {
           <SimplifiedPost
             scrollContainerRef={scrollContainerRef}
             searchTerm={searchTerm}
+            rateLimit={rateLimit}
+            setRateLimit={setRateLimit}
+            setModal={setModal}
           />
         </div>
       </div>

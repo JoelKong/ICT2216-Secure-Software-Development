@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { Heart, MessageCircle, ArrowUp } from "lucide-react";
 import formatTimestamp from "../../utils/formatTimestamp";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FETCH_POSTS_ROUTE, API_ENDPOINT, LIKE_POST_ROUTE } from "../../const";
+import checkRateLimit from "../../utils/checkRateLimit";
 
 export default function SimplifiedPost({
   scrollContainerRef,
   searchTerm = "",
   userId = null,
+  rateLimit,
+  setRateLimit,
+  setModal,
 }) {
   const [likedPosts, setLikedPosts] = useState({});
   const [sortBy, setSortBy] = useState("recent");
@@ -18,6 +22,7 @@ export default function SimplifiedPost({
   const [showBackToTop, setShowBackToTop] = useState(false);
   const fetchTimerRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const limit = 10;
 
   // Fetch all posts
@@ -43,20 +48,28 @@ export default function SimplifiedPost({
           },
         }
       );
-      const data = await res.json();
+      const response = await res.json();
 
       // If no data received
-      if (data.length === 0) {
+      if (!response.posts || response.posts.length === 0) {
         setHasMore(false);
         setLoading(false);
         return;
       }
 
+      // Initialise likedPosts using liked_post_ids
+      const likedPostIds = new Set(response.liked_post_ids || []);
+      const initialLikedPosts = {};
+      response.posts.forEach((post) => {
+        initialLikedPosts[post.post_id] = likedPostIds.has(post.post_id);
+      });
+      setLikedPosts(initialLikedPosts);
+
       if (offsetToFetch === 0) {
-        setPosts(data);
+        setPosts(response.posts);
       } else {
         const existingPostIds = new Set(posts.map((post) => post.post_id));
-        const newPosts = data.filter(
+        const newPosts = response.posts.filter(
           (post) => !existingPostIds.has(post.post_id)
         );
 
@@ -65,7 +78,10 @@ export default function SimplifiedPost({
           setPosts((prev) => [...prev, ...newPosts]);
         }
 
-        if (newPosts.length < data.length || data.length < limit) {
+        if (
+          newPosts.length < response.posts.length ||
+          response.posts.length < limit
+        ) {
           setHasMore(false);
         }
       }
@@ -80,34 +96,60 @@ export default function SimplifiedPost({
   }
 
   // Navigate to specific post detail page
-  const handlePostClick = (postId) => {
+  function handlePostClick(postId) {
     navigate(`/posts/${postId}`);
-  };
+  }
+
+  // Navigate to edit page if on profile page
+  function handleEditPost(postId) {
+    navigate(`/edit-post/${postId}`);
+  }
 
   // Toggle like function
   async function toggleLike(postId) {
-    const token = localStorage.getItem("access_token");
     try {
-      // await fetch(`${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`, {
-      //   method: "POST",
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //   },
-      // });
+      // Check if rate limit reached
+      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        return;
+      }
+
+      const token = localStorage.getItem("access_token");
+
+      const res = await fetch(`${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to toggle like");
+      }
 
       setLikedPosts((prev) => ({
         ...prev,
-        [postId]: !prev[postId],
+        [postId]: data.likes,
       }));
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.post_id === postId ? { ...post, likes: data.likes } : post
+        )
+      );
+      setRateLimit({
+        attempts: 0,
+        cooldown: false,
+      });
     } catch (err) {
       console.error("Error toggling like:", err);
     }
   }
 
   // Go back to top
-  const handleBackToTop = () => {
+  function handleBackToTop() {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }
 
   // Reset and fetch when sort changes
   useEffect(() => {
@@ -196,9 +238,22 @@ export default function SimplifiedPost({
             onClick={() => handlePostClick(post.post_id)}
           >
             <div className="p-4 sm:p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {post.title}
-              </h2>
+              <div className="flex flex-row items-center w-full justify-between">
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  {post.title}
+                </h2>
+                {userId && location.pathname === "/profile" && (
+                  <button
+                    className="mb-2 mr-2 px-3 py-1 bg-yellow-400 cursor-pointer text-black rounded hover:bg-yellow-500 transition"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditPost(post.post_id);
+                    }}
+                  >
+                    Edit Post
+                  </button>
+                )}
+              </div>
 
               <div className="text-sm text-gray-500 mb-3">
                 Posted by <span className="text-blue-600">{post.username}</span>{" "}
@@ -240,9 +295,7 @@ export default function SimplifiedPost({
                       likedPosts[post.post_id] ? "fill-current" : ""
                     }`}
                   />
-                  <span>
-                    {likedPosts[post.post_id] ? post.likes + 1 : post.likes}
-                  </span>
+                  <span>{post.likes}</span>
                 </button>
 
                 <button
