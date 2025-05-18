@@ -28,7 +28,7 @@ export default function SearchBar({ setSearchTerm }) {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-          placeholder="Search discussions..."
+          placeholder="Search discussions by topic..."
         />
         {searchValue && (
           <button

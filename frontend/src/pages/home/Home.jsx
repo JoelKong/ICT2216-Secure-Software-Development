@@ -1,8 +1,7 @@
 import SimplifiedPost from "../../components/home/SimplifiedPost";
-import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import NavBar from "../../components/global/NavBar";
+import upgradeMembership from "../../utils/upgradeMembership";
 
 export default function HomePage({
   user,
@@ -25,7 +24,10 @@ export default function HomePage({
               <p>You are currently on {user.membership} plan</p>
               <p>You can create {user.post_limit} posts today</p>
               {user.membership !== "premium" && (
-                <button className="border-2 px-3 py-2 bg-blue-300 hover:bg-blue-400 cursor-pointer text-sm rounded-lg transition">
+                <button
+                  className="border-2 px-3 py-2 bg-blue-300 hover:bg-blue-400 cursor-pointer text-sm rounded-lg transition"
+                  onClick={() => upgradeMembership()}
+                >
                   Upgrade to premium plan to enjoy unlimited posting
                 </button>
               )}

@@ -7,6 +7,7 @@ import PrivateRoute from "./components/global/PrivateRoute";
 import "./App.css";
 import Profile from "./pages/profile/Profile";
 import NavBar from "./components/global/NavBar";
+import PaymentSuccess from "./pages/payment_success/PaymentSuccess";
 
 function App() {
   // Set up global modal
@@ -119,6 +120,14 @@ function App() {
                   searchTerm={searchTerm}
                   userId={auth.user?.user_id}
                 />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/success"
+            element={
+              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                <PaymentSuccess />
               </PrivateRoute>
             }
           />

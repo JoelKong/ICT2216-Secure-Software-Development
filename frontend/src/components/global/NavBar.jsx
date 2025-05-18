@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
+import upgradeMembership from "../../utils/upgradeMembership";
 
 export default function NavBar({ user, setAuth, setSearchTerm }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -69,12 +70,14 @@ export default function NavBar({ user, setAuth, setSearchTerm }) {
                 >
                   View my profile
                 </a>
-                <button
-                  onClick={() => logout()}
-                  className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-                >
-                  Upgrade to premium
-                </button>
+                {user.membership === "basic" && (
+                  <button
+                    onClick={() => upgradeMembership()}
+                    className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Upgrade to premium
+                  </button>
+                )}
                 <button
                   onClick={() => logout()}
                   className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
