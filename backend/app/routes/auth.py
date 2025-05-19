@@ -37,6 +37,21 @@ def signup():
     # create session for user with access refresh token all that, idk if we store token in local storage better or yall got more secure idea
     # and return me corresponding success/error message, along with user details and session
 
+    # right now how we fetch is like this outside of login and signup 
+    
+   #       const res = await fetch(
+    #    `${API_ENDPOINT}/${FETCH_POSTS_ROUTE}?${params.toString()}`,
+     #   {
+      #    method: "GET",
+       #   headers: {
+       #     "Content-Type": "application/json",
+       #     Authorization: `Bearer ${auth.token}`,
+       #   },
+       #   credentials: "include",
+       # }
+      #);
+
+
     # lmk if need create new frontend page for OTP
 
     password_hash = generate_password_hash(password)
@@ -51,10 +66,10 @@ def signup():
         db.session.add(new_user)
         db.session.commit()
         # might need to add last login and posts made
+        # gpt say store refresh token in http cookie?
         return jsonify({
         "message": "Sign up was successful! Logging in...",
-        "access_token": "",
-        "refresh_token": "",
+        "access_token": "test",
         "user": {
             "user_id": new_user.user_id,
             "username": new_user.username,
@@ -90,8 +105,7 @@ def login():
     #return session also
     return jsonify({
         "message": "Login successful",
-        "access_token": "",
-        "refresh_token": "",
+        "access_token": "test",
         "user": {
             "user_id": user.user_id,
             "username": user.username,

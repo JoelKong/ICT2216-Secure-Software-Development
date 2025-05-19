@@ -10,9 +10,3 @@ class Comment(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-
-    # Self-referential relationship for nested comments
-    #dk why gpt gave this
-    # replies = db.relationship('Comment',
-    #                           backref=db.backref('parent', remote_side=[comment_id]),
-    #                           cascade="all, delete", lazy=True)

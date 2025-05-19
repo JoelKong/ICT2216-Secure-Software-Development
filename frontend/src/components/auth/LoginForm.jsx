@@ -1,26 +1,18 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
 import { API_ENDPOINT, LOGIN_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { useNavigate } from "react-router-dom";
+import { GlobalContext } from "../../utils/globalContext";
 
-export default function LoginForm({
-  setIsSignup,
-  setModal,
-  rateLimit,
-  setRateLimit,
-  setAuth,
-}) {
-  // State for login form data and modal
+export default function LoginForm({ setIsSignup }) {
+  const { setModal, rateLimit, setRateLimit, setAuth } =
+    useContext(GlobalContext);
   const [loginFormData, setLoginFormData] = useState({
     email: "",
     password: "",
   });
-
-  // Loading state for processes
   const [loading, setLoading] = useState(false);
-
-  // Navigation
   const navigate = useNavigate();
 
   // Handle input changes
@@ -74,8 +66,13 @@ export default function LoginForm({
           message: data.message,
         });
         setRateLimit({ attempts: 0, cooldown: false });
-        setAuth({ isAuthenticated: true, token: data.token, user: data.user });
-        // TODO: save token in localstorage
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        setAuth({
+          isAuthenticated: true,
+          token: data.access_token,
+          user: data.user,
+        });
         navigate("/posts");
       } else {
         setModal({

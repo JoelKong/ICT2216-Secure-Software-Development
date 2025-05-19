@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
 import SignupForm from "../../components/auth/SignupForm";
+import { GlobalContext } from "../../utils/globalContext";
 
-export default function AuthPage({
-  setModal,
-  rateLimit,
-  setRateLimit,
-  setAuth,
-}) {
+export default function AuthPage() {
+  const { auth } = useContext(GlobalContext);
   const [isSignup, setIsSignup] = useState(false);
+  const navigate = useNavigate();
+
+  // If already logged in, redirect to /posts
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      navigate("/posts");
+    }
+  }, [auth.isAuthenticated, navigate]);
 
   return (
     <section className="w-screen h-screen flex flex-col justify-center items-center mt-6 overflow-y-auto">
@@ -21,21 +27,9 @@ export default function AuthPage({
         </h2>
       </div>
       {isSignup ? (
-        <SignupForm
-          setIsSignup={setIsSignup}
-          setModal={setModal}
-          rateLimit={rateLimit}
-          setRateLimit={setRateLimit}
-          setAuth={setAuth}
-        />
+        <SignupForm setIsSignup={setIsSignup} />
       ) : (
-        <LoginForm
-          setIsSignup={setIsSignup}
-          setModal={setModal}
-          rateLimit={rateLimit}
-          setRateLimit={setRateLimit}
-          setAuth={setAuth}
-        />
+        <LoginForm setIsSignup={setIsSignup} />
       )}
     </section>
   );

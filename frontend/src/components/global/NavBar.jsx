@@ -1,15 +1,17 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
 import upgradeMembership from "../../utils/upgradeMembership";
+import { GlobalContext } from "../../utils/globalContext";
 
-export default function NavBar({ user, setAuth, setSearchTerm }) {
+export default function NavBar({ setSearchTerm }) {
+  const { auth, setAuth } = useContext(GlobalContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Log out on request by removing tokens from local storage and resetting auth state
   function logout() {
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
     localStorage.removeItem("user");
     setAuth({ isAuthenticated: false, token: null, user: null });
     navigate("/");
@@ -49,9 +51,9 @@ export default function NavBar({ user, setAuth, setSearchTerm }) {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center cursor-pointer focus:outline-none"
             >
-              {user?.profilePicture ? (
+              {auth.user?.profilePicture ? (
                 <img
-                  src={user.profile_picture}
+                  src={auth.user.profile_picture}
                   alt="User profile"
                   className="h-8 w-8 rounded-full object-cover border-2 border-gray-200"
                 />
@@ -70,7 +72,7 @@ export default function NavBar({ user, setAuth, setSearchTerm }) {
                 >
                   View my profile
                 </a>
-                {user.membership === "basic" && (
+                {auth.user.membership === "basic" && (
                   <button
                     onClick={() => upgradeMembership()}
                     className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"

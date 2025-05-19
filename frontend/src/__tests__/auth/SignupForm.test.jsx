@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import SignupForm from "../../components/auth/SignupForm";
 import { MemoryRouter } from "react-router-dom";
+import { GlobalContext } from "../../utils/globalContext";
 
 // Mock constants
 jest.mock("../../const", () => ({
@@ -11,11 +12,28 @@ jest.mock("../../const", () => ({
 
 // Sign up form test cases
 describe("SignupForm Component", () => {
+  // Mock states
   const mockSetIsSignup = jest.fn();
   const mockSetModal = jest.fn();
   const mockSetRateLimit = jest.fn();
   const mockSetAuth = jest.fn();
   const mockRateLimit = { attempts: 0, cooldown: false };
+
+  // Get global state
+  const renderWithContext = (ui, contextOverrides = {}) => {
+    const contextValue = {
+      setModal: mockSetModal,
+      rateLimit: mockRateLimit,
+      setRateLimit: mockSetRateLimit,
+      setAuth: mockSetAuth,
+      ...contextOverrides,
+    };
+    return render(
+      <GlobalContext.Provider value={contextValue}>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </GlobalContext.Provider>
+    );
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,17 +41,7 @@ describe("SignupForm Component", () => {
 
   // Check if rendered properly
   test("renders signup form correctly", () => {
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
@@ -46,17 +54,7 @@ describe("SignupForm Component", () => {
 
   // Check if password match validation is successful
   test("displays error when passwords do not match", async () => {
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
@@ -85,17 +83,9 @@ describe("SignupForm Component", () => {
 
   // Test if rate limiting works for signup
   test("handles rate limiting correctly during signup", async () => {
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={{ attempts: 5, cooldown: true }}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />, {
+      rateLimit: { attempts: 5, cooldown: true },
+    });
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
@@ -128,17 +118,9 @@ describe("SignupForm Component", () => {
   test("does not send API request when rate limiting occurs for signup page", async () => {
     global.fetch = jest.fn();
 
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={{ attempts: 5, cooldown: true }}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />, {
+      rateLimit: { attempts: 5, cooldown: true },
+    });
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
@@ -173,17 +155,7 @@ describe("SignupForm Component", () => {
 
   // Test if email regex validation works
   test("displays error for invalid email format", async () => {
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "invalid-email" },
@@ -211,17 +183,7 @@ describe("SignupForm Component", () => {
 
   // Test if password format validation works
   test("displays error for invalid password format", async () => {
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
@@ -257,17 +219,7 @@ describe("SignupForm Component", () => {
       })
     );
 
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
@@ -310,17 +262,7 @@ describe("SignupForm Component", () => {
       })
     );
 
-    render(
-      <MemoryRouter>
-        <SignupForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
+    renderWithContext(<SignupForm setIsSignup={mockSetIsSignup} />);
 
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },

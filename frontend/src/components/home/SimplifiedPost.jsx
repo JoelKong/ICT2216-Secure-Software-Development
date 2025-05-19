@@ -1,18 +1,22 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Heart, MessageCircle, ArrowUp } from "lucide-react";
 import formatTimestamp from "../../utils/formatTimestamp";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FETCH_POSTS_ROUTE, API_ENDPOINT, LIKE_POST_ROUTE } from "../../const";
+import {
+  FETCH_POSTS_ROUTE,
+  API_ENDPOINT,
+  LIKE_POST_ROUTE,
+  DELETE_POSTS_ROUTE,
+} from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
+import { GlobalContext } from "../../utils/globalContext";
 
 export default function SimplifiedPost({
   scrollContainerRef,
   searchTerm = "",
   userId = null,
-  rateLimit,
-  setRateLimit,
-  setModal,
 }) {
+  const { auth, setModal, rateLimit, setRateLimit } = useContext(GlobalContext);
   const [likedPosts, setLikedPosts] = useState({});
   const [sortBy, setSortBy] = useState("recent");
   const [posts, setPosts] = useState([]);
@@ -30,7 +34,6 @@ export default function SimplifiedPost({
     if (loading || !hasMore) return;
     setLoading(true);
 
-    const token = localStorage.getItem("access_token");
     const params = new URLSearchParams({
       sort_by: sortBy,
       limit,
@@ -43,9 +46,12 @@ export default function SimplifiedPost({
       const res = await fetch(
         `${API_ENDPOINT}/${FETCH_POSTS_ROUTE}?${params.toString()}`,
         {
+          method: "GET",
           headers: {
-            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.token}`,
           },
+          // credentials: "include",
         }
       );
       const response = await res.json();
@@ -105,6 +111,54 @@ export default function SimplifiedPost({
     navigate(`/edit-post/${postId}`);
   }
 
+  // Delete post in profile page
+  async function handleDeletePost(postId) {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      // Check if rate limit reached
+      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        return;
+      }
+
+      const res = await fetch(
+        `${API_ENDPOINT}/${DELETE_POSTS_ROUTE}/${postId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.token}`,
+          },
+          // credentials: "include"
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setModal({
+          active: true,
+          type: "fail",
+          message: data.error || "Failed to delete post",
+        });
+        return;
+      }
+      setPosts((prev) => prev.filter((post) => post.post_id !== postId));
+      setRateLimit({
+        attempts: 0,
+        cooldown: false,
+      });
+      setModal({
+        active: true,
+        type: "success",
+        message: "Post deleted successfully",
+      });
+    } catch (err) {
+      setModal({
+        active: true,
+        type: "fail",
+        message: "An error occurred while deleting the post.",
+      });
+    }
+  }
+
   // Toggle like function
   async function toggleLike(postId) {
     try {
@@ -113,13 +167,13 @@ export default function SimplifiedPost({
         return;
       }
 
-      const token = localStorage.getItem("access_token");
-
       const res = await fetch(`${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
         },
+        // credentials: "include"
       });
 
       const data = await res.json();
@@ -211,7 +265,7 @@ export default function SimplifiedPost({
 
   return (
     <div className="mt-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row items-baseline md:items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           {sortBy === "recent"
             ? "Recent Discussions"
@@ -222,7 +276,7 @@ export default function SimplifiedPost({
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          className="border-2 rounded px-2 py-1 text-sm bg-white hover:bg-gray-100 cursor-pointer"
+          className="border-2 rounded px-2 py-1 text-sm md:mt-0 mt-3 bg-white hover:bg-gray-100 cursor-pointer"
         >
           <option value="recent">Sort by Recent</option>
           <option value="likes">Sort by Likes</option>
@@ -243,15 +297,26 @@ export default function SimplifiedPost({
                   {post.title}
                 </h2>
                 {userId && location.pathname === "/profile" && (
-                  <button
-                    className="mb-2 mr-2 px-3 py-1 bg-yellow-400 cursor-pointer text-black rounded hover:bg-yellow-500 transition"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditPost(post.post_id);
-                    }}
-                  >
-                    Edit Post
-                  </button>
+                  <div>
+                    <button
+                      className="mb-2 mr-2 px-3 py-1 bg-yellow-400 cursor-pointer text-black rounded hover:bg-yellow-500 transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditPost(post.post_id);
+                      }}
+                    >
+                      Edit Post
+                    </button>
+                    <button
+                      className="mb-2 mr-2 px-3 py-1 bg-red-400 cursor-pointer text-black rounded hover:bg-red-500 transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeletePost(post.post_id);
+                      }}
+                    >
+                      Delete Post
+                    </button>
+                  </div>
                 )}
               </div>
 

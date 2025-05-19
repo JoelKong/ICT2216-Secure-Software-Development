@@ -78,6 +78,24 @@ def fetch_posts():
         "liked_post_ids": list(liked_post_ids)
     })
 
+@posts_bp.route('/posts/delete/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    # TODO: Validate token and get user_id from token
+    user_id = 1  # Placeholder for demonstration
+
+    post = Post.query.get(post_id)
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    # Optional: Only allow the owner to delete
+    if post.user_id != user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({"message": "Post deleted successfully"})
+
 @posts_bp.route('/posts/like/<int:post_id>', methods=['POST'])
 def toggle_like(post_id):
     token = request.headers.get("Authorization", "").replace("Bearer ", "")
@@ -92,11 +110,9 @@ def toggle_like(post_id):
     existing_like = Like.query.filter_by(post_id=post_id, user_id=user_id).first()
     if existing_like:
         db.session.delete(existing_like)
-        liked = False
     else:
         new_like = Like(post_id=post_id, user_id=user_id)
         db.session.add(new_like)
-        liked = True
 
     db.session.commit()
 

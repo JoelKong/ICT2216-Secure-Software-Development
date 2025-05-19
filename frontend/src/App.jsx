@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { GlobalContext } from "./utils/globalContext";
 import Modal from "./components/global/Modal";
 import AuthPage from "./pages/auth/AuthPage";
 import HomePage from "./pages/home/Home";
@@ -8,6 +9,7 @@ import "./App.css";
 import Profile from "./pages/profile/Profile";
 import NavBar from "./components/global/NavBar";
 import PaymentSuccess from "./pages/payment_success/PaymentSuccess";
+import PaymentFailure from "./pages/payment_failure/PaymentFailure";
 
 function App() {
   // Set up global modal
@@ -31,10 +33,11 @@ function App() {
 
   // Authenticate user based off token
   const [auth, setAuth] = useState({
-    isAuthenticated: true, // TODO: i bypass first till they fix session
+    isAuthenticated: false,
     token: null,
-    user: { user_id: 1 },
+    user: null,
   });
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   // Turn off modal
   useEffect(() => {
@@ -54,18 +57,30 @@ function App() {
     }
   }, [rateLimit.cooldown]);
 
-  // For caching token if we wan do this
-  // useEffect(() => {
-  //   const token = localStorage.getItem("token");
-  //   const user = JSON.parse(localStorage.getItem("user"));
-  //   if (token && user) {
-  //     setAuth({ isAuthenticated: true, token, user });
-  //   }
-  // }, []);
-
+  // Get token to slot in headers and user details
   useEffect(() => {
-    console.log(auth);
+    const token = localStorage.getItem("access_token");
+    const userStr = localStorage.getItem("user");
+    const user = JSON.parse(userStr);
+
+    if (token && user) {
+      setAuth({
+        isAuthenticated: true,
+        token: token,
+        user: user,
+      });
+    }
+    setIsAuthChecked(true);
   }, []);
+
+  if (!isAuthChecked) {
+    // Prevent any route rendering until auth is checked
+    return (
+      <div className="w-screen h-screen justify-center items-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <>
@@ -74,64 +89,54 @@ function App() {
         className="w-screen h-screen fixed bg-gradient-to-b from-blue-500 to-purple-500 overflow-y-auto overflow-x-clip"
         ref={scrollContainerRef}
       >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <AuthPage
-                setModal={setModal}
-                rateLimit={rateLimit}
-                setRateLimit={setRateLimit}
-                setAuth={setAuth}
-              />
-            }
-          />
-          <Route
-            path="/posts"
-            element={
-              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                <NavBar
-                  user={auth.user}
-                  setAuth={setAuth}
-                  setSearchTerm={setSearchTerm}
-                />
-                <HomePage
-                  user={auth.user}
-                  searchTerm={searchTerm}
-                  scrollContainerRef={scrollContainerRef}
-                  setModal={setModal}
-                  rateLimit={rateLimit}
-                  setRateLimit={setRateLimit}
-                />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                <NavBar
-                  user={auth.user}
-                  setAuth={setAuth}
-                  setSearchTerm={setSearchTerm}
-                />
-                <Profile
-                  scrollContainerRef={scrollContainerRef}
-                  searchTerm={searchTerm}
-                  userId={auth.user?.user_id}
-                />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/success"
-            element={
-              <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                <PaymentSuccess />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
+        <GlobalContext.Provider
+          value={{ auth, rateLimit, setAuth, setModal, setRateLimit }}
+        >
+          <Routes>
+            <Route path="/" element={<AuthPage />} />
+            <Route
+              path="/posts"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar setSearchTerm={setSearchTerm} />
+                  <HomePage
+                    searchTerm={searchTerm}
+                    scrollContainerRef={scrollContainerRef}
+                  />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar setSearchTerm={setSearchTerm} />
+                  <Profile
+                    scrollContainerRef={scrollContainerRef}
+                    searchTerm={searchTerm}
+                    userId={auth.user?.user_id}
+                  />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/success"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <PaymentSuccess />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/failure"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <PaymentFailure />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+        </GlobalContext.Provider>
       </main>
     </>
   );

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MemoryRouter } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
+import { GlobalContext } from "../../utils/globalContext";
 
 // Mock constants
 jest.mock("../../const", () => ({
@@ -9,53 +10,46 @@ jest.mock("../../const", () => ({
   LOGIN_ROUTE: "api/login",
 }));
 
-// Login form test cases
 describe("LoginForm Component", () => {
+  // Mock States
   const mockSetIsSignup = jest.fn();
   const mockSetModal = jest.fn();
   const mockSetRateLimit = jest.fn();
   const mockSetAuth = jest.fn();
   const mockRateLimit = { attempts: 0, cooldown: false };
 
+  // Get global states from global context
+  const renderWithContext = (ui, contextOverrides = {}) => {
+    const contextValue = {
+      setModal: mockSetModal,
+      rateLimit: mockRateLimit,
+      setRateLimit: mockSetRateLimit,
+      setAuth: mockSetAuth,
+      ...contextOverrides,
+    };
+    return render(
+      <GlobalContext.Provider value={contextValue}>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </GlobalContext.Provider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  // Check if rendered properly
+  // Render login form correctly
   test("renders login form correctly", () => {
-    render(
-      <MemoryRouter>
-        <LoginForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
-
+    renderWithContext(<LoginForm setIsSignup={mockSetIsSignup} />);
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /log in/i })).toBeInTheDocument();
   });
 
-  // Check if theres an error when fields are empty
+  // Validation when fields are empty
   test("displays error when fields are empty", async () => {
-    render(
-      <MemoryRouter>
-        <LoginForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
-
+    renderWithContext(<LoginForm setIsSignup={mockSetIsSignup} />);
     fireEvent.submit(screen.getByTestId("loginform"));
-
     await waitFor(() => {
       expect(mockSetModal).toHaveBeenCalledWith({
         active: true,
@@ -65,31 +59,19 @@ describe("LoginForm Component", () => {
     });
   });
 
-  // Test to ensure API request is not sent when rate limiting occurs
+  // If rate limit attempts reach dont send api request
   test("does not send API request when rate limiting occurs for login page", async () => {
     global.fetch = jest.fn();
-
-    render(
-      <MemoryRouter>
-        <LoginForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={{ attempts: 5, cooldown: true }}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
-
+    renderWithContext(<LoginForm setIsSignup={mockSetIsSignup} />, {
+      rateLimit: { attempts: 5, cooldown: true },
+    });
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "password123" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /log in/i }));
-
     await waitFor(() => {
       expect(mockSetModal).toHaveBeenCalledWith({
         active: true,
@@ -98,13 +80,11 @@ describe("LoginForm Component", () => {
           "Too many attempts. Please wait a short while before trying again.",
       });
     });
-
     expect(global.fetch).not.toHaveBeenCalled();
-
     global.fetch.mockRestore();
   });
 
-  // Test if login sends data to the server
+  // Sending of data to backend server
   test("sends login data to the server", async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -112,19 +92,7 @@ describe("LoginForm Component", () => {
         json: () => Promise.resolve({ message: "Login successful" }),
       })
     );
-
-    render(
-      <MemoryRouter>
-        <LoginForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
-
+    renderWithContext(<LoginForm setIsSignup={mockSetIsSignup} />);
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
     });
@@ -132,7 +100,6 @@ describe("LoginForm Component", () => {
       target: { value: "Password123!" },
     });
     fireEvent.click(screen.getByRole("button", { name: /log in/i }));
-
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         "http://localhost:5000/api/login",
@@ -145,11 +112,10 @@ describe("LoginForm Component", () => {
         })
       );
     });
-
     global.fetch.mockRestore();
   });
 
-  // Test if server error is handled correctly
+  // If server returns an error display it
   test("displays error when server returns an error", async () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
@@ -157,19 +123,7 @@ describe("LoginForm Component", () => {
         json: () => Promise.resolve({ error: "Invalid credentials" }),
       })
     );
-
-    render(
-      <MemoryRouter>
-        <LoginForm
-          setIsSignup={mockSetIsSignup}
-          setModal={mockSetModal}
-          rateLimit={mockRateLimit}
-          setRateLimit={mockSetRateLimit}
-          setAuth={mockSetAuth}
-        />
-      </MemoryRouter>
-    );
-
+    renderWithContext(<LoginForm setIsSignup={mockSetIsSignup} />);
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "test@example.com" },
     });
@@ -177,7 +131,6 @@ describe("LoginForm Component", () => {
       target: { value: "WrongPassword" },
     });
     fireEvent.click(screen.getByRole("button", { name: /log in/i }));
-
     await waitFor(() => {
       expect(mockSetModal).toHaveBeenCalledWith({
         active: true,
@@ -185,7 +138,6 @@ describe("LoginForm Component", () => {
         message: "Invalid credentials",
       });
     });
-
     global.fetch.mockRestore();
   });
 });
