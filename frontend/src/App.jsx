@@ -10,6 +10,7 @@ import Profile from "./pages/profile/Profile";
 import NavBar from "./components/global/NavBar";
 import PaymentSuccess from "./pages/payment_success/PaymentSuccess";
 import PaymentFailure from "./pages/payment_failure/PaymentFailure";
+import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
 
 function App() {
   // Set up global modal
@@ -39,6 +40,34 @@ function App() {
   });
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  // Fetch user profile with token
+  async function fetchUser(token) {
+    console.log("fetching user");
+    try {
+      const res = await fetch(`${API_ENDPOINT}/${FETCH_USER_ROUTE}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          // credentials: "include"
+        },
+      });
+      const data = await res.json();
+      if (data.user) {
+        setAuth({ isAuthenticated: true, token: token, user: data.user });
+        setIsAuthChecked(true);
+      } else {
+        setAuth({ isAuthenticated: false, token: null, user: null });
+        setIsAuthChecked(false);
+        localStorage.removeItem("access_token");
+      }
+    } catch (err) {
+      setAuth({ isAuthenticated: false, token: null, user: null });
+      setIsAuthChecked(false);
+      localStorage.removeItem("access_token");
+    }
+  }
+
   // Turn off modal
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -57,21 +86,16 @@ function App() {
     }
   }, [rateLimit.cooldown]);
 
-  // Get token to slot in headers and user details
+  // Fetch user
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    const userStr = localStorage.getItem("user");
-    const user = JSON.parse(userStr);
 
-    if (token && user) {
-      setAuth({
-        isAuthenticated: true,
-        token: token,
-        user: user,
-      });
+    if (token) {
+      fetchUser(token);
+    } else {
+      setIsAuthChecked(true);
     }
-    setIsAuthChecked(true);
-  }, []);
+  }, [isAuthChecked]);
 
   if (!isAuthChecked) {
     // Prevent any route rendering until auth is checked
@@ -93,7 +117,10 @@ function App() {
           value={{ auth, rateLimit, setAuth, setModal, setRateLimit }}
         >
           <Routes>
-            <Route path="/" element={<AuthPage />} />
+            <Route
+              path="/"
+              element={<AuthPage setIsAuthChecked={setIsAuthChecked} />}
+            />
             <Route
               path="/posts"
               element={

@@ -5,7 +5,7 @@ import checkRateLimit from "../../utils/checkRateLimit";
 import { useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../utils/globalContext";
 
-export default function SignupForm({ setIsSignup }) {
+export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
   const { setModal, rateLimit, setRateLimit, setAuth } =
     useContext(GlobalContext);
   const [signupFormData, setSignupFormData] = useState({
@@ -120,11 +120,11 @@ export default function SignupForm({ setIsSignup }) {
         });
         setRateLimit({ attempts: 0, cooldown: false });
         localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        setIsAuthChecked(false);
         setAuth({
           isAuthenticated: true,
           token: data.access_token,
-          user: data.user,
+          user: null,
         });
         navigate("/posts");
       } else {

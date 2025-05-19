@@ -3,6 +3,7 @@ from flask_cors import CORS
 from .db import db
 from .routes.auth import auth_bp
 from .routes.posts import posts_bp
+from .routes.profile import profile_bp
 from .routes.upgrade_membership import upgrade_membership_bp
 import os
 
@@ -18,6 +19,7 @@ def create_app():
 
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(posts_bp, url_prefix='/api')
+    app.register_blueprint(profile_bp, url_prefix='/api')
     app.register_blueprint(upgrade_membership_bp, url_prefix='/api')
 
     return app

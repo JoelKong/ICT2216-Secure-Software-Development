@@ -4,7 +4,7 @@ import LoginForm from "../../components/auth/LoginForm";
 import SignupForm from "../../components/auth/SignupForm";
 import { GlobalContext } from "../../utils/globalContext";
 
-export default function AuthPage() {
+export default function AuthPage({ setIsAuthChecked }) {
   const { auth } = useContext(GlobalContext);
   const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
@@ -27,9 +27,15 @@ export default function AuthPage() {
         </h2>
       </div>
       {isSignup ? (
-        <SignupForm setIsSignup={setIsSignup} />
+        <SignupForm
+          setIsSignup={setIsSignup}
+          setIsAuthChecked={setIsAuthChecked}
+        />
       ) : (
-        <LoginForm setIsSignup={setIsSignup} />
+        <LoginForm
+          setIsSignup={setIsSignup}
+          setIsAuthChecked={setIsAuthChecked}
+        />
       )}
     </section>
   );

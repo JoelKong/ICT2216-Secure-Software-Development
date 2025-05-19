@@ -3,16 +3,17 @@ import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
 import upgradeMembership from "../../utils/upgradeMembership";
 import { GlobalContext } from "../../utils/globalContext";
+import { useNavigate } from "react-router-dom";
 
 export default function NavBar({ setSearchTerm }) {
   const { auth, setAuth } = useContext(GlobalContext);
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   // Log out on request by removing tokens from local storage and resetting auth state
   function logout() {
     localStorage.removeItem("access_token");
-    localStorage.removeItem("user");
     setAuth({ isAuthenticated: false, token: null, user: null });
     navigate("/");
   }
@@ -74,7 +75,7 @@ export default function NavBar({ setSearchTerm }) {
                 </a>
                 {auth.user.membership === "basic" && (
                   <button
-                    onClick={() => upgradeMembership()}
+                    onClick={() => upgradeMembership(auth.token)}
                     className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                   >
                     Upgrade to premium

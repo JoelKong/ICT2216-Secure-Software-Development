@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.users import User
+from datetime import datetime
 from app.db import db
 
 auth_bp = Blueprint('auth', __name__)
@@ -47,7 +48,7 @@ def signup():
        #     "Content-Type": "application/json",
        #     Authorization: `Bearer ${auth.token}`,
        #   },
-       #   credentials: "include",
+       #   credentials: "include", (idk if the refresh token inside here as httpcookie)
        # }
       #);
 
@@ -70,15 +71,6 @@ def signup():
         return jsonify({
         "message": "Sign up was successful! Logging in...",
         "access_token": "test",
-        "user": {
-            "user_id": new_user.user_id,
-            "username": new_user.username,
-            "profile_picture": new_user.profile_picture,
-            "membership": new_user.membership,
-            "created_at": new_user.created_at,
-            "last_login": new_user.last_login,
-            "post_limit": new_user.post_limit
-            }
         }), 201
     except Exception as e:
         db.session.rollback()
@@ -94,28 +86,24 @@ def login():
 
     if not email or not password:
         return jsonify({"error": "Email and password required"}), 400
-    
-    #TODO: same thing with signup, need secure this
 
     user = User.query.filter_by(email=email).first()
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"error": "Invalid email or password"}), 401
-
-    #return session also
-    return jsonify({
+    
+    # Update last log in
+    try:
+        user.last_login = datetime.now()
+        db.session.commit()
+        return jsonify({
         "message": "Login successful",
         "access_token": "test",
-        "user": {
-            "user_id": user.user_id,
-            "username": user.username,
-            "profile_picture": user.profile_picture,
-            "membership": user.membership,
-            "created_at": user.created_at,
-            "last_login": user.last_login,
-            "post_limit": user.post_limit
-            }
     }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Something went wrong. Please try again."}), 500
+
 
 
 
