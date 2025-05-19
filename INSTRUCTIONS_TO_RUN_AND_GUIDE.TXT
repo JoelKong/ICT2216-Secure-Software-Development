@@ -9,6 +9,9 @@ from root folder, cd frontend, npm install (do this everytime u want do in case 
 BACKEND
 from root folder, cd backend, pip install -r requirements.txt (do this everytime u want do in case someone installed new package), then python main.py to run
 
+DATABASE
+use your own mysql workbench local db then copy the link over to .env then run SCHEMA.sql on ur db, then if u wan dummy data preloaded run DUMMY_DATA.sql
+
 DOCKER
 tbc
 
