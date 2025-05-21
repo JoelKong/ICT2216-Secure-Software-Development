@@ -2,7 +2,7 @@ ALTER TABLE posts AUTO_INCREMENT = 1;
 ALTER TABLE likes AUTO_INCREMENT = 1;
 ALTER TABLE comments AUTO_INCREMENT = 1;
 
-INSERT INTO Posts (title, content, image, user_id, created_at, updated_at)
+INSERT INTO posts (title, content, image, user_id, created_at, updated_at)
 VALUES
     ('Post Title 1', 'This is the content for post 1. It is a placeholder text for the dummy posts.', 'https://via.placeholder.com/150?text=Image+1', 1, NOW(), NOW()),
     ('Post Title 2', 'This is the content for post 2. It is a placeholder text for the dummy posts.', 'https://via.placeholder.com/150?text=Image+2', 1, NOW(), NOW()),
@@ -35,7 +35,7 @@ VALUES
     ('Post Title 29', 'This is the content for post 29. It is a placeholder text for the dummy posts.', 'https://via.placeholder.com/150?text=Image+29', 1, NOW(), NOW()),
     ('Post Title 30', 'This is the content for post 30. It is a placeholder text for the dummy posts.', 'https://via.placeholder.com/150?text=Image+30', 1, NOW(), NOW());
     
-INSERT INTO Likes (post_id, user_id, created_at)
+INSERT INTO likes (post_id, user_id, created_at)
 VALUES
     (1, 1, NOW()),
     (2, 1, NOW()),
@@ -58,7 +58,7 @@ VALUES
     (19, 1, NOW()),
     (20, 1, NOW());
     
-INSERT INTO Comments (post_id, user_id, content, created_at)
+INSERT INTO comments (post_id, user_id, content, created_at)
 VALUES
     (1, 1, 'Great post! I really enjoyed reading it.', NOW()),
     (2, 1, 'This is a fantastic article, thanks for sharing.', NOW()),
