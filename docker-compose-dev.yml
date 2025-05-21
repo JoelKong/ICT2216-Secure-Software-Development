@@ -1,50 +1,68 @@
 # this docker is for dev, use for testing ig before pushing to the cloud
-# need set up network and volumes (all this is from gpt)
+#TODO: need to secure and need to find a way to migrate the database
+# gpt say use alembic for migration
 
-# for frontend env variables set NODE_ENV=development or production
+version: "3.8"
+
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+    env_file:
+      - ./frontend/.env.development
     ports:
-      - "3000:80"
+      - "5173:5173"
     depends_on:
       - backend
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm install && npm run dev" #this command shldnt be here in prod, npm run build instead in dockerfile
     networks:
-      - app-network
+      - leonardo-network
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env.development
     ports:
       - "5000:5000"
-    environment:
-      - DATABASE_URL=mysql+pymysql://user:password@db:3306/forum
+    volumes:
+      - ./backend:/app
     depends_on:
       - db
+    entrypoint: >
+      sh -c "
+        sleep 10 &&
+        python migrate.py &&
+        python main.py
+      "
     networks:
-      - app-network
+      - leonardo-network
 
   db:
     image: mysql:8.0
     container_name: mysql-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: forum
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      # MYSQL_USER: ${MYSQL_USER} // only use if not using root user
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - app-network
+      - leonardo-network
 
   nginx:
-    image: nginx:latest
-    container_name: nginx-proxy
-    restart: unless-stopped
+    build:
+      context: ./nginx
     ports:
       - "80:80"
-      # - "443:443"
     volumes:
+      - ./frontend/dist:/usr/share/nginx/html
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./index.html:/var/www/html/index.html
       - ./certbot/www:/var/www/certbot
@@ -53,7 +71,7 @@ services:
       - frontend
       - backend
     networks:
-      - app-network
+      - leonardo-network
 
   sonarqube:
     image: sonarqube:latest
@@ -61,7 +79,7 @@ services:
     ports:
       - "9000:9000"
     networks:
-      - app-network
+      - leonardo-network
 
 #   nginx:                                      # THIS IS THE LAB ONE
 #     image: nginx:latest
@@ -94,7 +112,7 @@ services:
 #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
-  app-network:
+  leonardo-network:
     driver: bridge
 
 volumes:

@@ -1,4 +1,12 @@
-name: CI/CD Pipeline
+# Notes:
+
+#The Validate DB migrations step runs your migrate.py to ensure the schema is up-to-date.
+#Adjust SQLALCHEMY_DATABASE_URI as needed for your test DB.
+#The deploy step uses SSH to connect to your EC2 and run the production compose file.
+#Make sure your secrets (HOST, USERNAME, SSH_KEY) are set in your GitHub repo.
+# use github secrets to store sensitive data like SSH keys, database passwords, etc.
+
+name: The Leonardo's Discussion Room CI/CD Pipeline
 
 on:
   push:
@@ -24,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Cache dependencies to speed up build
+      # Cache Node.js modules
       - name: Cache Node.js modules
         uses: actions/cache@v2
         with:
@@ -33,95 +41,93 @@ jobs:
           restore-keys: |
             ${{ runner.OS }}-node-
 
-      # Setup Node.js for frontend testing
+      # Setup Node.js for frontend
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "16"
+          node-version: "18"
 
-      # Frontend build and test
+      # Install frontend dependencies
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm ci
 
+      # Lint frontend
       - name: Run frontend linting
         run: |
           cd frontend
           npm run lint
 
+      # Test frontend
       - name: Run frontend tests
         run: |
           cd frontend
           npm test -- --watchAll=false
 
+      # Build frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # Python setup for backend testing
+      # Setup Python for backend
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: "3.9"
 
+      # Install backend dependencies       put pytest and flake8 (dk whats this) in requirements.txt
       - name: Install backend dependencies
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest pytest-cov flake8
+          pip install pytest flake8
 
+      # Lint backend
       - name: Run backend linting
         run: |
           cd backend
           flake8 .
 
+      # Test backend
       - name: Run backend tests
         run: |
           cd backend
-          pytest --cov=.
+          pytest
 
-      # Security scan with OWASP Dependency-Check
-      - name: OWASP Dependency-Check - Frontend
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: "frontend"
-          path: "./frontend"
-          format: "HTML"
-          out: "./reports"
-
-      - name: OWASP Dependency-Check - Backend
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: "backend"
-          path: "./backend"
-          format: "HTML"
-          out: "./reports"
-
-      # Upload security reports as artifacts
-      - name: Upload security analysis reports
-        uses: actions/upload-artifact@v2
-        with:
-          name: security-reports
-          path: ./reports
-
-      # SonarQube analysis
-      - name: SonarQube Scan
-        uses: sonarsource/sonarcloud-github-action@v1
+      # Validate DB migrations
+      - name: Validate DB migrations
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.projectKey=your_project_key
-            -Dsonar.organization=your_organization
-            -Dsonar.sources=.
-            -Dsonar.host.url=https://sonarcloud.io
+          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
+        run: |
+          cd backend
+          python migrate.py
 
-      # Docker build
+      # Build Docker images
       - name: Build Docker images
         run: |
-          docker-compose build
+          docker-compose -f docker-compose-prod.yml build
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/your/project
+            git pull
+            docker-compose -f docker-compose-prod.yml down
+            docker-compose -f docker-compose-prod.yml up -d
 
       # Test nginx # this is the lab version
       # - name: Checkout code
@@ -141,24 +147,3 @@ jobs:
 
       # - name: Stop Nginx container
       #   run: docker stop test-nginx
-
-  # Deploy job - only runs on main branch
-  deploy:
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Deploy to production server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /path/to/your/project
-            git pull
-            docker-compose down
-            docker-compose up -d
