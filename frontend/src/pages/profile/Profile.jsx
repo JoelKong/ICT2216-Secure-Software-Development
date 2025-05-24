@@ -1,6 +1,13 @@
 import SimplifiedPost from "../../components/home/SimplifiedPost";
+import { useContext, useEffect } from "react";
+import { GlobalContext } from "../../utils/globalContext";
 
-export default function Profile({ scrollContainerRef, searchTerm, userId }) {
+export default function Profile({ scrollContainerRef, searchTerm }) {
+  const { auth } = useContext(GlobalContext);
+
+  useEffect(() => {
+    console.log(auth);
+  });
   return (
     <>
       <div className="mt-60">
@@ -11,7 +18,7 @@ export default function Profile({ scrollContainerRef, searchTerm, userId }) {
       <SimplifiedPost
         scrollContainerRef={scrollContainerRef}
         searchTerm={searchTerm}
-        userId={userId}
+        userId={auth.user.user_id}
       />
     </>
   );

@@ -141,7 +141,6 @@ function App() {
                   <Profile
                     scrollContainerRef={scrollContainerRef}
                     searchTerm={searchTerm}
-                    userId={auth.user?.user_id}
                   />
                 </PrivateRoute>
               }
