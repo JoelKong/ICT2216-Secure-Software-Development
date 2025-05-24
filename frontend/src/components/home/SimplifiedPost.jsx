@@ -351,6 +351,7 @@ export default function SimplifiedPost({
                     e.stopPropagation();
                     toggleLike(post.post_id);
                   }}
+                  aria-label="Like post"
                   className={`flex items-center space-x-1 cursor-pointer ${
                     likedPosts[post.post_id] ? "text-red-500" : "text-gray-500"
                   } hover:text-red-500`}
