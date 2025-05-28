@@ -2,8 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import pluginReact from "eslint-plugin-react";
 import pluginJest from "eslint-plugin-jest";
-import { defineConfig } from "eslint-config-helpers";
-
+import { defineConfig } from "eslint";
 export default defineConfig({
   files: ["**/*.{js,mjs,cjs,jsx}"],
   plugins: {
