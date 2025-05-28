@@ -100,7 +100,6 @@ jobs:
 
   deploy:
     needs: build
-    # Only deploy on PR to main
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
 

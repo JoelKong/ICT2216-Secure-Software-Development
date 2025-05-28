@@ -14,16 +14,23 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
       globals: {
         ...globals.browser,
         ...globals.jest,
         ...globals.node,
+        React: "writable",
         global: "writable",
       },
     },
     rules: {
       ...pluginReact.configs.recommended.rules,
       ...pluginJest.configs.recommended.rules,
+      "react/react-in-jsx-scope": "off",
     },
     settings: {
       react: {
@@ -32,7 +39,6 @@ export default [
     },
   },
   {
-    // Add specific config for test files
     files: [
       "**/__tests__/**/*.{js,jsx}",
       "**/*.test.{js,jsx}",
