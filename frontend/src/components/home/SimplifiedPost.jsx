@@ -151,6 +151,7 @@ export default function SimplifiedPost({
         message: "Post deleted successfully",
       });
     } catch (err) {
+      console.error(err);
       setModal({
         active: true,
         type: "fail",

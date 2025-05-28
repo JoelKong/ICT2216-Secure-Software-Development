@@ -2,7 +2,7 @@ import SimplifiedPost from "../../components/home/SimplifiedPost";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import upgradeMembership from "../../utils/upgradeMembership";
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 
 export default function HomePage({ searchTerm, scrollContainerRef }) {

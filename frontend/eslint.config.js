@@ -31,6 +31,8 @@ export default [
       ...pluginReact.configs.recommended.rules,
       ...pluginJest.configs.recommended.rules,
       "react/react-in-jsx-scope": "off",
+      "react/no-unescaped-entities": "off",
+      "react/prop-types": "off",
     },
     settings: {
       react: {
