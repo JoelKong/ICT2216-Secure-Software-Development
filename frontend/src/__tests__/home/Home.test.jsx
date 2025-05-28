@@ -3,7 +3,6 @@ import "@testing-library/jest-dom";
 import HomePage from "../../pages/home/Home";
 import { GlobalContext } from "../../utils/globalContext";
 import { MemoryRouter, useNavigate } from "react-router-dom";
-import upgradeMembership from "../../utils/upgradeMembership";
 
 // Mocks
 jest.mock("../../const", () => ({

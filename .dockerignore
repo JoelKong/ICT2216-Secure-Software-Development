@@ -1,0 +1,28 @@
+# Node.js / Frontend
+node_modules/
+npm-debug.log
+frontend/coverage/
+frontend/*.log
+
+# Python / Backend
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/venv/
+backend/*.log
+backend/pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Git
+.git/
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# General
+.DS_Store

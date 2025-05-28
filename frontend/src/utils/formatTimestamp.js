@@ -20,6 +20,7 @@ export default function formatTimestamp(timestamp) {
       return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
     }
   } catch (error) {
+    console.error(error);
     return "recently";
   }
 }

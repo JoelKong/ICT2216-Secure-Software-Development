@@ -62,6 +62,7 @@ function App() {
         localStorage.removeItem("access_token");
       }
     } catch (err) {
+      console.error(err);
       setAuth({ isAuthenticated: false, token: null, user: null });
       setIsAuthChecked(false);
       localStorage.removeItem("access_token");
