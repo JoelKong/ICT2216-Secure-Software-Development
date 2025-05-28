@@ -17,6 +17,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.jest,
+        ...globals.node,
+        global: "writable",
       },
     },
     rules: {
@@ -26,6 +28,21 @@ export default [
     settings: {
       react: {
         version: "detect",
+      },
+    },
+  },
+  {
+    // Add specific config for test files
+    files: [
+      "**/__tests__/**/*.{js,jsx}",
+      "**/*.test.{js,jsx}",
+      "jest.setup.js",
+    ],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
   },

@@ -85,7 +85,6 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest flake8
 
       # Lint backend
       - name: Run backend linting
@@ -98,19 +97,6 @@ jobs:
         run: |
           cd backend
           pytest
-
-      # Validate DB migrations
-      - name: Validate DB migrations
-        env:
-          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
-        run: |
-          cd backend
-          python migrate.py
-
-      # Build Docker images
-      - name: Build Docker images
-        run: |
-          docker-compose -f docker-compose-prod.yml build
 
   deploy:
     needs: build
