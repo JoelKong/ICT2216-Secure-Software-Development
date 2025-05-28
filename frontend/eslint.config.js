@@ -7,17 +7,18 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs,jsx}"],
-    plugins: { js },
-    extends: ["js/recommended"],
+    plugins: { js, react: pluginReact, jest: pluginJest },
+    extends: [
+      "js/recommended",
+      "plugin:react/recommended",
+      "plugin:jest/recommended",
+    ],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.jest },
+    },
   },
-  {
-    files: ["**/*.{js,mjs,cjs,jsx}"],
-    languageOptions: { globals: { ...globals.browser, ...globals.jest } },
-  },
-  pluginReact.configs.flat.recommended,
   {
     files: ["**/__tests__/**/*.{js,jsx}"],
-    plugins: { jest: pluginJest },
     extends: ["plugin:jest/recommended"],
   },
 ]);
