@@ -4,17 +4,13 @@ import pluginReact from "eslint-plugin-react";
 import pluginJest from "eslint-plugin-jest";
 
 export default [
+  js.configs.recommended,
   {
     files: ["**/*.{js,mjs,cjs,jsx}"],
     plugins: {
       react: pluginReact,
       jest: pluginJest,
     },
-    extends: [
-      "eslint:recommended",
-      "plugin:react/recommended",
-      "plugin:jest/recommended",
-    ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -22,6 +18,10 @@ export default [
         ...globals.browser,
         ...globals.jest,
       },
+    },
+    rules: {
+      ...pluginReact.configs.recommended.rules,
+      ...pluginJest.configs.recommended.rules,
     },
     settings: {
       react: {
