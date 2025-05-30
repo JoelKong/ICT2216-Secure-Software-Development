@@ -4,7 +4,7 @@ from app.db import db
 
 profile_bp = Blueprint('profile', __name__)
 
-# TODO: SECURE THIS CHECK ACCESS TOKEN VALID
+# TODOIS: SECURE THIS CHECK ACCESS TOKEN VALID
 @profile_bp.route('/profile', methods=['GET'])
 def fetch_user():
     auth_header = request.headers.get("Authorization")
