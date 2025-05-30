@@ -7,7 +7,7 @@ from app.db import db
 
 posts_bp = Blueprint('posts', __name__)
 
-# TODO: SECURE THIS CHECK ACCESS TOKEN VALID
+# TODOIS: SECURE THIS CHECK ACCESS TOKEN VALID
 @posts_bp.route('/posts', methods=['GET'])
 def fetch_posts():
     sort_by = request.args.get('sort_by', 'recent')

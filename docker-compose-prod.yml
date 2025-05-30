@@ -1,4 +1,5 @@
 # need set up network and volumes (all this is from gpt)
+#TODOIS
 
 services:
   frontend:

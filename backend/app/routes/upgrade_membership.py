@@ -10,7 +10,7 @@ import stripe
 upgrade_membership_bp = Blueprint('upgrade_membership', __name__)
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
-# TODO: SECURE THIS CHECK ACCESS TOKEN VALID
+# TODOIS: SECURE THIS CHECK ACCESS TOKEN VALID
 @upgrade_membership_bp.route('/upgrade-membership', methods=['POST'])
 def upgrade_membership():
     frontend_route = os.getenv("FRONTEND_ROUTE")

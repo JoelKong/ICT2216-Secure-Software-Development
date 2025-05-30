@@ -28,7 +28,7 @@ def signup():
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already taken."}), 400
     
-    # TODO: inside here need do server side protection, check email valid then need do server side rate limiting also (fe is set to 5 attempts then 10 sec cooldown)
+    # TODOIS: inside here need do server side protection, check email valid then need do server side rate limiting also (fe is set to 5 attempts then 10 sec cooldown)
     # check if username and email unique, password meets Minimum 8 characters
     #At least one uppercase letter
     #At least one lowercase letter
