@@ -27,7 +27,6 @@ export default function PaymentSuccess() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        // credentials: "include",
       }
     )
       .then((res) => res.json())

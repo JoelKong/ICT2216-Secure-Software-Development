@@ -28,10 +28,23 @@ const renderWithContext = (
     setModal = jest.fn(),
     rateLimit = { attempts: 0, cooldown: false },
     setRateLimit = jest.fn(),
+    getAuthToken = jest.fn(() => "mockToken"),
+    updateAuthToken = jest.fn(),
+    handleLogout = jest.fn(),
   } = {}
 ) => {
   return render(
-    <GlobalContext.Provider value={{ auth, setModal, rateLimit, setRateLimit }}>
+    <GlobalContext.Provider
+      value={{
+        auth,
+        setModal,
+        rateLimit,
+        setRateLimit,
+        getAuthToken,
+        updateAuthToken,
+        handleLogout,
+      }}
+    >
       <MemoryRouter>{ui}</MemoryRouter>
     </GlobalContext.Provider>
   );
@@ -72,7 +85,7 @@ describe("SimplifiedPost Component", () => {
                     liked_post_ids: [],
                   }),
               }),
-            100
+            100 // Mock fetch delay
           )
         )
     );
@@ -81,7 +94,10 @@ describe("SimplifiedPost Component", () => {
         scrollContainerRef={{ current: document.createElement("div") }}
       />
     );
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+    // `fetchPosts` is called inside a setTimeout(..., 50) in useEffect.
+    // `findByText` will wait for the "Loading..." text to appear.
+    expect(await screen.findByText(/Loading.../i)).toBeInTheDocument();
+    // Ensure fetch was actually called
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
   });
 

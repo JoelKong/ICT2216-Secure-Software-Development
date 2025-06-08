@@ -6,7 +6,8 @@ import { useContext } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 
 export default function HomePage({ searchTerm, scrollContainerRef }) {
-  const { auth } = useContext(GlobalContext);
+  const { auth, getAuthToken, updateAuthToken, handleLogout } =
+    useContext(GlobalContext);
   const navigate = useNavigate();
 
   return (
@@ -24,7 +25,13 @@ export default function HomePage({ searchTerm, scrollContainerRef }) {
               {auth.user.membership !== "premium" && (
                 <button
                   className="border-2 px-3 py-2 bg-blue-300 hover:bg-blue-400 cursor-pointer text-sm rounded-lg transition"
-                  onClick={() => upgradeMembership(auth.token)}
+                  onClick={() =>
+                    upgradeMembership(
+                      getAuthToken,
+                      updateAuthToken,
+                      handleLogout
+                    )
+                  }
                 >
                   Upgrade to premium plan to enjoy unlimited posting
                 </button>

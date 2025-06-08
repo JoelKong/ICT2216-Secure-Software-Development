@@ -11,8 +11,12 @@ import NavBar from "./components/global/NavBar";
 import PaymentSuccess from "./pages/payment_success/PaymentSuccess";
 import PaymentFailure from "./pages/payment_failure/PaymentFailure";
 import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
+import fetchWithAuth from "./utils/fetchWithAuth";
+import { useNavigate } from "react-router-dom";
 
 function App() {
+  const navigate = useNavigate();
+
   // Set up global modal
   const [modal, setModal] = useState({
     active: false,
@@ -40,32 +44,55 @@ function App() {
   });
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  const getAuthToken = () => localStorage.getItem("access_token");
+
+  const updateAuthToken = (newToken) => {
+    localStorage.setItem("access_token", newToken);
+    setAuth((prev) => ({
+      ...prev,
+      token: newToken,
+      isAuthenticated: !!newToken,
+    }));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    setAuth({ isAuthenticated: false, token: null, user: null });
+    setSearchTerm("");
+    setIsAuthChecked(true);
+    navigate("/");
+  };
+
   // Fetch user profile with token
-  async function fetchUser(token) {
-    console.log("fetching user");
+  async function fetchUser() {
     try {
-      const res = await fetch(`${API_ENDPOINT}/${FETCH_USER_ROUTE}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          // credentials: "include"
+      const res = await fetchWithAuth(
+        `${API_ENDPOINT}/${FETCH_USER_ROUTE}`,
+        {
+          method: "GET",
         },
-      });
+        getAuthToken,
+        updateAuthToken,
+        handleLogout
+      );
       const data = await res.json();
-      if (data.user) {
-        setAuth({ isAuthenticated: true, token: token, user: data.user });
+      if (res.ok && data.user) {
+        setAuth({
+          isAuthenticated: true,
+          token: getAuthToken(),
+          user: data.user,
+        });
         setIsAuthChecked(true);
       } else {
-        setAuth({ isAuthenticated: false, token: null, user: null });
-        setIsAuthChecked(false);
-        localStorage.removeItem("access_token");
+        handleLogout();
       }
     } catch (err) {
-      console.error(err);
-      setAuth({ isAuthenticated: false, token: null, user: null });
-      setIsAuthChecked(false);
-      localStorage.removeItem("access_token");
+      console.error("Failed to fetch user or session expired:", err);
+      if (!auth.isAuthenticated) {
+        handleLogout();
+      }
+    } finally {
+      setIsAuthChecked(true);
     }
   }
 
@@ -92,7 +119,7 @@ function App() {
     const token = localStorage.getItem("access_token");
 
     if (token) {
-      fetchUser(token);
+      fetchUser();
     } else {
       setIsAuthChecked(true);
     }
@@ -115,7 +142,16 @@ function App() {
         ref={scrollContainerRef}
       >
         <GlobalContext.Provider
-          value={{ auth, rateLimit, setAuth, setModal, setRateLimit }}
+          value={{
+            auth,
+            rateLimit,
+            setAuth,
+            setModal,
+            setRateLimit,
+            getAuthToken,
+            updateAuthToken,
+            handleLogout,
+          }}
         >
           <Routes>
             <Route

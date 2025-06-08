@@ -10,13 +10,21 @@ import {
 } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { GlobalContext } from "../../utils/globalContext";
+import fetchWithAuth from "../../utils/fetchWithAuth";
 
 export default function SimplifiedPost({
   scrollContainerRef,
   searchTerm = "",
   userId = null,
 }) {
-  const { auth, setModal, rateLimit, setRateLimit } = useContext(GlobalContext);
+  const {
+    setModal,
+    rateLimit,
+    setRateLimit,
+    getAuthToken,
+    updateAuthToken,
+    handleLogout,
+  } = useContext(GlobalContext);
   const [likedPosts, setLikedPosts] = useState({});
   const [sortBy, setSortBy] = useState("recent");
   const [posts, setPosts] = useState([]);
@@ -43,17 +51,22 @@ export default function SimplifiedPost({
     if (userId) params.append("user_id", userId);
 
     try {
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `${API_ENDPOINT}/${FETCH_POSTS_ROUTE}?${params.toString()}`,
         {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.token}`,
-          },
-          // credentials: "include",
-        }
+        },
+        getAuthToken,
+        updateAuthToken,
+        handleLogout
       );
+
+      if (!res.ok) {
+        const errorData = await res
+          .json()
+          .catch(() => ({ error: "Failed to fetch posts" }));
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+      }
       const response = await res.json();
 
       // If no data received
@@ -120,16 +133,14 @@ export default function SimplifiedPost({
         return;
       }
 
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `${API_ENDPOINT}/${DELETE_POSTS_ROUTE}/${postId}`,
         {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.token}`,
-          },
-          // credentials: "include"
-        }
+        },
+        getAuthToken,
+        updateAuthToken,
+        handleLogout
       );
       const data = await res.json();
       if (!res.ok) {
@@ -168,14 +179,15 @@ export default function SimplifiedPost({
         return;
       }
 
-      const res = await fetch(`${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
+      const res = await fetchWithAuth(
+        `${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`,
+        {
+          method: "POST",
         },
-        // credentials: "include"
-      });
+        getAuthToken,
+        updateAuthToken,
+        handleLogout
+      );
 
       const data = await res.json();
 

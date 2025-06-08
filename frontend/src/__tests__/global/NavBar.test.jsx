@@ -30,10 +30,15 @@ const renderWithContext = (
       isAuthenticated: true,
     },
     setAuth = jest.fn(),
+    handleLogout = jest.fn(),
+    getAuthToken = jest.fn(() => "mockToken"),
+    updateAuthToken = jest.fn(),
   } = {}
 ) => {
   return render(
-    <GlobalContext.Provider value={{ auth, setAuth }}>
+    <GlobalContext.Provider
+      value={{ auth, setAuth, handleLogout, getAuthToken, updateAuthToken }}
+    >
       <MemoryRouter>{ui}</MemoryRouter>
     </GlobalContext.Provider>
   );
@@ -102,16 +107,32 @@ describe("NavBar", () => {
   });
 
   test("logs out and navigates to / when Logout is clicked", () => {
-    const setAuth = jest.fn();
-    renderWithContext(<NavBar setSearchTerm={jest.fn()} />, { setAuth });
+    const mockSetAuth = jest.fn();
+
+    const mockContextHandleLogout = jest.fn(() => {
+      mockSetAuth({ isAuthenticated: false, token: null, user: null });
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      mockNavigate("/");
+    });
+
+    renderWithContext(<NavBar setSearchTerm={jest.fn()} />, {
+      setAuth: mockSetAuth,
+      handleLogout: mockContextHandleLogout,
+    });
+
     fireEvent.click(screen.getByRole("button"));
     fireEvent.click(screen.getByText(/Logout/i));
-    expect(setAuth).toHaveBeenCalledWith({
+
+    expect(mockContextHandleLogout).toHaveBeenCalledTimes(1);
+    // Verify the effects of the mockContextHandleLogout
+    expect(mockSetAuth).toHaveBeenCalledWith({
       isAuthenticated: false,
       token: null,
       user: null,
     });
     expect(mockNavigate).toHaveBeenCalledWith("/");
     expect(localStorage.getItem("access_token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull(); // Assert user is cleared
   });
 });

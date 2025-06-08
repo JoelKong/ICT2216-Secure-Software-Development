@@ -27,7 +27,6 @@ export default function PaymentFailure() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        // credentials: "include",
       }
     )
       .then((res) => res.json())
