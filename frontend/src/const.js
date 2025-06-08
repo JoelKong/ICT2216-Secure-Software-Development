@@ -3,6 +3,7 @@ export const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 // Auth
 export const SIGNUP_ROUTE = "api/signup";
 export const LOGIN_ROUTE = "api/login";
+export const REFRESH_ROUTE = "api/refresh";
 
 // Posts
 export const FETCH_POSTS_ROUTE = "api/posts";
