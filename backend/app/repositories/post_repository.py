@@ -3,13 +3,15 @@ from app.models.posts import Post
 from app.models.users import User
 from app.models.likes import Like
 from app.models.comments import Comment
+from app.interfaces.repositories.IPostRepository import IPostRepository
 from flask import current_app
 from sqlalchemy import func, desc, distinct
+from typing import List, Optional
 
-class PostRepository(BaseRepository):
+class PostRepository(BaseRepository[Post], IPostRepository):
     def __init__(self):
         super().__init__(Post)
-        
+    
     def get_posts(self, sort_by='recent', limit=10, offset=0, search=None, user_id=None):
         """Get posts with filtering, sorting and pagination"""
         try:
@@ -25,8 +27,8 @@ class PostRepository(BaseRepository):
             query = self.db.session.query(
                 Post,
                 User,
-                func.count(distinct(Comment.comment_id)).label("comment_count"),
-                func.count(distinct(Like.like_id)).label("like_count")
+                func.count(distinct(Comment.comment_id)).label("comments_count"),
+                func.count(distinct(Like.like_id)).label("likes_count")
             )\
             .join(User, Post.user_id == User.user_id)\
             .outerjoin(Comment, Post.post_id == Comment.post_id)\
@@ -45,12 +47,22 @@ class PostRepository(BaseRepository):
                 .limit(limit)
                 
             current_app.logger.info(f"Fetching posts with sort: {sort_by}, limit: {limit}, offset: {offset}")
-            return query.all()
+            
+            # Get results and add counts as attributes to the Post objects
+            results = []
+            for post_tuple in query.all():
+                post, user, comments_count, likes_count = post_tuple
+                post.user = user
+                post.comments_count = comments_count
+                post.likes_count = likes_count
+                results.append(post)
+            
+            return results
             
         except Exception as e:
             current_app.logger.error(f"Error retrieving posts: {str(e)}")
             raise
-            
+    
     def get_user_liked_posts(self, user_id, post_ids=None):
         """Get posts liked by a specific user"""
         try:

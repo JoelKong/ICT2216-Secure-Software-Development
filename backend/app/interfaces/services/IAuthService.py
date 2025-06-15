@@ -1,0 +1,31 @@
+from abc import ABC, abstractmethod
+from typing import Dict, Tuple, Any, Optional
+from app.models.users import User
+
+class IAuthService(ABC):
+    """Interface for authentication service operations"""
+    
+    @abstractmethod
+    def validate_signup_data(self, data: Dict[str, Any]) -> Tuple[bool, str]:
+        """Validate user signup data"""
+        pass
+    
+    @abstractmethod
+    def create_user(self, data: Dict[str, Any]) -> User:
+        """Create a new user"""
+        pass
+    
+    @abstractmethod
+    def login(self, email: str, password: str) -> Tuple[Optional[User], Optional[str]]:
+        """Authenticate a user"""
+        pass
+    
+    @abstractmethod
+    def generate_tokens(self, user_id: int) -> Dict[str, str]:
+        """Generate access and refresh tokens"""
+        pass
+    
+    @abstractmethod
+    def refresh_access_token(self, user_id: int) -> Dict[str, str]:
+        """Generate a new access token using a refresh token"""
+        pass

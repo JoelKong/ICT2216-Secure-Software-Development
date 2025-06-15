@@ -1,69 +1,91 @@
 from flask import request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.interfaces.services.IPaymentService import IPaymentService
 from app.services.payment_service import PaymentService
+from flask_jwt_extended import jwt_required, get_jwt_identity
+import stripe
+import os
 
 class PaymentController:
-    def __init__(self):
-        self.payment_service = PaymentService()
+    def __init__(self, payment_service: IPaymentService = None):
+        self.payment_service = payment_service or PaymentService()
+        self.webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
     
     @jwt_required()
     def create_checkout_session(self):
-        """Create Stripe checkout session for membership upgrade"""
+        """Create a checkout session for upgrading membership"""
         try:
+            # Get user ID from JWT
             user_id = get_jwt_identity()
-            current_app.logger.info(f"Creating checkout session for user: {user_id}")
             
-            session, error = self.payment_service.create_checkout_session(user_id)
+            # Create checkout session
+            session_data, error = self.payment_service.create_checkout_session(user_id)
             
             if error:
                 return jsonify({"error": error}), 400
                 
-            return jsonify({'id': session.id}), 200
+            return jsonify(session_data), 200
             
         except Exception as e:
             current_app.logger.error(f"Error creating checkout session: {str(e)}")
-            return jsonify({'error': "Failed to create checkout session"}), 500
-    
-    @jwt_required(optional=True)
-    def verify_session(self):
-        """Verify Stripe session status"""
-        try:
-            session_id = request.args.get('session_id')
-            if not session_id:
-                return jsonify({'valid': False, 'message': 'Session ID is required'}), 400
-                
-            current_app.logger.info(f"Verifying session: {session_id}")
-            
-            result = self.payment_service.verify_session(session_id)
-            
-            if result.get("error"):
-                return jsonify({'valid': False, 'message': result["error"]}), 400
-                
-            return jsonify(result), 200
-            
-        except Exception as e:
-            current_app.logger.error(f"Error verifying session: {str(e)}")
-            return jsonify({'valid': False, 'message': 'An unexpected error occurred'}), 500
+            return jsonify({"error": "Failed to create checkout session"}), 500
     
     def webhook_handler(self):
         """Handle Stripe webhook events"""
         try:
+            # Get webhook payload and signature
             payload = request.data
             sig_header = request.headers.get('Stripe-Signature')
             
-            if not sig_header:
-                current_app.logger.warning("Webhook called without Stripe signature")
-                return jsonify({'error': 'No Stripe signature provided'}), 400
-                
-            current_app.logger.info("Processing webhook event")
+            if not payload or not sig_header:
+                return jsonify({"error": "Missing payload or signature"}), 400
             
-            success, error = self.payment_service.process_webhook_event(payload, sig_header)
+            # Verify webhook signature
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, self.webhook_secret
+                )
+            except stripe.error.SignatureVerificationError as e:
+                current_app.logger.warning(f"Invalid webhook signature: {str(e)}")
+                return jsonify({"error": "Invalid signature"}), 400
             
-            if not success:
-                return jsonify({'error': error}), 400
+            # Handle specific events
+            event_type = event['type']
+            
+            if event_type == 'checkout.session.completed':
+                # Payment was successful
+                session = event['data']['object']
                 
-            return jsonify({'status': 'success'}), 200
+                # Update user membership
+                user_id = session.get('metadata', {}).get('user_id')
+                if user_id:
+                    success, _, error = self.payment_service.verify_session(session.id)
+                    if not success:
+                        current_app.logger.error(f"Failed to process session: {error}")
+                
+            return jsonify({"received": True}), 200
             
         except Exception as e:
-            current_app.logger.error(f"Webhook handler error: {str(e)}")
-            return jsonify({'error': 'An unexpected error occurred'}), 500
+            current_app.logger.error(f"Error handling webhook: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+    
+    @jwt_required()
+    def verify_session(self):
+        """Verify a checkout session and update user membership"""
+        try:
+            # Get session ID from query parameters
+            session_id = request.args.get('session_id')
+            
+            if not session_id:
+                return jsonify({"error": "Session ID is required"}), 400
+            
+            # Verify session
+            success, user_id, error = self.payment_service.verify_session(session_id)
+            
+            if not success:
+                return jsonify({"error": error}), 400
+                
+            return jsonify({"success": True, "message": "Membership upgraded successfully"}), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"Error verifying session: {str(e)}")
+            return jsonify({"error": "Failed to verify session"}), 500

@@ -1,119 +1,92 @@
-import os
-import stripe
+from app.interfaces.services.IPaymentService import IPaymentService
+from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.repositories.user_repository import UserRepository
-from flask import current_app
+from flask import current_app, request
+import stripe
+import os
+from typing import Dict, Tuple, Optional, Any
 
-class PaymentService:
-    def __init__(self):
-        self.user_repository = UserRepository()
-        stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+class PaymentService(IPaymentService):
+    def __init__(self, user_repository: IUserRepository = None):
+        self.user_repository = user_repository or UserRepository()
+        stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+        self.price_id = os.environ.get('STRIPE_PRICE_ID')
+        self.domain_url = os.environ.get('DOMAIN_URL')
     
-    def create_checkout_session(self, user_id):
-        """Create Stripe checkout session for membership upgrade"""
+    def create_checkout_session(self, user_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """Create a new checkout session"""
         try:
-            # Get user details from repository
+            # Check if user exists
             user = self.user_repository.get_by_id(user_id)
-            
             if not user:
-                current_app.logger.warning(f"Checkout attempt for non-existent user: {user_id}")
+                current_app.logger.warning(f"Checkout session request for non-existent user {user_id}")
                 return None, "User not found"
                 
-            if user.membership == 'premium':
-                current_app.logger.info(f"User {user_id} attempted upgrade but is already premium")
-                return None, "User is already a premium member"
-            
-            # Create checkout session (from existing upgrade-membership route)
-            frontend_route = os.getenv("FRONTEND_ROUTE")
-            
-            session = stripe.checkout.Session.create(
+            # Check if user is already premium
+            if user.membership:
+                current_app.logger.warning(f"User {user_id} already has premium membership")
+                return None, "User already has premium membership"
+                
+            # Create checkout session
+            checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
-                line_items=[{
-                    'price_data': {
-                        'currency': 'usd',
-                        'product_data': {
-                            'name': 'Premium Membership Upgrade',
-                            'description': 'Upgrade to premium membership for unlimited posts',
-                        },
-                        'unit_amount': 200,  # $2.00 in cents
+                line_items=[
+                    {
+                        'price': self.price_id,
+                        'quantity': 1,
                     },
-                    'quantity': 1,
-                }],
+                ],
+                metadata={
+                    'user_id': user_id
+                },
                 mode='payment',
-                success_url=f'{frontend_route}/success?session_id={{CHECKOUT_SESSION_ID}}',
-                cancel_url=f'{frontend_route}/failure?session_id={{CHECKOUT_SESSION_ID}}',
-                metadata={'user_id': user_id}
+                success_url=f'{self.domain_url}/success?session_id={{CHECKOUT_SESSION_ID}}',
+                cancel_url=f'{self.domain_url}/cancel',
             )
             
-            current_app.logger.info(f"Created checkout session for user {user_id}: {session.id}")
-            return session, None
+            current_app.logger.info(f"Created checkout session for user {user_id}: {checkout_session.id}")
+            return {'id': checkout_session.id}, None
             
         except stripe.error.StripeError as e:
-            current_app.logger.error(f"Stripe error creating checkout session: {str(e)}")
-            return None, f"Payment processing error: {str(e)}"
+            current_app.logger.error(f"Stripe error: {str(e)}")
+            return None, f"Stripe error: {str(e)}"
+            
         except Exception as e:
             current_app.logger.error(f"Error creating checkout session: {str(e)}")
-            raise
+            return None, f"Internal server error: {str(e)}"
     
-    def verify_session(self, session_id):
-        """Verify Stripe session status"""
+    def verify_session(self, session_id: str) -> Tuple[bool, Optional[int], Optional[str]]:
+        """Verify a completed session and update user membership"""
         try:
-            # Get session from Stripe (from existing verify-session route)
+            # Retrieve session
             session = stripe.checkout.Session.retrieve(session_id)
             
-            is_valid = session.payment_status == "paid"
-            current_app.logger.info(f"Verified session {session_id}: valid={is_valid}")
+            # Check payment status
+            if session.payment_status != 'paid':
+                current_app.logger.warning(f"Session {session_id} is not paid")
+                return False, None, "Payment not completed"
             
-            return {
-                "valid": is_valid,
-                "session_id": session_id,
-                "customer_email": session.customer_details.email if hasattr(session, 'customer_details') else None
-            }
+            # Get user ID from session metadata
+            user_id = session.metadata.get('user_id')
+            if not user_id:
+                current_app.logger.error(f"No user_id found in session {session_id}")
+                return False, None, "Invalid session: user ID not found"
+            
+            user_id = int(user_id)
+            
+            # Update user membership
+            user = self.user_repository.update_membership(user_id, True)
+            if not user:
+                current_app.logger.error(f"Failed to update membership for user {user_id}")
+                return False, user_id, "Failed to update user membership"
+            
+            current_app.logger.info(f"User {user_id} membership upgraded to premium")
+            return True, user_id, None
             
         except stripe.error.StripeError as e:
-            current_app.logger.error(f"Stripe error verifying session: {str(e)}")
-            return {"valid": False, "error": str(e)}
+            current_app.logger.error(f"Stripe error during verification: {str(e)}")
+            return False, None, f"Stripe error: {str(e)}"
+            
         except Exception as e:
             current_app.logger.error(f"Error verifying session: {str(e)}")
-            raise
-    
-    def process_webhook_event(self, payload, signature):
-        """Process Stripe webhook event"""
-        try:
-            # Process webhook (from existing stripe/webhook route)
-            endpoint_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
-            
-            event = stripe.Webhook.construct_event(
-                payload, signature, endpoint_secret
-            )
-            
-            # Handle checkout completion event
-            if event['type'] == 'checkout.session.completed':
-                session = event['data']['object']
-                user_id = session['metadata']['user_id']
-                
-                # Upgrade user membership using UserRepository
-                user = self.user_repository.get_by_id(user_id)
-                if user:
-                    user.membership = 'premium'
-                    
-                    try:
-                        self.user_repository.db.session.commit()
-                        current_app.logger.info(f"Successfully upgraded user {user_id} to premium via webhook")
-                    except Exception as e:
-                        self.user_repository.db.session.rollback()
-                        current_app.logger.error(f"Database error updating user membership: {str(e)}")
-                        return False, f"Database error: {str(e)}"
-                else:
-                    current_app.logger.warning(f"Failed to upgrade user {user_id} - user not found")
-                
-            return True, None
-            
-        except stripe.error.SignatureVerificationError as e:
-            current_app.logger.error(f"Webhook signature verification failed: {str(e)}")
-            return False, f"Signature verification failed: {str(e)}"
-        except ValueError as e:
-            current_app.logger.error(f"Invalid webhook payload: {str(e)}")
-            return False, f"Invalid payload: {str(e)}"
-        except Exception as e:
-            current_app.logger.error(f"Webhook processing error: {str(e)}")
-            raise
+            return False, None, f"Internal server error: {str(e)}"

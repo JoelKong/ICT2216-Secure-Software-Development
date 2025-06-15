@@ -1,11 +1,12 @@
 from flask import request, jsonify, current_app
+from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
 from flask_jwt_extended import jwt_required, get_jwt_identity, set_refresh_cookies, unset_jwt_cookies
 
 class AuthController:
-    def __init__(self):
-        self.auth_service = AuthService()
-        
+    def __init__(self, auth_service: IAuthService = None):
+        self.auth_service = auth_service or AuthService()
+    
     def signup(self):
         """Handle user signup"""
         try:
@@ -37,7 +38,7 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during signup: {str(e)}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
-            
+    
     def login(self):
         """Handle user login"""
         try:
@@ -73,19 +74,33 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during login: {str(e)}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
-            
+    
     @jwt_required(refresh=True)
     def refresh_token(self):
         """Refresh access token using refresh token"""
         try:
-            current_user_identity = get_jwt_identity()
-            current_app.logger.info(f"Token refresh for user {current_user_identity}")
+            # Get user ID from refresh token
+            user_id = get_jwt_identity()
+            current_app.logger.info(f"Refreshing token for user {user_id}")
             
             # Generate new access token
-            new_access_token = self.auth_service.generate_tokens(current_user_identity)['access_token']
+            tokens = self.auth_service.refresh_access_token(user_id)
             
-            return jsonify(access_token=new_access_token), 200
+            return jsonify(tokens), 200
             
         except Exception as e:
             current_app.logger.error(f"Error refreshing token: {str(e)}")
             return jsonify({"error": "Failed to refresh token"}), 500
+    
+    def logout(self):
+        """Handle user logout"""
+        try:
+            # Create response and unset JWT cookies
+            response = jsonify({"message": "Logout successful"})
+            unset_jwt_cookies(response)
+            
+            return response, 200
+            
+        except Exception as e:
+            current_app.logger.error(f"Error during logout: {str(e)}")
+            return jsonify({"error": "Something went wrong. Please try again."}), 500

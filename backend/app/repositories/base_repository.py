@@ -1,14 +1,18 @@
 from app.db import db
 from flask import current_app
+from app.interfaces.repositories.IBaseRepository import IBaseRepository
+from typing import TypeVar, Dict, List, Optional, Any, Generic
 
-class BaseRepository:
+T = TypeVar('T')
+
+class BaseRepository(IBaseRepository[T], Generic[T]):
     """Base repository class providing common database operations"""
     
     def __init__(self, model):
         self.model = model
         self.db = db
         
-    def get_by_id(self, id):
+    def get_by_id(self, id: int) -> Optional[T]:
         """Get entity by ID"""
         try:
             return self.model.query.get(id)
@@ -16,7 +20,7 @@ class BaseRepository:
             current_app.logger.error(f"Error retrieving {self.model.__name__} with ID {id}: {str(e)}")
             raise
     
-    def get_all(self):
+    def get_all(self) -> List[T]:
         """Get all entities"""
         try:
             return self.model.query.all()
@@ -24,7 +28,7 @@ class BaseRepository:
             current_app.logger.error(f"Error retrieving all {self.model.__name__}: {str(e)}")
             raise
     
-    def create(self, data):
+    def create(self, data: Dict[str, Any]) -> T:
         """Create a new entity"""
         try:
             entity = self.model(**data)
@@ -36,7 +40,7 @@ class BaseRepository:
             current_app.logger.error(f"Error creating {self.model.__name__}: {str(e)}")
             raise
     
-    def update(self, entity, data):
+    def update(self, entity: T, data: Dict[str, Any]) -> T:
         """Update an existing entity"""
         try:
             for key, value in data.items():
@@ -48,7 +52,7 @@ class BaseRepository:
             current_app.logger.error(f"Error updating {self.model.__name__}: {str(e)}")
             raise
     
-    def delete(self, entity):
+    def delete(self, entity: T) -> None:
         """Delete an entity"""
         try:
             db.session.delete(entity)
