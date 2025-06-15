@@ -44,6 +44,13 @@ export default async function fetchWithAuth(
 
     let response = await fetch(url, requestOptions);
 
+    // Handle 429 rate limit response
+    if (response.status === 429) {
+      console.warn("Rate limit exceeded for URL:", url);
+      // No need to retry these requests after a delay - let the user handle it
+      return response;
+    }
+
     if (response.status === 401) {
       if (!isRefreshing) {
         isRefreshing = true;

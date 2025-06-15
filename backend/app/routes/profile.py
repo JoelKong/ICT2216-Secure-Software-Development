@@ -1,27 +1,14 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.models.users import User
-from app.db import db
+from flask import Blueprint
+from app.controllers.profile_controller import ProfileController
 
 profile_bp = Blueprint('profile', __name__)
+profile_controller = ProfileController()
 
-# TODOIS: SECURE THIS CHECK ACCESS TOKEN VALID
-@profile_bp.route('/profile', methods=['GET'])
-@jwt_required()
-def fetch_user():
-    user_id = get_jwt_identity()
-    user = User.query.filter_by(user_id=user_id).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+# Get user profile
+profile_bp.route('/profile', methods=['GET'])(profile_controller.get_profile)
 
-    return jsonify({
-        "user": {
-            "user_id": user.user_id,
-            "username": user.username,
-            "email": user.email,
-            "membership": user.membership,
-            "profile_picture": user.profile_picture,
-            "created_at": user.created_at,
-            "post_limit": user.post_limit
-        }
-    }), 200
+# Update user profile
+# profile_bp.route('/profile', methods=['PUT'])(profile_controller.update_profile)
+
+# # Get user's posts
+# profile_bp.route('/profile/posts', methods=['GET'])(profile_controller.get_user_posts)

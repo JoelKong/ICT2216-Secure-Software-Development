@@ -58,6 +58,7 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
 
       // Check if rate limit reached
       if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        setLoading(false);
         return;
       }
 
@@ -100,6 +101,7 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
           type: "fail",
           message: error,
         });
+        setLoading(false);
         return;
       }
 
@@ -110,6 +112,26 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
         },
         body: JSON.stringify(signupFormData),
       });
+
+      // Handle 429 Too Many Requests specifically
+      if (response.status === 429) {
+        // Force client-side rate limiter to cooldown mode
+        setRateLimit({
+          attempts: 5,
+          cooldown: true,
+        });
+
+        setModal({
+          active: true,
+          type: "fail",
+          message:
+            "Too many signup attempts. Please wait a few minutes before trying again.",
+        });
+
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {

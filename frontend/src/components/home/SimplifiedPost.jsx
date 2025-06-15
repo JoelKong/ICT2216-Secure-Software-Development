@@ -11,6 +11,7 @@ import {
 import checkRateLimit from "../../utils/checkRateLimit";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
+import handleRateLimitResponse from "../../utils/handleRateLimitResponse";
 
 export default function SimplifiedPost({
   scrollContainerRef,
@@ -143,6 +144,12 @@ export default function SimplifiedPost({
         handleLogout
       );
       const data = await res.json();
+
+      // Handle 429 response
+      if (handleRateLimitResponse(res, setRateLimit, setModal, "delete post")) {
+        return;
+      }
+
       if (!res.ok) {
         setModal({
           active: true,
@@ -189,27 +196,47 @@ export default function SimplifiedPost({
         handleLogout
       );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to toggle like");
+      // Handle 429 response
+      if (handleRateLimitResponse(res, setRateLimit, setModal, "like")) {
+        return;
       }
 
-      setLikedPosts((prev) => ({
-        ...prev,
-        [postId]: data.likes,
-      }));
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.post_id === postId ? { ...post, likes: data.likes } : post
-        )
-      );
-      setRateLimit({
-        attempts: 0,
-        cooldown: false,
-      });
+      // Fix the like heart bug by toggling the value properly
+      if (res.ok) {
+        const data = await res.json();
+
+        // Toggle the liked state correctly
+        setLikedPosts((prev) => ({
+          ...prev,
+          [postId]: !prev[postId], // Toggle the boolean value instead of using the count
+        }));
+
+        // Update the post's like count separately
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.post_id === postId ? { ...post, likes: data.likes } : post
+          )
+        );
+
+        setRateLimit({
+          attempts: 0,
+          cooldown: false,
+        });
+      } else {
+        const errorData = await res.json();
+        setModal({
+          active: true,
+          type: "fail",
+          message: errorData.error || "Failed to like post",
+        });
+      }
     } catch (err) {
       console.error("Error toggling like:", err);
+      setModal({
+        active: true,
+        type: "fail",
+        message: "An error occurred while liking the post.",
+      });
     }
   }
 

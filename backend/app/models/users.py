@@ -8,8 +8,12 @@ class User(db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    profile_picture = db.Column(db.String(255), default='', nullable=True)
+    profile_picture = db.Column(db.String(255), nullable=True)
     membership = db.Column(ENUM('basic', 'premium'), default='basic')
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-    last_login = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-    post_limit = db.Column(db.Integer, default=2)
+    key = db.Column(db.String(64), nullable=True)
+    
+    # Relationships
+    posts = db.relationship('Post', backref='author', lazy=True, cascade="all, delete-orphan")
+    likes = db.relationship('Like', backref='user', lazy=True, cascade="all, delete")
+    comments = db.relationship('Comment', backref='author', lazy=True, cascade="all, delete")

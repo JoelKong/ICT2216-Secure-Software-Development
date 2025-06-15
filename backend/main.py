@@ -2,16 +2,17 @@ import os
 from app import create_app
 from dotenv import load_dotenv
 
-# need rmb set flask env in docker
+# Determine environment and load appropriate .env file
 env = os.getenv('FLASK_ENV', 'development')
-debug = True
-if env == 'production':
-    load_dotenv(os.path.join(os.path.dirname(__file__), '.env.production'))
-    debug = False
-else:
-    load_dotenv(os.path.join(os.path.dirname(__file__), '.env.development'))
+env_file = f".env.{env}"
 
-app = create_app()
+if os.path.exists(env_file):
+    load_dotenv(env_file)
+else:
+    load_dotenv()
+
+# Create app with environment configuration
+app = create_app(env)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=debug)
+    app.run(host="0.0.0.0", port=5000)
