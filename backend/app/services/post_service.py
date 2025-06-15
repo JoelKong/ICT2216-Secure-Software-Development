@@ -1,59 +1,64 @@
+from app.interfaces.services.IPostService import IPostService
+from app.interfaces.repositories.IPostRepository import IPostRepository
+from app.interfaces.repositories.ILikeRepository import ILikeRepository
 from app.repositories.post_repository import PostRepository
 from app.repositories.like_repository import LikeRepository
 from flask import current_app
+from typing import Dict, List, Optional, Any, Tuple
 
-class PostService:
-    def __init__(self):
-        self.post_repository = PostRepository()
-        self.like_repository = LikeRepository()
+class PostService(IPostService):
+    def __init__(self, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
+        self.post_repository = post_repository or PostRepository()
+        self.like_repository = like_repository or LikeRepository()
     
-    def get_posts(self, user_id, sort_by='recent', limit=10, offset=0, search=None, filter_user_id=None):
-        """Get posts with all necessary data"""
+    def get_posts(self, sort_by: str = 'recent', page: int = 1, 
+                  search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
+        """Get posts with pagination, filtering and sorting"""
         try:
-            # Get posts with sorting and filtering
-            posts_data = self.post_repository.get_posts(
+            # Calculate offset based on page number
+            limit = 10  # Number of posts per page
+            offset = (page - 1) * limit
+            
+            # Get posts from repository
+            posts = self.post_repository.get_posts(
                 sort_by=sort_by,
                 limit=limit,
                 offset=offset,
                 search=search,
-                user_id=filter_user_id
+                user_id=user_id
             )
             
-            # Extract post IDs
-            post_ids = [post.post_id for post, _, _, _ in posts_data]
-            
-            # Get current user's liked posts
-            liked_posts = []
-            if post_ids:
-                liked_posts = self.post_repository.get_user_liked_posts(user_id, post_ids)
-                
-            liked_post_ids = set(like.post_id for like in liked_posts)
-            
-            # Format posts response
-            result = []
-            for post, user, comment_count, like_count in posts_data:
-                result.append({
+            # Format response
+            formatted_posts = []
+            for post in posts:
+                formatted_post = {
                     "post_id": post.post_id,
                     "title": post.title,
                     "content": post.content,
-                    "image": post.image,
-                    "username": user.username,
-                    "likes": like_count,
-                    "comments": comment_count,
                     "created_at": post.created_at.isoformat(),
                     "updated_at": post.updated_at.isoformat() if post.updated_at else None,
-                })
+                    "user_id": post.user_id,
+                    "username": post.user.username,
+                    "profile_picture": post.user.profile_picture,
+                    "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
+                    "comments": post.comments_count if hasattr(post, 'comments_count') else 0
+                }
+                formatted_posts.append(formatted_post)
             
-            return {
-                "posts": result,
-                "liked_post_ids": list(liked_post_ids)
+            result = {
+                "posts": formatted_posts,
+                "page": page,
+                "has_more": len(posts) == limit
             }
             
-        except Exception as e:
-            current_app.logger.error(f"Error in get_posts service: {str(e)}")
-            raise
+            current_app.logger.info(f"Retrieved {len(posts)} posts for page {page}")
+            return result
             
-    def toggle_like(self, post_id, user_id):
+        except Exception as e:
+            current_app.logger.error(f"Error getting posts: {str(e)}")
+            raise
+    
+    def toggle_like(self, post_id: int, user_id: int) -> Tuple[Dict[str, Any], Optional[str]]:
         """Toggle like status for a post"""
         try:
             # Get post
@@ -63,7 +68,7 @@ class PostService:
                 return None, "Post not found"
                 
             # Check if user already liked this post
-            existing_like = self.like_repository.get_by_post_and_user(post_id, user_id)
+            existing_like = self.like_repository.get_by_user_and_post(user_id, post_id)
             
             if existing_like:
                 # Remove like
@@ -85,27 +90,39 @@ class PostService:
         except Exception as e:
             current_app.logger.error(f"Error toggling like: {str(e)}")
             raise
-            
-    def delete_post(self, post_id, user_id):
-        """Delete a post"""
+    
+    def delete_post(self, post_id: int, user_id: int) -> Tuple[bool, str]:
+        """Delete a post if user is authorized"""
         try:
+            # Get post
             post = self.post_repository.get_by_id(post_id)
-            
             if not post:
                 current_app.logger.warning(f"Delete attempt on non-existent post {post_id}")
                 return False, "Post not found"
-                
-            # Verify ownership
-            if int(post.user_id) != int(user_id):
-                current_app.logger.warning(f"Unauthorized delete attempt on post {post_id} by user {user_id}")
-                return False, "Unauthorized"
-                
-            # Delete post
-            self.post_repository.delete(post)
-            current_app.logger.info(f"Post {post_id} deleted by user {user_id}")
             
+            # Check if user is authorized to delete this post
+            if post.user_id != user_id:
+                current_app.logger.warning(f"Unauthorized delete attempt on post {post_id} by user {user_id}")
+                return False, "Unauthorized: You can only delete your own posts"
+            
+            # Delete likes and comments related to this post first
+            self.like_repository.delete_by_post_id(post_id)
+            
+            # Now delete the post
+            self.post_repository.delete(post)
+            
+            current_app.logger.info(f"Post {post_id} deleted by user {user_id}")
             return True, "Post deleted successfully"
             
         except Exception as e:
             current_app.logger.error(f"Error deleting post: {str(e)}")
             raise
+    
+    # Get posts created by a specific user
+    def get_user_liked_posts(self, user_id: int, post_ids: Optional[List[int]] = None) -> List[int]:
+        """Get IDs of posts liked by a specific user"""
+        try:
+            return self.like_repository.get_user_liked_post_ids(user_id, post_ids)
+        except Exception as e:
+            current_app.logger.error(f"Error getting user liked posts: {str(e)}")
+            return []
