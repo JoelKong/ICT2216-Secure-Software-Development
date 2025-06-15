@@ -109,7 +109,7 @@ function App() {
     if (rateLimit.cooldown) {
       const timer = setTimeout(() => {
         setRateLimit({ attempts: 0, cooldown: false });
-      }, 10000);
+      }, 30000);
       return () => clearTimeout(timer);
     }
   }, [rateLimit.cooldown]);

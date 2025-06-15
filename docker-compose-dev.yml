@@ -1,6 +1,4 @@
 # this docker is for dev, use for testing ig before pushing to the cloud
-#TODO: need to secure and need to find a way to migrate the database
-# gpt say use alembic for migration
 
 version: "3.8"
 
@@ -29,6 +27,7 @@ services:
       - "5000:5000"
     volumes:
       - ./backend:/app
+      - app_logs:/var/log/app
     depends_on:
       - db
     entrypoint: >
@@ -44,6 +43,8 @@ services:
     image: mysql:8.0
     container_name: mysql-db
     restart: unless-stopped
+    env_file:
+      - .env.development
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       # MYSQL_USER: ${MYSQL_USER} // only use if not using root user
@@ -117,3 +118,4 @@ networks:
 
 volumes:
   mysql_data:
+  app_logs:
