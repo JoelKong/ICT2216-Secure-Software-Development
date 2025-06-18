@@ -14,8 +14,13 @@ from dotenv import load_dotenv
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-# Load environment variables from the .env file
-load_dotenv()
+# Load environment variables from the correct .env file
+env = os.getenv('FLASK_ENV', 'development')
+env_file = f".env.{env}"
+if os.path.exists(env_file):
+    load_dotenv(dotenv_path=env_file)
+else:
+    load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

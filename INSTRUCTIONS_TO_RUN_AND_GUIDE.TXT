@@ -1,3 +1,5 @@
+#TODO to be refactored
+
 GENERAL
 MAKE SURE TO MAKE YOUR OWN .env.development AND .env.production in both frontend and backend
 open 2 consoles 1 for frontend 1 for backend
