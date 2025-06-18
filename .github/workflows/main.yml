@@ -1,10 +1,7 @@
 # Notes:
-
-#The Validate DB migrations step runs your migrate.py to ensure the schema is up-to-date.
-#Adjust SQLALCHEMY_DATABASE_URI as needed for your test DB.
-#The deploy step uses SSH to connect to your EC2 and run the production compose file.
-#Make sure your secrets (HOST, USERNAME, SSH_KEY) are set in your GitHub repo.
-# use github secrets to store sensitive data like SSH keys, database passwords, etc.
+# The Validate DB migrations step runs your migrate.py to ensure the schema is up-to-date.
+# The deploy step uses SSH to connect to your EC2 and run the production compose file.
+# Make sure your secrets (HOST, USERNAME, SSH_KEY, etc.) are set in your GitHub repo.
 
 name: The Leonardo's Discussion Room CI/CD Pipeline
 
@@ -14,13 +11,12 @@ on:
       - "**"
   pull_request:
     branches:
-      - "**"
+      - "main" # More efficient to only run on PRs to main
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     services:
       mysql:
         image: mysql:8.0
@@ -31,81 +27,104 @@ jobs:
           MYSQL_DATABASE: forum
         ports:
           - 3306:3306
-
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      # Cache Node.js modules
       - name: Cache Node.js modules
         uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.OS }}-node-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.OS }}-node-
+            ${{ runner.os }}-node-
 
-      # Setup Node.js for frontend
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "18"
-
-      # Install frontend dependencies
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm ci
 
-      # Lint frontend
       - name: Run frontend linting
         run: |
           cd frontend
           npm run lint
 
-      # Test frontend
       - name: Run frontend tests
         run: |
           cd frontend
           npm test -- --watchAll=false
 
-      # Build frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # Setup Python for backend
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.9"
 
-      # Install backend dependencies       put pytest and flake8 (dk whats this) in requirements.txt
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install backend dependencies
         run: |
           cd backend
           pip install -r requirements.txt
 
-      # Lint backend          #this one the linting annoying do at the end
-      # - name: Run backend linting
-      #   run: |
-      #     cd backend
-      #     flake8 .
+      - name: Validate DB Migrations
+        env:
+          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
+        run: |
+          cd backend
+          alembic upgrade head
 
-      # Test backend          # enable when got actual test
-      # - name: Run backend tests
-      #   run: |
-      #     cd backend
-      #     pytest
+      - name: Run backend linting
+        run: |
+          cd backend
+          flake8 .
 
-  #TODOIS
-  deploy:
+      - name: Run backend tests
+        env:
+          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
+        run: |
+          cd backend
+          pytest
+
+  deploy_staging:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-
+    environment: staging
     steps:
-      - uses: actions/checkout@v2
+      - name: "Deploy to staging"
+        run: echo "Deploying to staging environment after manual approval..."
+
+  deploy_uat:
+    needs: deploy_staging
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - name: "Deploy to UAT"
+        run: echo "Deploying to UAT environment after manual approval..."
+
+  deploy_prod:
+    needs: deploy_uat
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@master
@@ -115,25 +134,15 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /path/to/your/project
-            git pull
-            docker-compose -f docker-compose-prod.yml down
-            docker-compose -f docker-compose-prod.yml up -d
+            git pull origin main
 
-    # Test nginx # this is the lab version
-    # - name: Checkout code
-    #   uses: actions/checkout@v4
+            # Export secrets as environment variables for the deployment script
+            export VITE_API_ENDPOINT='${{ secrets.VITE_API_ENDPOINT }}'
+            export SECRET_KEY='${{ secrets.SECRET_KEY }}'
+            export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
+            export SQLALCHEMY_DATABASE_URI='${{ secrets.SQLALCHEMY_DATABASE_URI }}'
+            export FRONTEND_ROUTE='${{ secrets.FRONTEND_ROUTE }}'
 
-    # - name: Start Nginx with Docker
-    #   run: |
-    #     docker run -d --name test-nginx -p 8080:80 -v ${{ github.workspace }}/index.html:/usr/share/nginx/html/index.html:ro nginx:latest
-
-    # - name: Wait for Nginx to start
-    #   run: sleep 5
-
-    # - name: Test Hello World Page
-    #   run: |
-    #     curl -s -o response.html http://localhost:8080/index.html
-    #     grep "Hello World" response.html
-
-    # - name: Stop Nginx container
-    #   run: docker stop test-nginx
+            # Make the script executable and run it
+            chmod +x ./scripts/deploy_prod.sh
+            ./scripts/deploy_prod.sh
