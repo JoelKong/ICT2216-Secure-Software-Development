@@ -1,10 +1,8 @@
-CREATE DATABASE  IF NOT EXISTS `leonardo` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
-USE `leonardo`;
--- MySQL dump 10.13  Distrib 8.0.33, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.38, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: leonardo
 -- ------------------------------------------------------
--- Server version	8.0.33
+-- Server version	8.0.39
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -99,7 +97,7 @@ CREATE TABLE `posts` (
   PRIMARY KEY (`post_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,8 +124,7 @@ CREATE TABLE `users` (
   `profile_picture` varchar(255) DEFAULT '',
   `membership` enum('basic','premium') DEFAULT 'basic',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `last_login` datetime DEFAULT CURRENT_TIMESTAMP,
-  `post_limit` int DEFAULT '2',
+  `key` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
@@ -152,4 +149,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-18 15:17:44
+-- Dump completed on 2025-06-18 19:36:38
