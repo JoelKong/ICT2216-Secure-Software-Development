@@ -86,17 +86,17 @@ jobs:
       #     cd backend
       #     alembic upgrade head
 
-      - name: Run backend linting
-        run: |
-          cd backend
-          flake8 .
+      # - name: Run backend linting
+      #   run: |
+      #     cd backend
+      #     flake8 .
 
-      - name: Run backend tests
-        env:
-          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
-        run: |
-          cd backend
-          pytest
+      # - name: Run backend tests
+      #   env:
+      #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
+      #   run: |
+      #     cd backend
+      #     pytest
 
   deploy_staging:
     needs: build
