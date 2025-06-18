@@ -54,7 +54,7 @@ class AuthService(IAuthService):
             'email': data['email'],
             'password': hashed_password,
             'profile_picture': data.get('profile_picture', 'default.jpg'),
-            'membership': False
+            'membership': 'basic'
         }
         
         # Create user
