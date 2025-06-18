@@ -76,6 +76,9 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
+      - name: Load DB Schema
+        run: mysql -h 127.0.0.1 -u user --password=password leonardo < SCHEMA.sql
+
       - name: Validate DB Migrations
         env:
           SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
