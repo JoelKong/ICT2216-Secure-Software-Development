@@ -1,8 +1,3 @@
-# Notes:
-# The Validate DB migrations step runs your migrate.py to ensure the schema is up-to-date.
-# The deploy step uses SSH to connect to your EC2 and run the production compose file.
-# Make sure your secrets (HOST, USERNAME, SSH_KEY, etc.) are set in your GitHub repo.
-
 name: The Leonardo's Discussion Room CI/CD Pipeline
 
 on:
@@ -11,7 +6,7 @@ on:
       - "**"
   pull_request:
     branches:
-      - "main" # More efficient to only run on PRs to main
+      - "main"
   workflow_dispatch:
 
 jobs:
@@ -24,7 +19,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_USER: user
           MYSQL_PASSWORD: password
-          MYSQL_DATABASE: forum
+          MYSQL_DATABASE: leonardo
         ports:
           - 3306:3306
         options: >-
@@ -83,7 +78,7 @@ jobs:
 
       - name: Validate DB Migrations
         env:
-          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
+          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
         run: |
           cd backend
           alembic upgrade head
@@ -95,7 +90,7 @@ jobs:
 
       - name: Run backend tests
         env:
-          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/forum
+          SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
         run: |
           cd backend
           pytest
