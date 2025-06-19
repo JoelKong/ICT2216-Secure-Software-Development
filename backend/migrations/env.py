@@ -40,6 +40,11 @@ from app import create_app
 from app.db import db
 
 app = create_app()
+
+# Explicitly import models to populate metadata
+with app.app_context():
+    from app import models  # models/__init__.py should import all individual model files
+    
 target_metadata = db.metadata
 
 def run_migrations_offline():
