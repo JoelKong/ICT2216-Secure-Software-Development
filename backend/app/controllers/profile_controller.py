@@ -25,28 +25,77 @@ class ProfileController:
             current_app.logger.error(f"Error in profile controller: {str(e)}")
             return jsonify({"error": "Failed to retrieve user profile"}), 500
     
+    @jwt_required()
+    def update_profile(self):
+        """Handle PUT request to update user profile"""
+        try:
+            user_id = get_jwt_identity()
+            data = request.get_json()
+            
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
+                
+            current_app.logger.info(f"Updating profile for user: {user_id}")
+            
+            updated_user, error = self.profile_service.update_profile(user_id, data)
+            
+            if error:
+                return jsonify({"error": error}), 400
+                
+            return jsonify({"user": updated_user, "message": "Profile updated successfully"}), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"Error updating profile: {str(e)}")
+            return jsonify({"error": "Failed to update user profile"}), 500
+        
     # @jwt_required()
-    # def update_profile(self):
-    #     """Handle PUT request to update user profile"""
+    # def update_profile_picture(self):
+    #     """Handle file upload endpoint"""
     #     try:
     #         user_id = get_jwt_identity()
-    #         data = request.get_json()
+    #         file = request.files.get("profile_picture")
             
-    #         if not data:
-    #             return jsonify({"error": "No data provided"}), 400
+    #         if not file:
+    #             return jsonify({"error": "No file uploaded"}), 400
                 
-    #         current_app.logger.info(f"Updating profile for user: {user_id}")
-            
-    #         updated_user, error = self.profile_service.update_profile(user_id, data)
+    #         profile_picture_url, error = self.profile_service.update_profile_picture(user_id, file)
             
     #         if error:
     #             return jsonify({"error": error}), 400
                 
-    #         return jsonify({"user": updated_user, "message": "Profile updated successfully"}), 200
-            
+    #         return jsonify({
+    #             "profile_picture": profile_picture_url,
+    #             "message": "Upload successful"
+    #         }), 200
+
     #     except Exception as e:
-    #         current_app.logger.error(f"Error updating profile: {str(e)}")
-    #         return jsonify({"error": "Failed to update user profile"}), 500
+    #         current_app.logger.error(f"Upload endpoint error: {str(e)}")
+    #         return jsonify({"error": "Internal server error"}), 500
+        
+    @jwt_required()
+    def delete_profile(self):
+        """Handle DELETE request for user profile"""
+        try:
+            user_id = get_jwt_identity()
+            current_app.logger.info(f"Deleting profile for user: {user_id}")
+
+            user = self.profile_service.get_user_profile(user_id)
+            if not user:
+                return jsonify({"error": "User not found"}), 404
+            
+            success, error = self.profile_service.delete_user_profile(user_id)
+            
+            if error:
+                return jsonify({"error": error}), 404
+                
+            return jsonify({
+                "message": "User profile deleted successfully",
+                "user_id": user_id
+            }), 200
+            
+        except Exception as e:
+            current_app.logger.error(f"Error in profile controller: {str(e)}")
+            return jsonify({"error": "Failed to delete user profile"}), 500
 
     @jwt_required()
     def get_user_posts(self):
