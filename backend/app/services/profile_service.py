@@ -30,7 +30,8 @@ class ProfileService(IProfileService):
                 "email": user.email,
                 "password": user.password,
                 "profile_picture": user.profile_picture,
-                "membership": user.membership
+                "membership": user.membership,
+                "created_at": user.created_at
             }
             
             current_app.logger.info(f"Retrieved profile for user: {user_id}")
