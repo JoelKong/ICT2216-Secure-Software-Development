@@ -34,7 +34,7 @@ export default async function fetchWithAuth(
     const requestOptions = {
       ...options,
       headers: {
-        "Content-Type": "application/json", // Default, can be overridden by options.headers
+        ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }), // Default, can be overridden by options.headers
         ...options.headers,
       },
     };
