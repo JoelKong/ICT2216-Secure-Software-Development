@@ -14,7 +14,17 @@ profile_controller = ProfileController(profile_service=profile_service)
 profile_bp.route('/profile', methods=['GET'])(profile_controller.get_profile)
 
 # Update user profile
-# profile_bp.route('/profile', methods=['PUT'])(profile_controller.update_profile)
+profile_bp.route('/profile', methods=['PUT'])(profile_controller.update_profile)
+
+# Upload profile picture
+profile_bp.route('/profile/picture', methods=['POST'])(profile_controller.update_profile_picture)
+
+# Delete user profile
+profile_bp.route('/profile', methods=['DELETE'])(profile_controller.delete_profile)
 
 # Get user's posts
 profile_bp.route('/profile/posts', methods=['GET'])(profile_controller.get_user_posts)
+
+# Get profile images 
+profile_bp.route('/profile/uploads/<filename>', methods=['GET'])(profile_controller.get_profile_image)
+
