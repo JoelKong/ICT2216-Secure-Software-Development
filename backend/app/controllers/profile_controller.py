@@ -48,29 +48,33 @@ class ProfileController:
             current_app.logger.error(f"Error updating profile: {str(e)}")
             return jsonify({"error": "Failed to update user profile"}), 500
         
-    # @jwt_required()
-    # def update_profile_picture(self):
-    #     """Handle file upload endpoint"""
-    #     try:
-    #         user_id = get_jwt_identity()
-    #         file = request.files.get("profile_picture")
+    @jwt_required()
+    def update_profile_picture(self):
+        """Handle POST request for upload profile picture"""
+        try:
+            user_id = get_jwt_identity()
+            file = request.files.get("profile_picture")
             
-    #         if not file:
-    #             return jsonify({"error": "No file uploaded"}), 400
+            if not file:
+                return jsonify({"error": "No file uploaded"}), 400
                 
-    #         profile_picture_url, error = self.profile_service.update_profile_picture(user_id, file)
+            profile_picture_url, error = self.profile_service.update_profile_picture(user_id, file)
             
-    #         if error:
-    #             return jsonify({"error": error}), 400
+            if error:
+                return jsonify({"error": error}), 400
                 
-    #         return jsonify({
-    #             "profile_picture": profile_picture_url,
-    #             "message": "Upload successful"
-    #         }), 200
+            return jsonify({
+                "profile_picture": profile_picture_url,
+                "message": "Upload successful"
+            }), 200
 
-    #     except Exception as e:
-    #         current_app.logger.error(f"Upload endpoint error: {str(e)}")
-    #         return jsonify({"error": "Internal server error"}), 500
+        except Exception as e:
+            current_app.logger.error(f"Upload endpoint error: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+        
+    def get_profile_image(self, filename):
+        """Handle GET request for profile images"""
+        return self.profile_service.get_profile_image(filename)
         
     @jwt_required()
     def delete_profile(self):
@@ -128,3 +132,5 @@ class ProfileController:
         except Exception as e:
             current_app.logger.error(f"Error fetching user posts: {str(e)}")
             return jsonify({"error": "Failed to fetch posts"}), 500
+        
+    

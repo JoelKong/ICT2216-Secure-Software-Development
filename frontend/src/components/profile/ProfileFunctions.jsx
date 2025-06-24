@@ -24,6 +24,10 @@ export default function useProfile() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(true);
 
+  const profilePictureUrl = profile?.profile_picture 
+  ? `${API_ENDPOINT}/${FETCH_USER_ROUTE}${profile.profile_picture}`
+  : null;
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!auth.isAuthenticated) return;
@@ -261,6 +265,7 @@ export default function useProfile() {
     handleDeleteAccount,
     handleProfilePicClick,
     handleProfilePicChange,
-    auth
+    auth,
+    profilePictureUrl,
   };
 }

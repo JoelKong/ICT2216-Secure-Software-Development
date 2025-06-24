@@ -23,7 +23,8 @@ export default function Profile({ scrollContainerRef, searchTerm }) {
     handleCancel,
     handleDeleteAccount,
     handleProfilePicClick,
-    handleProfilePicChange
+    handleProfilePicChange,
+    profilePictureUrl
   } = useProfile();
 
   if (!auth.isAuthenticated) {
@@ -71,15 +72,35 @@ export default function Profile({ scrollContainerRef, searchTerm }) {
             profile ? (
               <div className="bg-white rounded-lg shadow-md p-6 w-full overflow-auto">
                 <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-10">
-                  <div
-                    className="relative cursor-pointer"
-                    onClick={handleProfilePicClick}
-                  >
-                    <img
-                      src={profile.profile_picture || "/default-profile.png"}
-                      alt="Profile"
-                      className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover"
-                    />
+                  <div className="relative">
+                    <div 
+                      className="cursor-pointer w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden"
+                      onClick={handleProfilePicClick}
+                    >
+                      {profilePictureUrl ? (
+                        <img
+                          src={profilePictureUrl}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.parentElement.innerHTML = `
+                              <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-inner">
+                                <span class="text-3xl font-medium text-gray-600">
+                                  ${profile?.username?.charAt(0).toUpperCase() || 'U'}
+                                </span>
+                              </div>
+                            `;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-inner">
+                          <span className="text-3xl font-medium text-gray-600">
+                            {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <input
                       type="file"
                       accept="image/*"
