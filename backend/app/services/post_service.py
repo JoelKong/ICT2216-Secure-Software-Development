@@ -11,15 +11,9 @@ class PostService(IPostService):
         self.post_repository = post_repository or PostRepository()
         self.like_repository = like_repository or LikeRepository()
     
-    def get_posts(self, sort_by: str = 'recent', page: int = 1, 
-                  search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
-        """Get posts with pagination, filtering and sorting"""
+    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10,
+                search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
         try:
-            # Calculate offset based on page number
-            limit = 10  # Number of posts per page
-            offset = (page - 1) * limit
-            
-            # Get posts from repository
             posts = self.post_repository.get_posts(
                 sort_by=sort_by,
                 limit=limit,
@@ -47,13 +41,12 @@ class PostService(IPostService):
             
             result = {
                 "posts": formatted_posts,
-                "page": page,
+                "offset": offset,
+                "limit": limit,
                 "has_more": len(posts) == limit
             }
-            
-            current_app.logger.info(f"Retrieved {len(posts)} posts for page {page}")
+            current_app.logger.info(f"Retrieved {len(posts)} posts for offset {offset}")
             return result
-            
         except Exception as e:
             current_app.logger.error(f"Error getting posts: {str(e)}")
             raise
@@ -126,3 +119,31 @@ class PostService(IPostService):
         except Exception as e:
             current_app.logger.error(f"Error getting user liked posts: {str(e)}")
             return []
+        
+    def get_post_detail(self, post_id: int, current_user_id: int) -> Optional[Dict[str, Any]]:
+        try:
+            post = self.post_repository.get_post_by_id(post_id)
+            if not post:
+                return None
+            
+            # Check if current user liked the post
+            liked_post_ids = self.get_user_liked_posts(current_user_id, [post_id])
+            liked = post_id in liked_post_ids
+            
+            return {
+                "post_id": post.post_id,
+                "title": post.title,
+                "content": post.content,
+                "created_at": post.created_at.isoformat(),
+                "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+                "user_id": post.user_id,
+                "username": post.user.username,
+                "profile_picture": post.user.profile_picture,
+                "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
+                "comments": post.comments_count if hasattr(post, 'comments_count') else 0,
+                "liked": liked,
+                "image": post.image
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error getting post detail {post_id}: {str(e)}")
+            raise

@@ -13,6 +13,8 @@ import PaymentFailure from "./pages/payment_failure/PaymentFailure";
 import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
 import fetchWithAuth from "./utils/fetchWithAuth";
 import { useNavigate } from "react-router-dom";
+import PostDetail from "./pages/posts/PostDetail";
+
 
 function App() {
   const navigate = useNavigate();
@@ -167,6 +169,15 @@ function App() {
                     searchTerm={searchTerm}
                     scrollContainerRef={scrollContainerRef}
                   />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/posts/:postId"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar setSearchTerm={setSearchTerm} />
+                  <PostDetail />
                 </PrivateRoute>
               }
             />
