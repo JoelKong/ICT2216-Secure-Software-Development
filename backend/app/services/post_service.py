@@ -11,15 +11,9 @@ class PostService(IPostService):
         self.post_repository = post_repository or PostRepository()
         self.like_repository = like_repository or LikeRepository()
     
-    def get_posts(self, sort_by: str = 'recent', page: int = 1, 
-                  search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
-        """Get posts with pagination, filtering and sorting"""
+    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10,
+                search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
         try:
-            # Calculate offset based on page number
-            limit = 10  # Number of posts per page
-            offset = (page - 1) * limit
-            
-            # Get posts from repository
             posts = self.post_repository.get_posts(
                 sort_by=sort_by,
                 limit=limit,
@@ -47,13 +41,12 @@ class PostService(IPostService):
             
             result = {
                 "posts": formatted_posts,
-                "page": page,
+                "offset": offset,
+                "limit": limit,
                 "has_more": len(posts) == limit
             }
-            
-            current_app.logger.info(f"Retrieved {len(posts)} posts for page {page}")
+            current_app.logger.info(f"Retrieved {len(posts)} posts for offset {offset}")
             return result
-            
         except Exception as e:
             current_app.logger.error(f"Error getting posts: {str(e)}")
             raise

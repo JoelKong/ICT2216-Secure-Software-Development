@@ -11,21 +11,21 @@ class PostController:
     def fetch_posts(self):
         """Get posts with filtering, pagination and sorting"""
         try:
-            # Get query parameters
             sort_by = request.args.get('sort_by', 'recent')
-            page = int(request.args.get('page', 1))
+            offset = int(request.args.get('offset', 0))  # Changed here
+            limit = int(request.args.get('limit', 10))   # Optional: also read limit from query
             search = request.args.get('search', None)
             user_id = request.args.get('user_id', None)
             if user_id:
                 user_id = int(user_id)
-            
-            # Get current user ID from JWT
+
             current_user_id = get_jwt_identity()
-            
-            # Get posts
+
+            # Pass offset and limit instead of page
             result = self.post_service.get_posts(
                 sort_by=sort_by,
-                page=page,
+                offset=offset,
+                limit=limit,
                 search=search,
                 user_id=user_id
             )

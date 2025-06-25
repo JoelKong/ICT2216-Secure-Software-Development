@@ -12,17 +12,68 @@ class PostRepository(BaseRepository[Post], IPostRepository):
     def __init__(self):
         super().__init__(Post)
     
+    # def get_posts(self, sort_by='recent', limit=10, offset=0, search=None, user_id=None):
+    #     """Get posts with filtering, sorting and pagination"""
+    #     try:
+    #         # Define sort criteria
+    #         sort_map = {
+    #             'recent': Post.updated_at.desc(),
+    #             'likes': func.count(Like.post_id).desc(),
+    #             'comments': func.count(Comment.comment_id).desc()
+    #         }
+    #         sort_criteria = sort_map.get(sort_by, Post.updated_at.desc())
+            
+    #         # Build query
+    #         query = self.db.session.query(
+    #             Post,
+    #             User,
+    #             func.count(distinct(Comment.comment_id)).label("comments_count"),
+    #             func.count(distinct(Like.like_id)).label("likes_count")
+    #         )\
+    #         .join(User, Post.user_id == User.user_id)\
+    #         .outerjoin(Comment, Post.post_id == Comment.post_id)\
+    #         .outerjoin(Like, Post.post_id == Like.post_id)\
+    #         .group_by(Post.post_id, User.user_id)
+            
+    #         # Apply filters if provided
+    #         if search:
+    #             query = query.filter(Post.title.ilike(f'%{search}%'))
+    #         if user_id:
+    #             query = query.filter(Post.user_id == user_id)
+                
+    #         # Apply sorting and pagination
+    #         query = query.order_by(sort_criteria, Post.post_id.desc())\
+    #             .offset(offset)\
+    #             .limit(limit)
+                
+    #         current_app.logger.info(f"Fetching posts with sort: {sort_by}, limit: {limit}, offset: {offset}")
+            
+    #         # Get results and add counts as attributes to the Post objects
+    #         results = []
+    #         for post_tuple in query.all():
+    #             post, user, comments_count, likes_count = post_tuple
+    #             post.user = user
+    #             post.comments_count = comments_count
+    #             post.likes_count = likes_count
+    #             results.append(post)
+            
+    #         return results
+            
+    #     except Exception as e:
+    #         current_app.logger.error(f"Error retrieving posts: {str(e)}")
+    #         raise
+
     def get_posts(self, sort_by='recent', limit=10, offset=0, search=None, user_id=None):
         """Get posts with filtering, sorting and pagination"""
         try:
-            # Define sort criteria
+            # Define sort criteria as tuples (primary, tiebreaker)
             sort_map = {
-                'recent': Post.updated_at.desc(),
-                'likes': func.count(Like.post_id).desc(),
-                'comments': func.count(Comment.comment_id).desc()
+                'recent': (Post.updated_at.desc(), Post.post_id.desc()),
+                'likes': (func.count(distinct(Like.like_id)).desc(), Post.post_id.desc()),
+                'comments': (func.count(distinct(Comment.comment_id)).desc(), Post.post_id.desc())
             }
-            sort_criteria = sort_map.get(sort_by, Post.updated_at.desc())
-            
+            primary_sort, tiebreak_sort = sort_map.get(sort_by, (Post.updated_at.desc(), Post.post_id.desc()))
+
             # Build query
             query = self.db.session.query(
                 Post,
@@ -34,20 +85,20 @@ class PostRepository(BaseRepository[Post], IPostRepository):
             .outerjoin(Comment, Post.post_id == Comment.post_id)\
             .outerjoin(Like, Post.post_id == Like.post_id)\
             .group_by(Post.post_id, User.user_id)
-            
+
             # Apply filters if provided
             if search:
                 query = query.filter(Post.title.ilike(f'%{search}%'))
             if user_id:
                 query = query.filter(Post.user_id == user_id)
-                
+
             # Apply sorting and pagination
-            query = query.order_by(sort_criteria, Post.post_id.desc())\
+            query = query.order_by(primary_sort, tiebreak_sort)\
                 .offset(offset)\
                 .limit(limit)
-                
+
             current_app.logger.info(f"Fetching posts with sort: {sort_by}, limit: {limit}, offset: {offset}")
-            
+
             # Get results and add counts as attributes to the Post objects
             results = []
             for post_tuple in query.all():
@@ -56,12 +107,15 @@ class PostRepository(BaseRepository[Post], IPostRepository):
                 post.comments_count = comments_count
                 post.likes_count = likes_count
                 results.append(post)
-            
+
+            current_app.logger.info(f"Posts returned: {[p.post_id for p in results]}")
+
             return results
-            
+
         except Exception as e:
             current_app.logger.error(f"Error retrieving posts: {str(e)}")
             raise
+
     
     def get_user_liked_posts(self, user_id, post_ids=None):
         """Get posts liked by a specific user"""

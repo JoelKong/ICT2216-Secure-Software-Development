@@ -176,6 +176,7 @@ function App() {
               path="/posts/:postId"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar setSearchTerm={setSearchTerm} />
                   <PostDetail />
                 </PrivateRoute>
               }

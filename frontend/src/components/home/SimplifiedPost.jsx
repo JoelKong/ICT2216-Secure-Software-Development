@@ -79,11 +79,14 @@ export default function SimplifiedPost({
 
       // Initialise likedPosts using liked_post_ids
       const likedPostIds = new Set(response.liked_post_ids || []);
-      const initialLikedPosts = {};
-      response.posts.forEach((post) => {
-        initialLikedPosts[post.post_id] = likedPostIds.has(post.post_id);
+      setLikedPosts((prevLikedPosts) => {
+        const updatedLikedPosts = { ...prevLikedPosts };
+        response.posts.forEach((post) => {
+          updatedLikedPosts[post.post_id] = likedPostIds.has(post.post_id);
+        });
+        return updatedLikedPosts;
       });
-      setLikedPosts(initialLikedPosts);
+
 
       if (offsetToFetch === 0) {
         setPosts(response.posts);
@@ -93,10 +96,15 @@ export default function SimplifiedPost({
           (post) => !existingPostIds.has(post.post_id)
         );
 
+
         // Only append non-duplicate posts
         if (newPosts.length > 0) {
-          setPosts((prev) => [...prev, ...newPosts]);
+          setPosts((prev) => {
+            const combined = [...prev, ...newPosts];
+            return combined;
+          });
         }
+
 
         if (
           newPosts.length < response.posts.length ||
