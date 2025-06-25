@@ -74,3 +74,33 @@ class PostRepository(BaseRepository[Post], IPostRepository):
         except Exception as e:
             current_app.logger.error(f"Error retrieving liked posts: {str(e)}")
             raise
+
+    def get_post_by_id(self, post_id: int):
+        try:
+            # Query Post joined with User, and count comments and likes
+            query = self.db.session.query(
+                Post,
+                func.count(distinct(Comment.comment_id)).label("comments_count"),
+                func.count(distinct(Like.like_id)).label("likes_count"),
+                User
+            )\
+            .join(User, Post.user_id == User.user_id)\
+            .outerjoin(Comment, Post.post_id == Comment.post_id)\
+            .outerjoin(Like, Post.post_id == Like.post_id)\
+            .filter(Post.post_id == post_id)\
+            .group_by(Post.post_id, User.user_id)
+            
+            result = query.first()
+            if not result:
+                return None
+            
+            post, comments_count, likes_count, user = result
+            post.comments_count = comments_count
+            post.likes_count = likes_count
+            post.user = user
+            
+            return post
+        
+        except Exception as e:
+            current_app.logger.error(f"Error retrieving post {post_id}: {str(e)}")
+            raise

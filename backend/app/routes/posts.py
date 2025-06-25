@@ -21,3 +21,5 @@ posts_bp.route('/posts/delete/<int:post_id>', methods=['DELETE'])(post_controlle
 
 # Toggle like route
 posts_bp.route('/posts/like/<int:post_id>', methods=['POST'])(post_controller.toggle_like)
+
+posts_bp.route('/posts/<int:post_id>', methods=['GET'])(post_controller.get_post_detail)

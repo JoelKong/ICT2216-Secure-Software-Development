@@ -85,6 +85,19 @@ class PostController:
             current_app.logger.error(f"Error deleting post: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
     
+    @jwt_required()
+    def get_post_detail(self, post_id):
+        try:
+            current_user_id = get_jwt_identity()
+            post_detail = self.post_service.get_post_detail(post_id, current_user_id)
+            if not post_detail:
+                return jsonify({"error": "Post not found"}), 404
+            
+            return jsonify(post_detail), 200
+        except Exception as e:
+            current_app.logger.error(f"Error fetching post detail: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+
     # Create posts
     # @jwt_required()
     # def create_post(self):

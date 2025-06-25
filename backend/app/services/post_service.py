@@ -126,3 +126,31 @@ class PostService(IPostService):
         except Exception as e:
             current_app.logger.error(f"Error getting user liked posts: {str(e)}")
             return []
+        
+    def get_post_detail(self, post_id: int, current_user_id: int) -> Optional[Dict[str, Any]]:
+        try:
+            post = self.post_repository.get_post_by_id(post_id)
+            if not post:
+                return None
+            
+            # Check if current user liked the post
+            liked_post_ids = self.get_user_liked_posts(current_user_id, [post_id])
+            liked = post_id in liked_post_ids
+            
+            return {
+                "post_id": post.post_id,
+                "title": post.title,
+                "content": post.content,
+                "created_at": post.created_at.isoformat(),
+                "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+                "user_id": post.user_id,
+                "username": post.user.username,
+                "profile_picture": post.user.profile_picture,
+                "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
+                "comments": post.comments_count if hasattr(post, 'comments_count') else 0,
+                "liked": liked,
+                "image": post.image
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error getting post detail {post_id}: {str(e)}")
+            raise
