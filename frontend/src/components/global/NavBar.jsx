@@ -3,8 +3,6 @@ import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
 import upgradeMembership from "../../utils/upgradeMembership";
 import { GlobalContext } from "../../utils/globalContext";
-import { useLocation } from "react-router-dom";
-
 export default function NavBar({ setSearchTerm, activeTab }) {
   const { auth, handleLogout, getAuthToken, updateAuthToken } =
     useContext(GlobalContext);
