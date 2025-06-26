@@ -4,6 +4,7 @@ import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
 import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE  } from "../../const";
 import { Heart, MessageCircle } from "lucide-react";
+import checkRateLimit from "../../utils/checkRateLimit";
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -17,8 +18,10 @@ export default function PostDetail() {
 
   async function toggleLike() {
     try {
-      // Rate limit check (if you have such a function, else omit)
-      // if (checkRateLimit(rateLimit, setRateLimit, setModal)) return;
+      // Check if rate limit reached (using your util)
+      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+        return; // Exit if on cooldown
+      }
 
       const res = await fetchWithAuth(
         `${API_ENDPOINT}/${LIKE_POST_ROUTE}/${postId}`,
