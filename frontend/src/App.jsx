@@ -46,6 +46,8 @@ function App() {
   });
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  const [activeTab, setActiveTab] = useState("profile"); // default to 'profile'
+
   const getAuthToken = () => localStorage.getItem("access_token");
 
   const updateAuthToken = (newToken) => {
@@ -185,10 +187,15 @@ function App() {
               path="/profile"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                  <NavBar setSearchTerm={setSearchTerm} />
+                  <NavBar
+                    setSearchTerm={setSearchTerm}
+                    activeTab={activeTab}
+                  />
                   <Profile
                     scrollContainerRef={scrollContainerRef}
                     searchTerm={searchTerm}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                   />
                 </PrivateRoute>
               }
