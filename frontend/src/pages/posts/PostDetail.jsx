@@ -5,16 +5,32 @@ import fetchWithAuth from "../../utils/fetchWithAuth";
 import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE  } from "../../const";
 import { Heart, MessageCircle } from "lucide-react";
 import checkRateLimit from "../../utils/checkRateLimit";
+import { deletePost } from "../../utils/postHelpers";
+import { useNavigate } from "react-router-dom";
 
 export default function PostDetail() {
   const { postId } = useParams();
-    const { getAuthToken, updateAuthToken, handleLogout, auth, setModal, rateLimit, setRateLimit } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout, auth, setModal, rateLimit, setRateLimit } = useContext(GlobalContext);
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+
+  const navigate = useNavigate();
+
+  async function handleDeletePost(postId) {
+    await deletePost(postId, {
+      getAuthToken,
+      updateAuthToken,
+      handleLogout,
+      rateLimit,
+      setRateLimit,
+      setModal,
+      onSuccess: () => navigate("/posts"),
+    });
+  }
 
   async function toggleLike() {
     try {
@@ -141,7 +157,7 @@ export default function PostDetail() {
             </button>
             <button
               className="ml-2 px-3 py-1 bg-red-400 text-black rounded hover:bg-red-500"
-              onClick={() => {}}
+              onClick={() => handleDeletePost(post.post_id)}
             >
               Delete
             </button>
