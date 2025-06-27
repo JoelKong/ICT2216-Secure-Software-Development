@@ -2,16 +2,12 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Heart, MessageCircle, ArrowUp } from "lucide-react";
 import formatTimestamp from "../../utils/formatTimestamp";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  FETCH_POSTS_ROUTE,
-  API_ENDPOINT,
-  LIKE_POST_ROUTE,
-  DELETE_POSTS_ROUTE,
-} from "../../const";
+import { FETCH_POSTS_ROUTE, API_ENDPOINT, LIKE_POST_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
 import handleRateLimitResponse from "../../utils/handleRateLimitResponse";
+import { deletePost } from "../../utils/postHelpers";
 
 export default function SimplifiedPost({
   scrollContainerRef,
@@ -133,58 +129,70 @@ export default function SimplifiedPost({
     navigate(`/edit-post/${postId}`);
   }
 
-  // Delete post in profile page
   async function handleDeletePost(postId) {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      // Check if rate limit reached
-      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
-        return;
-      }
-
-      const res = await fetchWithAuth(
-        `${API_ENDPOINT}/${DELETE_POSTS_ROUTE}/${postId}`,
-        {
-          method: "DELETE",
-        },
-        getAuthToken,
-        updateAuthToken,
-        handleLogout
-      );
-      const data = await res.json();
-
-      // Handle 429 response
-      if (handleRateLimitResponse(res, setRateLimit, setModal, "delete post")) {
-        return;
-      }
-
-      if (!res.ok) {
-        setModal({
-          active: true,
-          type: "fail",
-          message: data.error || "Failed to delete post",
-        });
-        return;
-      }
-      setPosts((prev) => prev.filter((post) => post.post_id !== postId));
-      setRateLimit({
-        attempts: 0,
-        cooldown: false,
-      });
-      setModal({
-        active: true,
-        type: "success",
-        message: "Post deleted successfully",
-      });
-    } catch (err) {
-      console.error(err);
-      setModal({
-        active: true,
-        type: "fail",
-        message: "An error occurred while deleting the post.",
-      });
-    }
+    await deletePost(postId, {
+      getAuthToken,
+      updateAuthToken,
+      handleLogout,
+      rateLimit,
+      setRateLimit,
+      setModal,
+      onSuccess: () =>
+        setPosts((prev) => prev.filter((post) => post.post_id !== postId)),
+    });
   }
+  // // Delete post in profile page
+  // async function handleDeletePost(postId) {
+  //   if (!window.confirm("Are you sure you want to delete this post?")) return;
+  //   try {
+  //     // Check if rate limit reached
+  //     if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
+  //       return;
+  //     }
+
+  //     const res = await fetchWithAuth(
+  //       `${API_ENDPOINT}/${DELETE_POSTS_ROUTE}/${postId}`,
+  //       {
+  //         method: "DELETE",
+  //       },
+  //       getAuthToken,
+  //       updateAuthToken,
+  //       handleLogout
+  //     );
+  //     const data = await res.json();
+
+  //     // Handle 429 response
+  //     if (handleRateLimitResponse(res, setRateLimit, setModal, "delete post")) {
+  //       return;
+  //     }
+
+  //     if (!res.ok) {
+  //       setModal({
+  //         active: true,
+  //         type: "fail",
+  //         message: data.error || "Failed to delete post",
+  //       });
+  //       return;
+  //     }
+  //     setPosts((prev) => prev.filter((post) => post.post_id !== postId));
+  //     setRateLimit({
+  //       attempts: 0,
+  //       cooldown: false,
+  //     });
+  //     setModal({
+  //       active: true,
+  //       type: "success",
+  //       message: "Post deleted successfully",
+  //     });
+  //   } catch (err) {
+  //     console.error(err);
+  //     setModal({
+  //       active: true,
+  //       type: "fail",
+  //       message: "An error occurred while deleting the post.",
+  //     });
+  //   }
+  // }
 
   // Toggle like function
   async function toggleLike(postId) {
