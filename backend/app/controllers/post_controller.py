@@ -2,6 +2,7 @@ from flask import request, jsonify, current_app
 from app.interfaces.services.IPostService import IPostService
 from app.services.post_service import PostService
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import request, jsonify
 
 class PostController:
     def __init__(self, post_service: IPostService = None):
@@ -98,40 +99,38 @@ class PostController:
             current_app.logger.error(f"Error fetching post detail: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
 
-    # Create posts
-    # @jwt_required()
-    # def create_post(self):
-    #     """Create a new post"""
-    #     try:
-    #         data = request.get_json()
-            
-    #         if not data:
-    #             return jsonify({"error": "No data provided"}), 400
-            
-    #         # Get required fields
-    #         title = data.get('title')
-    #         content = data.get('content')
-            
-    #         # Validate required fields
-    #         if not title or not content:
-    #             return jsonify({"error": "Title and content are required"}), 400
-            
-    #         # Get user ID from token
-    #         user_id = get_jwt_identity()
-            
-    #         # Create post
-    #         new_post = self.post_repository.create({
-    #             'user_id': user_id,
-    #             'title': title,
-    #             'content': content,
-    #             'image': data.get('image')
-    #         })
-            
-    #         return jsonify({
-    #             "message": "Post created successfully",
-    #             "post_id": new_post.post_id
-    #         }), 201
-            
-    #     except Exception as e:
-    #         current_app.logger.error(f"Error creating post: {str(e)}")
-    #         return jsonify({"error": "Internal server error"}), 500
+    @jwt_required()
+    def create_post(self):
+        """Handle POST request for creating a new post with optional image"""
+        try:
+            user_id = get_jwt_identity()
+            title = request.form.get("title")
+            content = request.form.get("content")
+            image_file = request.files.get("image")
+
+            if not title or not content:
+                return jsonify({"error": "Title and content are required"}), 400
+
+            post = self.post_service.create_post(
+                title=title,
+                content=content,
+                image_file=image_file,
+                user_id=user_id
+            )
+
+            return jsonify({
+                "message": "Post created",
+                "post_id": post.post_id
+            }), 201
+
+        except ValueError as ve:
+            current_app.logger.warning(f"Validation error: {str(ve)}")
+            return jsonify({"error": str(ve)}), 400
+
+        except Exception as e:
+            current_app.logger.error(f"Create post error: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+        
+    def get_post_image(self, filename):
+        """Handle GET request for post images"""
+        return self.post_service.get_post_image(filename)

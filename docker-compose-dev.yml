@@ -32,7 +32,11 @@ services:
       - db
     entrypoint: >
       sh -c "
-        sleep 10 &&
+        until nc -z db 3306; do
+          echo 'Waiting for MySQL to be ready...'
+          sleep 3
+        done
+        echo 'MySQL is up - running migrations and starting backend'
         python migrate.py &&
         python main.py
       "

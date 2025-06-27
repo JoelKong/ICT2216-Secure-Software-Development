@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: ea7a2c357391
+Revision ID: 114512ee4e41
 Revises: 
-Create Date: 2025-06-19 08:09:08.979410
+Create Date: 2025-06-27 08:08:21.685050
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'ea7a2c357391'
+revision = '114512ee4e41'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -38,7 +38,7 @@ def upgrade():
     sa.Column('content', sa.Text(), nullable=False),
     sa.Column('image', sa.String(length=255), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('post_id')
     )
