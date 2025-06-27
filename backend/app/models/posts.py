@@ -1,5 +1,5 @@
 from app.db import db
-from datetime import datetime
+from sqlalchemy.sql import func
 
 class Post(db.Model):
     __tablename__ = 'posts'
@@ -10,7 +10,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
-    updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
     likes = db.relationship('Like', backref='post', lazy=True, cascade="all, delete-orphan")

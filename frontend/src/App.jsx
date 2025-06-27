@@ -14,6 +14,7 @@ import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
 import fetchWithAuth from "./utils/fetchWithAuth";
 import { useNavigate } from "react-router-dom";
 import PostDetail from "./pages/posts/PostDetail";
+import CreatePost from "./pages/posts/CreatePost";
 
 
 function App() {
@@ -178,11 +179,21 @@ function App() {
               path="/posts/:postId"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                  <NavBar setSearchTerm={setSearchTerm} />
+                  <NavBar />
                   <PostDetail />
                 </PrivateRoute>
               }
             />
+            <Route
+              path="/create-post"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar />
+                  <CreatePost />
+                </PrivateRoute>
+              }
+            />
+
             <Route
               path="/profile"
               element={
