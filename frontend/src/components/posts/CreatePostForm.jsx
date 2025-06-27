@@ -21,6 +21,11 @@ export default function CreatePostForm() {
   // Brush settings state
   const [brushSize, setBrushSize] = useState(2);
   const [brushColor, setBrushColor] = useState("#000000");
+  const [isEraser, setIsEraser] = useState(false);
+
+  // Undo/Redo stacks
+  const undoStack = useRef([]);
+  const redoStack = useRef([]);
 
   const canvasRef = useRef(null);
   const fabricRef = useRef(null); // reference to Fabric canvas object
@@ -35,8 +40,20 @@ export default function CreatePostForm() {
       fabricCanvas.setHeight(300);
       fabricCanvas.setWidth(400);
       fabricCanvas.freeDrawingBrush.width = brushSize;
-      fabricCanvas.freeDrawingBrush.color = brushColor;
+      fabricCanvas.freeDrawingBrush.color = isEraser ? "#fff" : brushColor;
       fabricRef.current = fabricCanvas;
+
+      // Save initial state
+      undoStack.current = [];
+      redoStack.current = [];
+      saveState();
+
+      // Listen for drawing events to save undo state
+      fabricCanvas.on("path:created", () => {
+        saveState();
+        // Clear redo stack when new action performed
+        redoStack.current = [];
+      });
 
       return () => {
         fabricCanvas.dispose();
@@ -49,6 +66,8 @@ export default function CreatePostForm() {
         fabricRef.current.dispose();
         fabricRef.current = null;
         setDrawnImage(null);
+        undoStack.current = [];
+        redoStack.current = [];
       }
     }
   }, [imageMode]);
@@ -57,9 +76,47 @@ export default function CreatePostForm() {
   useEffect(() => {
     if (fabricRef.current) {
       fabricRef.current.freeDrawingBrush.width = brushSize;
-      fabricRef.current.freeDrawingBrush.color = brushColor;
+      fabricRef.current.freeDrawingBrush.color = isEraser ? "#fff" : brushColor;
     }
-  }, [brushSize, brushColor]);
+  }, [brushSize, brushColor, isEraser]);
+
+  // Save current canvas state (for Undo)
+  function saveState() {
+    if (!fabricRef.current) return;
+    const json = fabricRef.current.toJSON();
+    undoStack.current.push(json);
+    // Limit stack size to prevent memory bloat (optional)
+    if (undoStack.current.length > 50) {
+      undoStack.current.shift();
+    }
+  }
+
+  // Undo function
+  function undo() {
+    if (!fabricRef.current || undoStack.current.length <= 1) return;
+
+    // Pop last state and push to redo
+    const currentState = undoStack.current.pop();
+    redoStack.current.push(currentState);
+
+    // Load previous state from undo stack
+    const prevState = undoStack.current[undoStack.current.length - 1];
+    fabricRef.current.loadFromJSON(prevState, () => {
+      fabricRef.current.renderAll();
+    });
+  }
+
+  // Redo function
+  function redo() {
+    if (!fabricRef.current || redoStack.current.length === 0) return;
+
+    const nextState = redoStack.current.pop();
+    undoStack.current.push(nextState);
+
+    fabricRef.current.loadFromJSON(nextState, () => {
+      fabricRef.current.renderAll();
+    });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -212,6 +269,35 @@ export default function CreatePostForm() {
                   onChange={(e) => setBrushColor(e.target.value)}
                 />
               </label>
+
+              <button
+                type="button"
+                className={`px-3 py-1 rounded ${
+                  isEraser
+                    ? "bg-gray-300 text-gray-600"
+                    : "bg-yellow-400 text-black hover:bg-yellow-500"
+                }`}
+                onClick={() => setIsEraser(!isEraser)}
+              >
+                {isEraser ? "Disable Eraser" : "Eraser"}
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 bg-gray-300 text-black rounded hover:bg-gray-400"
+                onClick={undo}
+                disabled={undoStack.current.length <= 1}
+              >
+                Undo
+              </button>
+
+              <button
+                type="button"
+                className="px-3 py-1 bg-gray-300 text-black rounded hover:bg-gray-400"
+                onClick={redo}
+                disabled={redoStack.current.length === 0}
+              >
+                Redo
+              </button>
             </div>
             <canvas
               ref={canvasRef}
@@ -224,6 +310,9 @@ export default function CreatePostForm() {
                   fabricRef.current.clear();
                   fabricRef.current.backgroundColor = "#fff";
                   setDrawnImage(null);
+                  undoStack.current = [];
+                  redoStack.current = [];
+                  saveState();
                 }}
                 className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
               >
