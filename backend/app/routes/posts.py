@@ -14,7 +14,7 @@ post_controller = PostController(post_service=post_service)
 posts_bp.route('/posts', methods=['GET'])(post_controller.fetch_posts)
 
 # Create post route
-# posts_bp.route('/posts', methods=['POST'])(post_controller.create_post)
+posts_bp.route('/posts/create', methods=['POST'])(post_controller.create_post)
 
 # Delete post route
 posts_bp.route('/posts/delete/<int:post_id>', methods=['DELETE'])(post_controller.delete_post)
@@ -23,3 +23,6 @@ posts_bp.route('/posts/delete/<int:post_id>', methods=['DELETE'])(post_controlle
 posts_bp.route('/posts/like/<int:post_id>', methods=['POST'])(post_controller.toggle_like)
 
 posts_bp.route('/posts/<int:post_id>', methods=['GET'])(post_controller.get_post_detail)
+
+# Get post images 
+posts_bp.route('/posts/post_uploads/<filename>', methods=['GET'])(post_controller.get_post_image)

@@ -124,7 +124,7 @@ describe("HomePage", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /Create Post/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/create-posts");
+    expect(mockNavigate).toHaveBeenCalledWith("/create-post");
   });
 
   test("calls upgradeMembership when upgrade button is clicked", () => {
