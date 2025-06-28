@@ -7,6 +7,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { editPost, deletePost } from "../../utils/postHelpers";
 import { useNavigate } from "react-router-dom";
+import CommentSection from "../../components/comments/CommentSection";
 
 export default function PostDetail() {
   const { postId } = useParams();
@@ -17,6 +18,8 @@ export default function PostDetail() {
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+
+  const [showComments, setShowComments] = useState(false);
 
   const navigate = useNavigate();
 
@@ -144,10 +147,11 @@ export default function PostDetail() {
         <button
           className="flex items-center space-x-1 cursor-pointer text-gray-500 hover:text-blue-500"
           aria-label="Comment button"
-          onClick={(e) => e.preventDefault()}
+          onClick={() => setShowComments((prev) => !prev)}
         >
           <MessageCircle className="h-6 w-6" />
           <span>{post.comments || 0}</span>
+          {showComments ? "Hide Comments" : "Show Comments"}
         </button>
 
         {/* Edit and Delete Buttons - only visible if user's own post */}
@@ -168,6 +172,7 @@ export default function PostDetail() {
           </>
         )}
       </div>
+      {showComments && <CommentSection postId={post.post_id} />}
     </div>
   );
 }
