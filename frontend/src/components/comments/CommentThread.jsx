@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CommentForm from "./CommentForm";
+//import { API_ENDPOINT } from "../../const";
 
 export default function CommentThread({ comment }) {
   const [showReplies, setShowReplies] = useState(false);
@@ -10,13 +11,13 @@ export default function CommentThread({ comment }) {
       <div className="text-sm mb-2">
         <p className="font-semibold">{comment.username}</p>
         <p>{comment.content}</p>
-        {comment.image && (
+        {/* {comment.image && (
           <img
             src={`${import.meta.env.VITE_API_BASE_URL}${comment.image}`}
             alt="comment"
             className="mt-2 max-w-xs rounded"
           />
-        )}
+        )} */}
         <button
           onClick={() => setShowReplyForm(true)}
           className="text-blue-500 text-xs mt-1"
