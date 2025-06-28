@@ -30,6 +30,7 @@ services:
       - app_logs:/var/log/app
       - post_uploads_data:/data/post_uploads
       - profile_uploads_data:/data/uploads
+      - comment_uploads_data:/data/comment_uploads
     depends_on:
       - db
     entrypoint: >
@@ -127,3 +128,4 @@ volumes:
   app_logs:
   post_uploads_data:
   profile_uploads_data:
+  comment_uploads_data:

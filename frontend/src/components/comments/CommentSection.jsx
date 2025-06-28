@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { API_ENDPOINT } from "../../const";
+import { API_ENDPOINT, FETCH_COMMENTS_ROUTE } from "../../const";
 import fetchWithAuth from "../../utils/fetchWithAuth";
 import { GlobalContext } from "../../utils/globalContext";
 import CommentThread from "./CommentThread";
@@ -10,10 +10,37 @@ export default function CommentSection({ postId }) {
   const [comments, setComments] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
+  function buildCommentTree(flatComments) {
+    const map = new Map();
+    const roots = [];
+
+    // Initialize map and set up reply containers
+    flatComments.forEach((comment) => {
+      comment.replies = [];
+      map.set(comment.comment_id, comment);
+    });
+
+    flatComments.forEach((comment) => {
+      if (comment.parent_id) {
+        const parent = map.get(comment.parent_id);
+        if (parent) {
+          parent.replies.push(comment);
+        } else {
+          roots.push(comment); // fallback
+        }
+      } else {
+        roots.push(comment);
+      }
+    });
+
+    return roots;
+  }
+
+
   async function loadComments() {
     try {
       const res = await fetchWithAuth(
-        `${API_ENDPOINT}/comments/${postId}`,
+        `${API_ENDPOINT}/${FETCH_COMMENTS_ROUTE}/${postId}`,
         { method: "GET" },
         getAuthToken,
         updateAuthToken,
@@ -22,7 +49,8 @@ export default function CommentSection({ postId }) {
 
       if (!res.ok) throw new Error("Failed to load comments");
       const data = await res.json();
-      setComments(data.comments || []);
+      const tree = buildCommentTree(data.comments || []);
+      setComments(tree);
     } catch (err) {
       console.error("Error loading comments:", err);
     }

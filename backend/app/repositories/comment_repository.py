@@ -2,7 +2,7 @@ from .base_repository import BaseRepository
 from app.models.comments import Comment
 from app.interfaces.repositories.ICommentRepository import ICommentRepository
 from flask import current_app
-from typing import List
+from typing import List, Optional
 
 class CommentRepository(BaseRepository[Comment], ICommentRepository):
     def __init__(self):
@@ -34,4 +34,22 @@ class CommentRepository(BaseRepository[Comment], ICommentRepository):
         except Exception as e:
             self.db.session.rollback()
             current_app.logger.error(f"Error deleting comments by post ID: {str(e)}")
+            raise
+    
+    def create_comment(self, comment: Comment) -> Comment:
+        try:
+            self.db.session.add(comment)
+            self.db.session.commit()
+            current_app.logger.info(f"Created comment with id {comment.comment_id}")
+            return comment
+        except Exception as e:
+            self.db.session.rollback()
+            current_app.logger.error(f"Error creating comment: {str(e)}")
+            raise
+
+    def get_comment_by_id(self, comment_id: int) -> Optional[Comment]:
+        try:
+            return self.model.query.filter_by(comment_id=comment_id).first()
+        except Exception as e:
+            current_app.logger.error(f"Error getting comment by id {comment_id}: {str(e)}")
             raise

@@ -34,12 +34,14 @@ def create_app(env=None):
     from .routes.posts import posts_bp
     from .routes.profile import profile_bp
     from .routes.upgrade_membership import upgrade_membership_bp
+    from .routes.comments import comments_bp
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api')
     app.register_blueprint(posts_bp, url_prefix='/api')
     app.register_blueprint(profile_bp, url_prefix='/api')
     app.register_blueprint(upgrade_membership_bp, url_prefix='/api')
+    app.register_blueprint(comments_bp, url_prefix="/api")
     
     # Log application creation
     app.logger.info(f"Application initialized with environment: {configured_env}")

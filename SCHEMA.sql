@@ -24,7 +24,7 @@ DROP TABLE IF EXISTS `comments`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `comments` (
   `comment_id` int NOT NULL AUTO_INCREMENT,
-  `post_id` int DEFAULT NULL,
+  `post_id` int NOT NULL,
   `parent_id` int DEFAULT NULL,
   `user_id` int NOT NULL,
   `content` text NOT NULL,
@@ -36,8 +36,7 @@ CREATE TABLE `comments` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`post_id`) REFERENCES `posts` (`post_id`) ON DELETE CASCADE,
   CONSTRAINT `comments_ibfk_2` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`comment_id`) ON DELETE CASCADE,
-  CONSTRAINT `comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `chk_comment_target` CHECK ((((`post_id` is not null) and (`parent_id` is null)) or ((`post_id` is null) and (`parent_id` is not null))))
+  CONSTRAINT `comments_ibfk_3` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
