@@ -76,16 +76,16 @@ class PaymentController:
             session_id = request.args.get('session_id')
             
             if not session_id:
-                return jsonify({"error": "Session ID is required"}), 400
+                return jsonify({"error": "Session ID is required", "valid": False}), 400
             
             # Verify session
             success, user_id, error = self.payment_service.verify_session(session_id)
             
             if not success:
-                return jsonify({"error": error}), 400
+                return jsonify({"error": error, "valid": False}), 400
                 
-            return jsonify({"success": True, "message": "Membership upgraded successfully"}), 200
+            return jsonify({"valid": True, "message": "Membership upgraded successfully"}), 200
             
         except Exception as e:
             current_app.logger.error(f"Error verifying session: {str(e)}")
-            return jsonify({"error": "Failed to verify session"}), 500
+            return jsonify({"error": "Failed to verify session", "valid": False}), 500
