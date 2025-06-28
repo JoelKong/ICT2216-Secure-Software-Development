@@ -24,3 +24,8 @@ class IPostRepository(IBaseRepository[Post]):
     @abstractmethod
     def create_post(self, title: str, content: str, image_url: Optional[str], user_id: int) -> Post:
         pass
+
+    @abstractmethod
+    def edit_post(self, post_id: int, title: str, content: str, image_url: Optional[str]) -> Optional[Post]:
+        """Update the post's content and optionally the image"""
+        pass
