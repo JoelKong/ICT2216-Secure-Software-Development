@@ -5,7 +5,7 @@ import fetchWithAuth from "../../utils/fetchWithAuth";
 import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE  } from "../../const";
 import { Heart, MessageCircle } from "lucide-react";
 import checkRateLimit from "../../utils/checkRateLimit";
-import { deletePost } from "../../utils/postHelpers";
+import { editPost, deletePost } from "../../utils/postHelpers";
 import { useNavigate } from "react-router-dom";
 
 export default function PostDetail() {
@@ -19,6 +19,10 @@ export default function PostDetail() {
   const [likesCount, setLikesCount] = useState(0);
 
   const navigate = useNavigate();
+
+  function handleEditPost(postId) {
+    editPost(navigate, postId);
+  }
 
   async function handleDeletePost(postId) {
     await deletePost(postId, {
@@ -151,7 +155,7 @@ export default function PostDetail() {
           <>
             <button
               className="ml-4 px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-              onClick={() => {}}
+              onClick={() => handleEditPost(post.post_id)}
             >
               Edit
             </button>

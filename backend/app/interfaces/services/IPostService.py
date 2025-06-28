@@ -40,6 +40,12 @@ class IPostService(ABC):
         pass
 
     @abstractmethod
+    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file: Optional[Any] = None) -> Optional[Post]:
+        """Update a post's title, content, and optionally the image"""
+        pass
+
+
+    @abstractmethod
     def get_post_image(self, filename: str) -> Any:
         """Serve post image by filename"""
         pass

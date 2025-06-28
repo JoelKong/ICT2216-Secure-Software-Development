@@ -5,7 +5,7 @@ from app.models.likes import Like
 from app.models.comments import Comment
 from app.interfaces.repositories.IPostRepository import IPostRepository
 from flask import current_app
-from sqlalchemy import func, desc, distinct
+from sqlalchemy import func, distinct
 from typing import Optional
 
 class PostRepository(BaseRepository[Post], IPostRepository):
@@ -117,3 +117,23 @@ class PostRepository(BaseRepository[Post], IPostRepository):
         self.db.session.add(new_post)
         self.db.session.commit()
         return new_post
+    
+    def edit_post(self, post_id: int, title: str, content: str, image_url: Optional[str]) -> Optional[Post]:
+        try:
+            post = self.db.session.query(Post).filter_by(post_id=post_id).first()
+            if not post:
+                current_app.logger.warning(f"Post {post_id} not found for update.")
+                return None
+
+            post.title = title
+            post.content = content
+            if image_url is not None:
+                post.image = image_url
+
+            self.db.session.commit()
+            current_app.logger.info(f"Post {post_id} updated successfully.")
+            return post
+        except Exception as e:
+            self.db.session.rollback()
+            current_app.logger.error(f"Error updating post {post_id}: {str(e)}")
+            raise

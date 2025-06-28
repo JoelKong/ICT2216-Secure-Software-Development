@@ -183,6 +183,49 @@ class PostService(IPostService):
             current_app.logger.error(f"Failed to create post: {str(e)}")
             raise
 
+    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file=None):
+        """Update an existing post"""
+        try:
+            post = self.post_repository.get_by_id(post_id)
+            if not post:
+                current_app.logger.warning(f"Post {post_id} not found for update.")
+                return None
+
+            if post.user_id != user_id:
+                current_app.logger.warning(f"User {user_id} unauthorized to update post {post_id}.")
+                return None
+
+            image_url = post.image  # Default to existing image
+            if image_file and image_file.filename:
+                # Validate file
+                if not self._is_allowed_file(image_file.filename):
+                    raise ValueError("File type not allowed")
+
+                # Generate new filename
+                filename = f"user_{user_id}_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
+                filepath = os.path.join(self.UPLOAD_FOLDER, filename)
+
+                # Ensure upload folder exists
+                os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
+
+                # Save file
+                image_file.save(filepath)
+                image_url = f"/post_uploads/{filename}"
+                current_app.logger.info(f"Updated image saved at {filepath}")
+
+            # Call repository update method
+            return self.post_repository.edit_post(
+                post_id=post_id,
+                title=title,
+                content=content,
+                image_url=image_url
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Error updating post {post_id}: {str(e)}")
+            raise
+
+
     def get_post_image(self, filename):
         """Serve post image from post_uploads folder"""
         try:
