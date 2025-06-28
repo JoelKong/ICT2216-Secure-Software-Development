@@ -76,19 +76,31 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
-      # - name: Validate DB Migrations //TODO find out why this not working   ffff
-      #   env:
-      #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
-      #   run: |
-      #     cd backend
-      #     alembic upgrade head
-
       - name: Run backend tests
         run: |
           cd backend
           python run_tests.py
 
-      #TODO: apparently i think we supposed to save the build artifacts for fe and be then in prod we download?
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-app
+          path: |
+            backend/
+            !backend/.pytest_cache/
+            !backend/htmlcov/
+            !backend/.coverage
+            !backend/logs/
+            !backend/__pycache__/
+            docker-compose-prod.yml
+            scripts/deploy_prod.sh
+            nginx/
 
   deploy_staging:
     needs: build
@@ -114,17 +126,56 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: artifacts/frontend-build
 
-      - name: Deploy to production server
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-app
+          path: artifacts/backend-app
+
+      - name: Bring down existing containers on production server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e
+            # The project root on the server
+            PROJECT_PATH="/path/to/your/project"
+
+            echo "Creating project directory..."
+            mkdir -p $PROJECT_PATH
+            cd $PROJECT_PATH
+
+            echo "Bringing down existing containers..."
+            # Use docker-compose from the artifact, suppress "not found" errors
+            docker-compose -f docker-compose-prod.yml down || true
+
+      - name: Upload artifacts to production server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "artifacts/backend-app/*,artifacts/frontend-build/*"
+          target: "/path/to/your/project/"
+          strip_components: 2
+
+      - name: Finalize deployment on production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
             cd /path/to/your/project
-            git pull origin main
 
             # Export secrets as environment variables for the deployment script
             export VITE_API_ENDPOINT='${{ secrets.VITE_API_ENDPOINT }}'
