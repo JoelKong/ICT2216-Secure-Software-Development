@@ -272,4 +272,4 @@ const DrawingCanvas = forwardRef(
 );
 
 export default DrawingCanvas;
-//fix?
+DrawingCanvas.displayName = "DrawingCanvas";

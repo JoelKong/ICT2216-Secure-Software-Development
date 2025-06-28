@@ -25,14 +25,15 @@ export default function EditPostForm() {
     async function fetchPost() {
       try {
         const res = await fetchWithAuth(
-          `${API_ENDPOINT}/${FETCH_POSTS_ROUTE}/${postId}`,
+          `${API_ENDPOINT}/${FETCH_POSTS_ROUTE}/${postId}/edit`,
           { method: "GET" },
           getAuthToken,
           updateAuthToken,
           handleLogout
         );
         if (!res.ok) {
-          throw new Error("Failed to fetch post");
+          navigate("/");
+          return;
         }
         const data = await res.json();
         setTitle(data.title);
@@ -181,7 +182,6 @@ export default function EditPostForm() {
                 accept="image/*"
                 onChange={(e) => {
                   setUploadedImage(e.target.files[0]);
-                  setDrawnImage(null);
                 }}
                 className="block mt-2"
               />

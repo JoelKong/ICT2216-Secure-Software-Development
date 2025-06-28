@@ -130,7 +130,31 @@ class PostController:
         except Exception as e:
             current_app.logger.error(f"Create post error: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
-        
+
+    @jwt_required()
+    def get_post_for_edit(self, post_id):
+        try:
+            current_user_id = int(get_jwt_identity())
+            post = self.post_service.get_post_detail(post_id, current_user_id)
+
+            if not post:
+                return jsonify({"error": "Post not found"}), 404
+
+            if post["user_id"] != current_user_id:
+                return jsonify({"error": "Unauthorized"}), 403
+
+            # Minimal data needed for editing
+            return jsonify({
+                "post_id": post["post_id"],
+                "title": post["title"],
+                "content": post["content"],
+                "image": post["image"]
+            }), 200
+
+        except Exception as e:
+            current_app.logger.error(f"Error fetching post for edit: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+
     @jwt_required()
     def edit_post(self, post_id):
         """Edit an existing post with optional new image"""

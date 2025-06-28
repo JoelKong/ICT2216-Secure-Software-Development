@@ -19,6 +19,10 @@ posts_bp.route('/posts/create', methods=['POST'])(post_controller.create_post)
 # Edit post route
 posts_bp.route('/posts/edit/<int:post_id>', methods=['PUT'])(post_controller.edit_post)
 
+# Fetch post route for editing
+posts_bp.route('/posts/<int:post_id>/edit', methods=['GET'])(post_controller.get_post_for_edit)
+
+
 # Delete post route
 posts_bp.route('/posts/delete/<int:post_id>', methods=['DELETE'])(post_controller.delete_post)
 
