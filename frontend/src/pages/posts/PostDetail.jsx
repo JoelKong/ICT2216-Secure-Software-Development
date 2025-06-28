@@ -143,7 +143,7 @@ export default function PostDetail() {
           <span>{likesCount}</span>
         </button>
 
-        {/* Comment Button - no action yet */}
+        {/* Comment Button*/}
         <button
           className="flex items-center space-x-1 cursor-pointer text-gray-500 hover:text-blue-500"
           aria-label="Comment button"

@@ -41,6 +41,7 @@ class PostService(IPostService):
                     "user_id": post.user_id,
                     "username": post.user.username,
                     "profile_picture": post.user.profile_picture,
+                    "image": post.image,
                     "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
                     "comments": post.comments_count if hasattr(post, 'comments_count') else 0
                 }
@@ -224,7 +225,6 @@ class PostService(IPostService):
         except Exception as e:
             current_app.logger.error(f"Error updating post {post_id}: {str(e)}")
             raise
-
 
     def get_post_image(self, filename):
         """Serve post image from post_uploads folder"""
