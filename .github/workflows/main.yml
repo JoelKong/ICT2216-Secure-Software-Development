@@ -76,9 +76,6 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
-      - name: Load DB Schema
-        run: mysql -h 127.0.0.1 -u user --password=password leonardo < SCHEMA.sql
-
       # - name: Validate DB Migrations //TODO find out why this not working   ffff
       #   env:
       #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
@@ -86,17 +83,12 @@ jobs:
       #     cd backend
       #     alembic upgrade head
 
-      # - name: Run backend linting
-      #   run: |
-      #     cd backend
-      #     flake8 .
+      - name: Run backend tests
+        run: |
+          cd backend
+          python run_tests.py
 
-      # - name: Run backend tests
-      #   env:
-      #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
-      #   run: |
-      #     cd backend
-      #     pytest
+      #TODO: apparently i think we supposed to save the build artifacts for fe and be then in prod we download?
 
   deploy_staging:
     needs: build

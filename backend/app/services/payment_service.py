@@ -11,7 +11,7 @@ class PaymentService(IPaymentService):
         self.user_repository = user_repository or UserRepository()
         stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
         self.price_id = os.environ.get('STRIPE_PRICE_ID')
-        self.domain_url = os.environ.get('DOMAIN_URL')
+        self.domain_url = os.environ.get('FRONTEND_ROUTE')
     
     def create_checkout_session(self, user_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """Create a new checkout session"""
@@ -23,7 +23,7 @@ class PaymentService(IPaymentService):
                 return None, "User not found"
                 
             # Check if user is already premium
-            if user.membership:
+            if user.membership == 'premium':
                 current_app.logger.warning(f"User {user_id} already has premium membership")
                 return None, "User already has premium membership"
                 
@@ -32,12 +32,18 @@ class PaymentService(IPaymentService):
                 payment_method_types=['card'],
                 line_items=[
                     {
-                        'price': self.price_id,
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': 'Premium Membership',
+                            },
+                            'unit_amount': 200, 
+                        },
                         'quantity': 1,
                     },
                 ],
                 metadata={
-                    'user_id': user_id
+                    'user_id': int(user_id)
                 },
                 mode='payment',
                 success_url=f'{self.domain_url}/success?session_id={{CHECKOUT_SESSION_ID}}',
@@ -75,7 +81,7 @@ class PaymentService(IPaymentService):
             user_id = int(user_id)
             
             # Update user membership
-            user = self.user_repository.update_membership(user_id, True)
+            user = self.user_repository.update_membership(user_id, 'premium')
             if not user:
                 current_app.logger.error(f"Failed to update membership for user {user_id}")
                 return False, user_id, "Failed to update user membership"
