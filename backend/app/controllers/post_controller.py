@@ -187,7 +187,6 @@ class PostController:
             current_app.logger.error(f"Edit post error: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
 
-    
     def get_post_image(self, filename):
         """Handle GET request for post images"""
         return self.post_service.get_post_image(filename)
