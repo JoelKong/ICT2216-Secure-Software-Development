@@ -130,7 +130,64 @@ class PostController:
         except Exception as e:
             current_app.logger.error(f"Create post error: {str(e)}")
             return jsonify({"error": "Internal server error"}), 500
-        
+
+    @jwt_required()
+    def get_post_for_edit(self, post_id):
+        try:
+            current_user_id = int(get_jwt_identity())
+            post = self.post_service.get_post_detail(post_id, current_user_id)
+
+            if not post:
+                return jsonify({"error": "Post not found"}), 404
+
+            if post["user_id"] != current_user_id:
+                return jsonify({"error": "Unauthorized"}), 403
+
+            # Minimal data needed for editing
+            return jsonify({
+                "post_id": post["post_id"],
+                "title": post["title"],
+                "content": post["content"],
+                "image": post["image"]
+            }), 200
+
+        except Exception as e:
+            current_app.logger.error(f"Error fetching post for edit: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+
+    @jwt_required()
+    def edit_post(self, post_id):
+        """Edit an existing post with optional new image"""
+        try:
+            user_id = int(get_jwt_identity())
+            title = request.form.get("title")
+            content = request.form.get("content")
+            image_file = request.files.get("image")
+
+            if not title or not content:
+                return jsonify({"error": "Title and content are required"}), 400
+
+            updated_post = self.post_service.edit_post(
+                post_id=post_id,
+                user_id=user_id,
+                title=title,
+                content=content,
+                image_file=image_file
+            )
+
+            if not updated_post:
+                return jsonify({"error": "Post not found or unauthorized"}), 404
+
+            return jsonify({
+                "message": "Post updated",
+                "post_id": updated_post.post_id
+            }), 200
+
+        except Exception as e:
+            current_app.logger.error(f"Edit post error: {str(e)}")
+            return jsonify({"error": "Internal server error"}), 500
+
+    
     def get_post_image(self, filename):
         """Handle GET request for post images"""
         return self.post_service.get_post_image(filename)

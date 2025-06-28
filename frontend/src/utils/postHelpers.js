@@ -3,6 +3,11 @@ import checkRateLimit from "./checkRateLimit";
 import handleRateLimitResponse from "./handleRateLimitResponse";
 import { API_ENDPOINT, DELETE_POSTS_ROUTE } from "../const";
 
+export function editPost(navigate, postId) {
+  if (!postId) return;
+  navigate(`/edit-post/${postId}`);
+}
+
 export async function deletePost(
   postId,
   {
