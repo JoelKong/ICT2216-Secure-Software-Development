@@ -40,7 +40,7 @@ class UserRepository(BaseRepository[User], IUserRepository):
             current_app.logger.error(f"Error checking if username exists: {str(e)}")
             raise
 
-    def update_membership(self, user_id: int, is_premium: bool) -> User:
+    def update_membership(self, user_id: int, is_premium: str) -> User:
         """Update user membership status"""
         try:
             user = self.get_by_id(user_id)
