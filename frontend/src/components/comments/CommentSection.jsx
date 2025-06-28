@@ -1,0 +1,66 @@
+import { useEffect, useState, useContext } from "react";
+import { API_ENDPOINT } from "../../const";
+import fetchWithAuth from "../../utils/fetchWithAuth";
+import { GlobalContext } from "../../utils/globalContext";
+import CommentThread from "./CommentThread";
+import CommentForm from "./CommentForm";
+
+export default function CommentSection({ postId }) {
+  const { getAuthToken, updateAuthToken, handleLogout } = useContext(GlobalContext);
+  const [comments, setComments] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+
+  async function loadComments() {
+    try {
+      const res = await fetchWithAuth(
+        `${API_ENDPOINT}/comments/${postId}`,
+        { method: "GET" },
+        getAuthToken,
+        updateAuthToken,
+        handleLogout
+      );
+
+      if (!res.ok) throw new Error("Failed to load comments");
+      const data = await res.json();
+      setComments(data.comments || []);
+    } catch (err) {
+      console.error("Error loading comments:", err);
+    }
+  }
+
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
+  function handleNewComment(newComment) {
+    setComments((prev) => [...prev, newComment]);
+  }
+
+  return (
+    <div className="mt-8 space-y-4">
+      <h2 className="text-xl font-semibold">Comments</h2>
+      <button
+        onClick={() => setShowForm(true)}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Add Comment
+      </button>
+
+      {showForm && (
+        <CommentForm
+          postId={postId}
+          onSuccess={handleNewComment}
+          onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {comments.length === 0 ? (
+        <p className="text-gray-400">No comments yet.</p>
+      ) : (
+        comments.map((comment) => (
+          <CommentThread key={comment.comment_id} comment={comment} />
+        ))
+      )}
+    </div>
+  );
+}

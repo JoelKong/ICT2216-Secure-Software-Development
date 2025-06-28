@@ -12,6 +12,9 @@ export const EDIT_POST_ROUTE = "api/posts/edit";
 export const DELETE_POSTS_ROUTE = "api/posts/delete";
 export const LIKE_POST_ROUTE = "api/posts/like";
 
+// Comments
+
+
 // Profile/Global
 export const FETCH_USER_ROUTE = "api/profile";
 
