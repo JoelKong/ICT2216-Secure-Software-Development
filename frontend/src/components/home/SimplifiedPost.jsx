@@ -34,6 +34,12 @@ export default function SimplifiedPost({
   const location = useLocation();
   const limit = 10;
 
+  function getPostImageUrl(imagePath) {
+    return imagePath
+      ? `${API_ENDPOINT}/api/posts${imagePath.startsWith("/") ? imagePath : "/" + imagePath}`
+      : null;
+  }
+
   // Fetch all posts
   async function fetchPosts(sortBy, offsetToFetch) {
     if (loading || !hasMore) return;
@@ -332,15 +338,11 @@ export default function SimplifiedPost({
               <div className="mb-4">
                 <p className="text-gray-700 line-clamp-3">{post.content}</p>
                 {post.image && (
-                  <div className="mt-3 max-h-64 overflow-hidden rounded-md">
+                  <div className="mt-3">
                     <img
-                      src={`${API_ENDPOINT}/api/posts${
-                        post.image.startsWith("/")
-                          ? post.image
-                          : "/" + post.image
-                      }`}
+                      src={getPostImageUrl(post.image)}
                       alt={post.title}
-                      className="w-full object-cover"
+                      className="w-full object-contain max-h-[400px] rounded-md"
                     />
                   </div>
                 )}
