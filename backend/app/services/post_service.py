@@ -12,7 +12,7 @@ class PostService(IPostService):
     def __init__(self, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
         self.post_repository = post_repository or PostRepository()
         self.like_repository = like_repository or LikeRepository()
-        self.UPLOAD_FOLDER = os.path.abspath('post_uploads')
+        self.UPLOAD_FOLDER = '/data/post_uploads'
     
     def _is_allowed_file(self, filename: str) -> bool:
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}

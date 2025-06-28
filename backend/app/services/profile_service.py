@@ -14,7 +14,7 @@ class ProfileService(IProfileService):
     def __init__(self, user_repository: IUserRepository = None, post_repository: IPostRepository = None):
         self.user_repository = user_repository or UserRepository()
         self.post_repository = post_repository or PostRepository()
-        self.UPLOAD_FOLDER = os.path.abspath('uploads')
+        self.UPLOAD_FOLDER = '/data/uploads'
 
     def _is_allowed_file(self, filename: str) -> bool:
         """Check if the file extension is allowed"""
