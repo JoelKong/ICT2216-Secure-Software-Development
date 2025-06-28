@@ -14,7 +14,7 @@ export default function CommentForm({
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
   const [drawingData, setDrawingData] = useState(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [setIsDrawing] = useState(false);
   const [mode, setMode] = useState(null);
 
   function handleFileChange(e) {
