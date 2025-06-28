@@ -83,7 +83,6 @@ export default function SimplifiedPost({
         return updatedLikedPosts;
       });
 
-
       if (offsetToFetch === 0) {
         setPosts(response.posts);
       } else {
@@ -92,7 +91,6 @@ export default function SimplifiedPost({
           (post) => !existingPostIds.has(post.post_id)
         );
 
-
         // Only append non-duplicate posts
         if (newPosts.length > 0) {
           setPosts((prev) => {
@@ -100,7 +98,6 @@ export default function SimplifiedPost({
             return combined;
           });
         }
-
 
         if (
           newPosts.length < response.posts.length ||
@@ -334,11 +331,14 @@ export default function SimplifiedPost({
 
               <div className="mb-4">
                 <p className="text-gray-700 line-clamp-3">{post.content}</p>
-
                 {post.image && (
                   <div className="mt-3 max-h-64 overflow-hidden rounded-md">
                     <img
-                      src={post.image}
+                      src={`${API_ENDPOINT}/api/posts${
+                        post.image.startsWith("/")
+                          ? post.image
+                          : "/" + post.image
+                      }`}
                       alt={post.title}
                       className="w-full object-cover"
                     />
