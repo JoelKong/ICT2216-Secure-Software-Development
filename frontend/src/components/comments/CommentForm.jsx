@@ -2,7 +2,7 @@ import { useState, useContext } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import DrawingCanvas from "../posts/DrawingCanvas";
 import fetchWithAuth from "../../utils/fetchWithAuth";
-import { API_ENDPOINT } from "../../const";
+import { API_ENDPOINT, CREATE_COMMENT_ROUTE } from "../../const";
 
 export default function CommentForm({
   postId,
@@ -37,7 +37,7 @@ export default function CommentForm({
 
     try {
       const res = await fetchWithAuth(
-        `${API_ENDPOINT}/comments/${postId}`,
+        `${API_ENDPOINT}/${CREATE_COMMENT_ROUTE}/${postId}`,
         {
           method: "POST",
           body: formData,
@@ -54,7 +54,7 @@ export default function CommentForm({
         return;
       }
 
-      onSuccess?.(data.comment); // let parent re-render
+      onSuccess?.(data);
       setContent("");
       setImage(null);
       setDrawingData(null);
