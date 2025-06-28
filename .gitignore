@@ -32,3 +32,5 @@ certbot
 
 # Photo Upload Folder
 uploads/
+
+.coverage
