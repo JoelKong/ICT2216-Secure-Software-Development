@@ -28,6 +28,8 @@ services:
     volumes:
       - ./backend:/app
       - app_logs:/var/log/app
+      - post_uploads_data:/data/post_uploads
+      - profile_uploads_data:/data/uploads
     depends_on:
       - db
     entrypoint: >
@@ -123,3 +125,5 @@ networks:
 volumes:
   mysql_data:
   app_logs:
+  post_uploads_data:
+  profile_uploads_data:
