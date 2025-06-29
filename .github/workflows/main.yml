@@ -16,6 +16,7 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
+          # Temporary test database to run integration tests in the future
           MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_USER: user
           MYSQL_PASSWORD: password
@@ -29,6 +30,10 @@ jobs:
           --health-retries=3
     steps:
       - uses: actions/checkout@v4
+      - name: Run frontend linting
+        run: |
+          cd frontend
+          npm run lint
 
       - name: Cache Node.js modules
         uses: actions/cache@v4
@@ -42,11 +47,6 @@ jobs:
         run: |
           cd frontend
           npm ci
-
-      - name: Run frontend linting
-        run: |
-          cd frontend
-          npm run lint
 
       - name: Run frontend tests
         run: |
@@ -109,7 +109,7 @@ jobs:
     environment: staging
     steps:
       - name: "Deploy to staging"
-        run: echo "Deploying to staging environment after manual approval..."
+        run: echo "Deploying to staging environment"
 
   deploy_uat:
     needs: deploy_staging
@@ -118,7 +118,7 @@ jobs:
     environment: uat
     steps:
       - name: "Deploy to UAT"
-        run: echo "Deploying to UAT environment after manual approval..."
+        run: echo "Deploying to UAT environment"
 
   deploy_prod:
     needs: deploy_uat
@@ -137,25 +137,6 @@ jobs:
         with:
           name: backend-app
           path: artifacts/backend-app
-
-      - name: Bring down existing containers on production server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -e
-            # The project root on the server
-            PROJECT_PATH="/path/to/your/project"
-
-            echo "Creating project directory..."
-            mkdir -p $PROJECT_PATH
-            cd $PROJECT_PATH
-
-            echo "Bringing down existing containers..."
-            # Use docker-compose from the artifact, suppress "not found" errors
-            docker-compose -f docker-compose-prod.yml down || true
 
       - name: Upload artifacts to production server
         uses: appleboy/scp-action@master
@@ -176,14 +157,11 @@ jobs:
           script: |
             set -e
             cd /path/to/your/project
-
-            # Export secrets as environment variables for the deployment script
-            export VITE_API_ENDPOINT='${{ secrets.VITE_API_ENDPOINT }}'
-            export SECRET_KEY='${{ secrets.SECRET_KEY }}'
-            export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
-            export SQLALCHEMY_DATABASE_URI='${{ secrets.SQLALCHEMY_DATABASE_URI }}'
-            export FRONTEND_ROUTE='${{ secrets.FRONTEND_ROUTE }}'
-
-            # Make the script executable and run it
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
+        env:
+          VITE_API_ENDPOINT: ${{ secrets.VITE_API_ENDPOINT }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
+          FRONTEND_ROUTE: ${{ secrets.FRONTEND_ROUTE }}
