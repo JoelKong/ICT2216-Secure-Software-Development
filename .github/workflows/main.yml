@@ -99,6 +99,9 @@ jobs:
             !backend/.coverage
             !backend/logs/
             !backend/__pycache__/
+            frontend/
+            !frontend/dist/
+            !frontend/node_modules/
             docker-compose-prod.yml
             scripts/deploy_prod.sh
             nginx/
