@@ -13,7 +13,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: production
     services:
       mysql:
         image: mysql:8.0
@@ -54,14 +53,6 @@ jobs:
         run: |
           cd frontend
           npm test -- --watchAll=false
-
-      - name: Create frontend .env file for production build
-        if: github.ref == 'refs/heads/main'
-        run: |
-          cat <<EOF > frontend/.env.production
-          VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
-          VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
-          EOF
 
       - name: Build frontend
         run: |
@@ -167,7 +158,10 @@ jobs:
           script: |
             set -e
             PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
-            mkdir -p $PROJECT_DIR
+            mkdir -p $PROJECT_DIR/backend
+            mkdir -p $PROJECT_DIR/frontend
+            mkdir -p $PROJECT_DIR/scripts
+            mkdir -p $PROJECT_DIR/nginx
             cd $PROJECT_DIR
 
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
