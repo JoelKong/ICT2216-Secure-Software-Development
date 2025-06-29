@@ -13,6 +13,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: production
     services:
       mysql:
         image: mysql:8.0
@@ -53,6 +54,14 @@ jobs:
         run: |
           cd frontend
           npm test -- --watchAll=false
+
+      - name: Create frontend .env file for production build
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cat <<EOF > frontend/.env.production
+          VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}
+          VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+          EOF
 
       - name: Build frontend
         run: |
