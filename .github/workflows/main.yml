@@ -9,6 +9,7 @@ on:
       - "main"
   workflow_dispatch:
 
+#TODO: SAST (sonarqube) and DAST (OWASP ZAP) scans
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -145,8 +146,37 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "artifacts/backend-app/*,artifacts/frontend-build/*"
-          target: "/path/to/your/project/"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app"
           strip_components: 2
+
+      - name: Create .env files on production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
+            mkdir -p $PROJECT_DIR
+            cd $PROJECT_DIR
+
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env.production
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env.production
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env.production
+
+            echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
+            echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
+            echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.production
+            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" > backend/.env.production
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
+            echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
+            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
+
+            echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > frontend/.env.production
+            echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" >> frontend/.env.production
 
       - name: Finalize deployment on production server
         uses: appleboy/ssh-action@master
@@ -156,12 +186,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            cd /path/to/your/project
+            cd /home/${{ secrets.USERNAME }}/leonardo-app
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
-        env:
-          VITE_API_ENDPOINT: ${{ secrets.VITE_API_ENDPOINT }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
-          FRONTEND_ROUTE: ${{ secrets.FRONTEND_ROUTE }}
