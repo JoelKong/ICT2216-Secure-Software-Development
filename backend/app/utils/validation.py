@@ -20,3 +20,8 @@ def is_strong_password(password):
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
         return False, "Password must contain at least one special character."
     return True, ""
+
+# This is to help validate IDs in the system, such as user IDs, post IDs, etc.
+def is_valid_id(value):
+    """Check if value is a positive integer (no leading zero)"""
+    return re.match(r"^[1-9]\d*$", str(value)) is not None

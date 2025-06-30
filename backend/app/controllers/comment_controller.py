@@ -6,6 +6,8 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.services.comment_service import CommentService
 from app.interfaces.services.ICommentService import ICommentService
+# Imported resuable validation function
+from app.utils.validation import is_valid_id
 
 # --- Validation constants & regexes ---
 INT_REGEX          = r"^[1-9]\d*$"          # positive integers (no leading zero)
@@ -22,7 +24,7 @@ class CommentController:
         """GET /posts/<post_id>/comments"""
         try:
             # Validate post_id is a positive integer
-            if not re.match(INT_REGEX, str(post_id)):
+            if not is_valid_id(post_id):
                 return jsonify({"error": "Invalid post ID"}), 400
 
             comments = self.comment_service.get_comments_by_post(int(post_id))
@@ -58,7 +60,7 @@ class CommentController:
             parent_raw = request.form.get("parent_id", None)
             parent_id = None
             if parent_raw:
-                if not re.match(INT_REGEX, parent_raw):
+                if not is_valid_id(parent_raw):
                     return jsonify({"error": "Invalid parent comment ID"}), 400
                 parent_id = int(parent_raw)
 
