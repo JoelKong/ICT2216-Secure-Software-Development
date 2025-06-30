@@ -7,8 +7,14 @@ export const REFRESH_ROUTE = "api/refresh";
 
 // Posts
 export const FETCH_POSTS_ROUTE = "api/posts";
+export const CREATE_POST_ROUTE = "api/posts/create";
+export const EDIT_POST_ROUTE = "api/posts/edit";
 export const DELETE_POSTS_ROUTE = "api/posts/delete";
 export const LIKE_POST_ROUTE = "api/posts/like";
+
+// Comments
+export const FETCH_COMMENTS_ROUTE = `api/comments`;
+export const CREATE_COMMENT_ROUTE = `api/comments/create`;
 
 // Profile/Global
 export const FETCH_USER_ROUTE = "api/profile";

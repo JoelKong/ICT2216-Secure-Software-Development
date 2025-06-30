@@ -2,16 +2,12 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Heart, MessageCircle, ArrowUp } from "lucide-react";
 import formatTimestamp from "../../utils/formatTimestamp";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  FETCH_POSTS_ROUTE,
-  API_ENDPOINT,
-  LIKE_POST_ROUTE,
-  DELETE_POSTS_ROUTE,
-} from "../../const";
+import { FETCH_POSTS_ROUTE, API_ENDPOINT, LIKE_POST_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
 import handleRateLimitResponse from "../../utils/handleRateLimitResponse";
+import { editPost, deletePost } from "../../utils/postHelpers";
 
 export default function SimplifiedPost({
   scrollContainerRef,
@@ -37,6 +33,12 @@ export default function SimplifiedPost({
   const navigate = useNavigate();
   const location = useLocation();
   const limit = 10;
+
+  function getPostImageUrl(imagePath) {
+    return imagePath
+      ? `${API_ENDPOINT}/api/posts${imagePath.startsWith("/") ? imagePath : "/" + imagePath}`
+      : null;
+  }
 
   // Fetch all posts
   async function fetchPosts(sortBy, offsetToFetch) {
@@ -79,11 +81,13 @@ export default function SimplifiedPost({
 
       // Initialise likedPosts using liked_post_ids
       const likedPostIds = new Set(response.liked_post_ids || []);
-      const initialLikedPosts = {};
-      response.posts.forEach((post) => {
-        initialLikedPosts[post.post_id] = likedPostIds.has(post.post_id);
+      setLikedPosts((prevLikedPosts) => {
+        const updatedLikedPosts = { ...prevLikedPosts };
+        response.posts.forEach((post) => {
+          updatedLikedPosts[post.post_id] = likedPostIds.has(post.post_id);
+        });
+        return updatedLikedPosts;
       });
-      setLikedPosts(initialLikedPosts);
 
       if (offsetToFetch === 0) {
         setPosts(response.posts);
@@ -95,7 +99,10 @@ export default function SimplifiedPost({
 
         // Only append non-duplicate posts
         if (newPosts.length > 0) {
-          setPosts((prev) => [...prev, ...newPosts]);
+          setPosts((prev) => {
+            const combined = [...prev, ...newPosts];
+            return combined;
+          });
         }
 
         if (
@@ -122,60 +129,20 @@ export default function SimplifiedPost({
 
   // Navigate to edit page if on profile page
   function handleEditPost(postId) {
-    navigate(`/edit-post/${postId}`);
+    editPost(navigate, postId);
   }
 
-  // Delete post in profile page
   async function handleDeletePost(postId) {
-    if (!window.confirm("Are you sure you want to delete this post?")) return;
-    try {
-      // Check if rate limit reached
-      if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
-        return;
-      }
-
-      const res = await fetchWithAuth(
-        `${API_ENDPOINT}/${DELETE_POSTS_ROUTE}/${postId}`,
-        {
-          method: "DELETE",
-        },
-        getAuthToken,
-        updateAuthToken,
-        handleLogout
-      );
-      const data = await res.json();
-
-      // Handle 429 response
-      if (handleRateLimitResponse(res, setRateLimit, setModal, "delete post")) {
-        return;
-      }
-
-      if (!res.ok) {
-        setModal({
-          active: true,
-          type: "fail",
-          message: data.error || "Failed to delete post",
-        });
-        return;
-      }
-      setPosts((prev) => prev.filter((post) => post.post_id !== postId));
-      setRateLimit({
-        attempts: 0,
-        cooldown: false,
-      });
-      setModal({
-        active: true,
-        type: "success",
-        message: "Post deleted successfully",
-      });
-    } catch (err) {
-      console.error(err);
-      setModal({
-        active: true,
-        type: "fail",
-        message: "An error occurred while deleting the post.",
-      });
-    }
+    await deletePost(postId, {
+      getAuthToken,
+      updateAuthToken,
+      handleLogout,
+      rateLimit,
+      setRateLimit,
+      setModal,
+      onSuccess: () =>
+        setPosts((prev) => prev.filter((post) => post.post_id !== postId)),
+    });
   }
 
   // Toggle like function
@@ -370,13 +337,12 @@ export default function SimplifiedPost({
 
               <div className="mb-4">
                 <p className="text-gray-700 line-clamp-3">{post.content}</p>
-
                 {post.image && (
-                  <div className="mt-3 max-h-64 overflow-hidden rounded-md">
+                  <div className="mt-3">
                     <img
-                      src={post.image}
+                      src={getPostImageUrl(post.image)}
                       alt={post.title}
-                      className="w-full object-cover"
+                      className="w-full object-contain max-h-[400px] rounded-md"
                     />
                   </div>
                 )}

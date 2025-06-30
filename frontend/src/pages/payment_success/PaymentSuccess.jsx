@@ -41,7 +41,7 @@ export default function PaymentSuccess() {
     <div className="w-screen h-screen flex justify-center items-center">
       <div className="border-2 w-11/12 md:w-1/2 h-1/3 rounded-lg flex flex-col justify-evenly items-center bg-gray-300">
         <p className="text-xl font-bold">
-          {valid === null ? "Verifying Payment..." : "Payment Successful!"}{" "}
+          {valid === null ? "Verifying Payment..." : "Payment Successful!"}
         </p>
         {valid !== null && (
           <button

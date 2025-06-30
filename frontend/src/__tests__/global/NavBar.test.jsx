@@ -8,6 +8,13 @@ import { MemoryRouter } from "react-router-dom";
 jest.mock("../../utils/upgradeMembership", () => jest.fn());
 const mockUpgradeMembership = require("../../utils/upgradeMembership");
 
+beforeAll(() => {
+  // Mock global window.location.pathname to /posts
+  delete window.location;
+  window.location = { pathname: "/posts" };
+});
+
+
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => {
   const actual = jest.requireActual("react-router-dom");

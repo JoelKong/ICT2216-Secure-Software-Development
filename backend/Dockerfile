@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create log directory with proper permissions
 RUN mkdir -p /var/log/app && chmod 755 /var/log/app
 
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

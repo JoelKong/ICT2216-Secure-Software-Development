@@ -29,3 +29,8 @@ certbot
 .env
 .env.development
 .env.production
+
+# Photo Upload Folder
+uploads/
+
+.coverage
