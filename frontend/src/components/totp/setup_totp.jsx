@@ -6,7 +6,7 @@ import { API_ENDPOINT, GET_TOTP, VERIFY_OTP } from '../../const';
 function SetupTotp() {
   const [totpSecret, setTotpSecret] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [, setError] = useState(null);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,7 +29,7 @@ function SetupTotp() {
         // Send totpsecret to frontend to generate QR
         setTotpSecret(data.totpSecret);
         setLoading(false);
-      } catch {
+      } catch(error) {
         setError('Failed to load TOTP secret. Please try again.');
         setLoading(false);
       }
@@ -66,7 +66,8 @@ function SetupTotp() {
       } else {
         alert(data.error || "Invalid OTP code. Please try again.");
       }
-    } catch {
+    } catch(error) {
+      console.error("Fetch TOTP error:", error);
       alert("Error verifying OTP. Please try again.");
     }
   };
