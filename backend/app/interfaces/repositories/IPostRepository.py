@@ -16,3 +16,16 @@ class IPostRepository(IBaseRepository[Post]):
     def get_user_liked_posts(self, user_id: int, post_ids: Optional[List[int]] = None) -> List[Post]:
         """Get posts liked by a specific user"""
         pass
+
+    @abstractmethod
+    def get_post_by_id(self, post_id: int) -> Optional[Post]:
+        pass
+    
+    @abstractmethod
+    def create_post(self, title: str, content: str, image_url: Optional[str], user_id: int) -> Post:
+        pass
+
+    @abstractmethod
+    def edit_post(self, post_id: int, title: str, content: str, image_url: Optional[str]) -> Optional[Post]:
+        """Update the post's content and optionally the image"""
+        pass

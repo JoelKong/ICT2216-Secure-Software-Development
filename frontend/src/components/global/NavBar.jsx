@@ -3,8 +3,7 @@ import { User } from "lucide-react";
 import SearchBar from "./SearchBar";
 import upgradeMembership from "../../utils/upgradeMembership";
 import { GlobalContext } from "../../utils/globalContext";
-
-export default function NavBar({ setSearchTerm }) {
+export default function NavBar({ setSearchTerm, activeTab }) {
   const { auth, handleLogout, getAuthToken, updateAuthToken } =
     useContext(GlobalContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -42,7 +41,10 @@ export default function NavBar({ setSearchTerm }) {
             </a>
           </div>
 
-          <SearchBar setSearchTerm={setSearchTerm} />
+          {(location.pathname === "/posts" || 
+            (location.pathname === "/profile" && activeTab === "posts")) && (
+            <SearchBar setSearchTerm={setSearchTerm} />
+          )}
 
           <div className="relative" ref={dropdownRef}>
             <button

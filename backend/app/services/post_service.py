@@ -3,23 +3,24 @@ from app.interfaces.repositories.IPostRepository import IPostRepository
 from app.interfaces.repositories.ILikeRepository import ILikeRepository
 from app.repositories.post_repository import PostRepository
 from app.repositories.like_repository import LikeRepository
-from flask import current_app
+from flask import current_app, send_from_directory
 from typing import Dict, List, Optional, Any, Tuple
+import os
+import time
 
 class PostService(IPostService):
     def __init__(self, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
         self.post_repository = post_repository or PostRepository()
         self.like_repository = like_repository or LikeRepository()
+        self.UPLOAD_FOLDER = '/data/post_uploads'
     
-    def get_posts(self, sort_by: str = 'recent', page: int = 1, 
-                  search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
-        """Get posts with pagination, filtering and sorting"""
+    def _is_allowed_file(self, filename: str) -> bool:
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10,
+                search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
         try:
-            # Calculate offset based on page number
-            limit = 10  # Number of posts per page
-            offset = (page - 1) * limit
-            
-            # Get posts from repository
             posts = self.post_repository.get_posts(
                 sort_by=sort_by,
                 limit=limit,
@@ -40,6 +41,7 @@ class PostService(IPostService):
                     "user_id": post.user_id,
                     "username": post.user.username,
                     "profile_picture": post.user.profile_picture,
+                    "image": post.image,
                     "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
                     "comments": post.comments_count if hasattr(post, 'comments_count') else 0
                 }
@@ -47,13 +49,12 @@ class PostService(IPostService):
             
             result = {
                 "posts": formatted_posts,
-                "page": page,
+                "offset": offset,
+                "limit": limit,
                 "has_more": len(posts) == limit
             }
-            
-            current_app.logger.info(f"Retrieved {len(posts)} posts for page {page}")
+            current_app.logger.info(f"Retrieved {len(posts)} posts for offset {offset}")
             return result
-            
         except Exception as e:
             current_app.logger.error(f"Error getting posts: {str(e)}")
             raise
@@ -118,7 +119,7 @@ class PostService(IPostService):
             current_app.logger.error(f"Error deleting post: {str(e)}")
             raise
     
-    # Get posts created by a specific user
+    # Get posts liked by a specific user
     def get_user_liked_posts(self, user_id: int, post_ids: Optional[List[int]] = None) -> List[int]:
         """Get IDs of posts liked by a specific user"""
         try:
@@ -126,3 +127,113 @@ class PostService(IPostService):
         except Exception as e:
             current_app.logger.error(f"Error getting user liked posts: {str(e)}")
             return []
+        
+    def get_post_detail(self, post_id: int, current_user_id: int) -> Optional[Dict[str, Any]]:
+        try:
+            post = self.post_repository.get_post_by_id(post_id)
+            if not post:
+                return None
+            
+            # Check if current user liked the post
+            liked_post_ids = self.get_user_liked_posts(current_user_id, [post_id])
+            liked = post_id in liked_post_ids
+            
+            return {
+                "post_id": post.post_id,
+                "title": post.title,
+                "content": post.content,
+                "created_at": post.created_at.isoformat(),
+                "updated_at": post.updated_at.isoformat() if post.updated_at else None,
+                "user_id": post.user_id,
+                "username": post.user.username,
+                "profile_picture": post.user.profile_picture,
+                "likes": post.likes_count if hasattr(post, 'likes_count') else 0,
+                "comments": post.comments_count if hasattr(post, 'comments_count') else 0,
+                "liked": liked,
+                "image": post.image
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error getting post detail {post_id}: {str(e)}")
+            raise
+
+    def create_post(self, title: str, content: str, image_file, user_id: int):
+        try:
+            image_url = None
+
+            if image_file and image_file.filename:
+                # Validate file extension
+                if not self._is_allowed_file(image_file.filename):
+                    raise ValueError("File type not allowed")
+                
+                # Generate unique filename
+                filename = f"user_{user_id}_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
+                filepath = os.path.join(self.UPLOAD_FOLDER, filename)
+
+                # Create uploads directory if it doesn't exist
+                os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
+
+                # Save image
+                image_file.save(filepath)
+                image_url = f"/post_uploads/{filename}"
+                current_app.logger.info(f"Image saved at {filepath}")
+
+            # Save post using repository
+            return self.post_repository.create_post(title, content, image_url, user_id)
+
+        except Exception as e:
+            current_app.logger.error(f"Failed to create post: {str(e)}")
+            raise
+
+    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file=None):
+        """Update an existing post"""
+        try:
+            post = self.post_repository.get_by_id(post_id)
+            if not post:
+                current_app.logger.warning(f"Post {post_id} not found for update.")
+                return None
+
+            if post.user_id != user_id:
+                current_app.logger.warning(f"User {user_id} unauthorized to update post {post_id}.")
+                return None
+
+            image_url = post.image  # Default to existing image
+            if image_file and image_file.filename:
+                # Validate file
+                if not self._is_allowed_file(image_file.filename):
+                    raise ValueError("File type not allowed")
+
+                # Generate new filename
+                filename = f"user_{user_id}_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
+                filepath = os.path.join(self.UPLOAD_FOLDER, filename)
+
+                # Ensure upload folder exists
+                os.makedirs(self.UPLOAD_FOLDER, exist_ok=True)
+
+                # Save file
+                image_file.save(filepath)
+                image_url = f"/post_uploads/{filename}"
+                current_app.logger.info(f"Updated image saved at {filepath}")
+
+            # Call repository update method
+            return self.post_repository.edit_post(
+                post_id=post_id,
+                title=title,
+                content=content,
+                image_url=image_url
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Error updating post {post_id}: {str(e)}")
+            raise
+
+    def get_post_image(self, filename):
+        """Serve post image from post_uploads folder"""
+        try:
+            # Security check - prevent directory traversal
+            if '..' in filename or filename.startswith('/'):
+                raise ValueError("Invalid filename")
+                
+            return send_from_directory(self.UPLOAD_FOLDER, filename)
+        except Exception as e:
+            current_app.logger.error(f"Error serving file {filename}: {str(e)}")
+            raise 

@@ -12,12 +12,14 @@ auth_service = AuthService()
 auth_controller = AuthController(auth_service=auth_service)
 
 # Sign up route with rate limiting
+# Limiter is done to prevent abuse of the signup endpoint and spams especially for bots
 @auth_bp.route('/signup', methods=['POST'])
 @limiter.limit("5 per minute")
 def signup():
     return auth_controller.signup()
 
 # Login route with rate limiting
+# Limiter is done to prevent abuse of the signup endpoint and spams especially for brute force attacks
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("5 per minute")
 def login():

@@ -9,6 +9,7 @@ on:
       - "main"
   workflow_dispatch:
 
+#TODO: SAST (sonarqube) and DAST (OWASP ZAP) scans
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,6 +17,7 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
+          # Temporary test database to run integration tests in the future
           MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_USER: user
           MYSQL_PASSWORD: password
@@ -29,7 +31,6 @@ jobs:
           --health-retries=3
     steps:
       - uses: actions/checkout@v4
-
       - name: Cache Node.js modules
         uses: actions/cache@v4
         with:
@@ -76,27 +77,34 @@ jobs:
           cd backend
           pip install -r requirements.txt
 
-      - name: Load DB Schema
-        run: mysql -h 127.0.0.1 -u user --password=password leonardo < SCHEMA.sql
+      - name: Run backend tests
+        run: |
+          cd backend
+          python run_tests.py
 
-      # - name: Validate DB Migrations //TODO find out why this not working
-      #   env:
-      #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
-      #   run: |
-      #     cd backend
-      #     alembic upgrade head
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
 
-      # - name: Run backend linting
-      #   run: |
-      #     cd backend
-      #     flake8 .
-
-      # - name: Run backend tests
-      #   env:
-      #     SQLALCHEMY_DATABASE_URI: mysql+pymysql://user:password@127.0.0.1:3306/leonardo
-      #   run: |
-      #     cd backend
-      #     pytest
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-app
+          path: |
+            backend/
+            !backend/.pytest_cache/
+            !backend/htmlcov/
+            !backend/.coverage
+            !backend/logs/
+            !backend/__pycache__/
+            frontend/
+            !frontend/dist/
+            !frontend/node_modules/
+            docker-compose-prod.yml
+            scripts/deploy_prod.sh
+            nginx/
 
   deploy_staging:
     needs: build
@@ -105,7 +113,7 @@ jobs:
     environment: staging
     steps:
       - name: "Deploy to staging"
-        run: echo "Deploying to staging environment after manual approval..."
+        run: echo "Deploying to staging environment"
 
   deploy_uat:
     needs: deploy_staging
@@ -114,7 +122,7 @@ jobs:
     environment: uat
     steps:
       - name: "Deploy to UAT"
-        run: echo "Deploying to UAT environment after manual approval..."
+        run: echo "Deploying to UAT environment"
 
   deploy_prod:
     needs: deploy_uat
@@ -122,25 +130,68 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: artifacts/frontend-build
 
-      - name: Deploy to production server
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-app
+          path: artifacts/backend-app
+
+      - name: Upload artifacts to production server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "artifacts/backend-app/*,artifacts/frontend-build/*"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app"
+          strip_components: 2
+
+      - name: Create .env files on production server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /path/to/your/project
-            git pull origin main
+            set -e
+            PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
+            mkdir -p $PROJECT_DIR/backend
+            mkdir -p $PROJECT_DIR/frontend
+            mkdir -p $PROJECT_DIR/scripts
+            mkdir -p $PROJECT_DIR/nginx
+            cd $PROJECT_DIR
 
-            # Export secrets as environment variables for the deployment script
-            export VITE_API_ENDPOINT='${{ secrets.VITE_API_ENDPOINT }}'
-            export SECRET_KEY='${{ secrets.SECRET_KEY }}'
-            export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}'
-            export SQLALCHEMY_DATABASE_URI='${{ secrets.SQLALCHEMY_DATABASE_URI }}'
-            export FRONTEND_ROUTE='${{ secrets.FRONTEND_ROUTE }}'
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env.production
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env.production
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env.production
 
-            # Make the script executable and run it
+            echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
+            echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
+            echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.production
+            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" > backend/.env.production
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
+            echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
+            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
+
+            echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > frontend/.env.production
+            echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" >> frontend/.env.production
+
+      - name: Finalize deployment on production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd /home/${{ secrets.USERNAME }}/leonardo-app
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
