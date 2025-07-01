@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.interfaces.services.IPostService import IPostService
 from app.services.post_service import PostService
+from openai import OpenAI
 import os
 
 # --- Validation constants & regexes ---
@@ -262,3 +263,48 @@ class PostController:
             return jsonify({"error": "Invalid image filename"}), 400
 
         return self.post_service.get_post_image(filename)
+    
+    @jwt_required()
+    def summarize_post(self, post_id):
+        try:
+            current_app.logger.info(f"[AI SUMMARY] Requested for post_id={post_id}")
+
+            user_id = get_jwt_identity()
+            current_app.logger.info(f"[AI SUMMARY] JWT Identity resolved: user_id={user_id}")
+
+            post = PostService().get_post_detail(post_id, user_id)
+            if not post:
+                current_app.logger.warning(f"[AI SUMMARY] Post not found: post_id={post_id}")
+                return jsonify({"error": "Post not found"}), 404
+
+            content = post["content"]
+            word_count = len(content.split())
+            current_app.logger.info(f"[AI SUMMARY] Word count for post {post_id}: {word_count}")
+
+            if word_count <= 50:
+                current_app.logger.info(f"[AI SUMMARY] Post too short to summarize.")
+                return jsonify({"summary": "Post content too short to summarize."}), 200
+
+            client = OpenAI(api_key=os.environ.get("OPENAI_SECRET_KEY"))
+            if not client:
+                current_app.logger.error("[AI SUMMARY] Missing OpenAI API key!")
+                return jsonify({"error": "Server misconfigured for OpenAI"}), 500
+
+            current_app.logger.info(f"[AI SUMMARY] Calling OpenAI API for post_id={post_id}")
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "Summarize the following post:"},
+                    {"role": "user", "content": post["content"]}
+                ],
+                max_tokens=100,
+                temperature=0.7
+            )
+
+            summary = response.choices[0].message.content
+            current_app.logger.info(f"[AI SUMMARY] Summary generated for post_id={post_id}")
+            return jsonify({"summary": summary}), 200
+
+        except Exception as e:
+            current_app.logger.error(f"[AI SUMMARY] Exception: {e}")
+            return jsonify({"error": "Failed to summarize post."}), 500

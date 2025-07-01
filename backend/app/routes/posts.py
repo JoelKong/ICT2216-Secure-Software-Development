@@ -39,3 +39,6 @@ posts_bp.route('/posts/<int:post_id>', methods=['GET'])(post_controller.get_post
 
 # Get post images 
 posts_bp.route('/posts/post_uploads/<filename>', methods=['GET'])(post_controller.get_post_image)
+
+# Summarize post
+posts_bp.route('/posts/summary/<int:post_id>', methods=['GET'])(post_controller.summarize_post)

@@ -46,9 +46,6 @@ export default function SimplifiedPost({
     setLoading(true);
 
     const offsetInt = Math.max(0, parseInt(offsetToFetch) || 0);
-    console.log("Fetching posts with offsetToFetch:", offsetToFetch);
-    console.log("Fetching posts with offset:", offsetInt);
-
     const params = new URLSearchParams({
       sort_by: sortBy,
       limit: limit.toString(),
