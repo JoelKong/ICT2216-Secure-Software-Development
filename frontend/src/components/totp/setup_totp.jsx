@@ -30,6 +30,7 @@ function SetupTotp() {
         setTotpSecret(data.totpSecret);
         setLoading(false);
       } catch(error) {
+        console.error("Fetch TOTP error:", error);
         setError('Failed to load TOTP secret. Please try again.');
         setLoading(false);
       }
