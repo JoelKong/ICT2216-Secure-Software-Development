@@ -14,7 +14,7 @@ class ProfileService(IProfileService):
     def __init__(self, user_repository: IUserRepository = None, post_repository: IPostRepository = None):
         self.user_repository = user_repository or UserRepository()
         self.post_repository = post_repository or PostRepository()
-        self.UPLOAD_FOLDER = os.path.abspath('uploads')
+        self.UPLOAD_FOLDER = '/data/uploads'
 
     def _is_allowed_file(self, filename: str) -> bool:
         """Check if the file extension is allowed"""
@@ -153,6 +153,7 @@ class ProfileService(IProfileService):
         except Exception as e:
             current_app.logger.error(f"Upload failed: {str(e)}")
             raise
+        
     def get_profile_image(self, filename):
         """Serve profile image from uploads folder"""
         try:

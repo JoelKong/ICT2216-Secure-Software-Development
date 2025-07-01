@@ -14,6 +14,8 @@ import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
 import fetchWithAuth from "./utils/fetchWithAuth";
 import { useNavigate } from "react-router-dom";
 import PostDetail from "./pages/posts/PostDetail";
+import CreatePost from "./pages/posts/CreatePost";
+import EditPost from "./pages/posts/EditPost";
 
 
 function App() {
@@ -45,6 +47,8 @@ function App() {
     user: null,
   });
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  const [activeTab, setActiveTab] = useState("profile"); // default to 'profile'
 
   const getAuthToken = () => localStorage.getItem("access_token");
 
@@ -176,19 +180,44 @@ function App() {
               path="/posts/:postId"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                  <NavBar setSearchTerm={setSearchTerm} />
+                  <NavBar />
                   <PostDetail />
                 </PrivateRoute>
               }
             />
             <Route
+              path="/create-post"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar />
+                  <CreatePost />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/edit-post/:postId"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <NavBar />
+                  <EditPost />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
               path="/profile"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
-                  <NavBar setSearchTerm={setSearchTerm} />
+                  <NavBar
+                    setSearchTerm={setSearchTerm}
+                    activeTab={activeTab}
+                  />
                   <Profile
                     scrollContainerRef={scrollContainerRef}
                     searchTerm={searchTerm}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                   />
                 </PrivateRoute>
               }

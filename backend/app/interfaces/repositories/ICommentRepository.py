@@ -20,3 +20,11 @@ class ICommentRepository(IBaseRepository[Comment]):
     def delete_by_post_id(self, post_id: int) -> None:
         """Delete all comments for a specific post"""
         pass
+
+    @abstractmethod
+    def create_comment(self, comment: Comment) -> Comment:
+        pass
+
+    @abstractmethod
+    def get_comment_by_id(self, comment_id: int) -> Optional[Comment]:
+        pass

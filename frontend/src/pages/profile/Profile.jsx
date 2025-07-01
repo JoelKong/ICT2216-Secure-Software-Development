@@ -5,18 +5,16 @@ import {
 } from "../../components/profile/ProfileModalForm";
 import useProfile from "../../components/profile/ProfileFunctions";
 
-export default function Profile({ scrollContainerRef, searchTerm }) {
+export default function Profile({ scrollContainerRef, searchTerm, activeTab, setActiveTab }) {
   const {
     profile,
     editingField,
     editValue,
     showDeleteConfirm,
     fileInputRef,
-    activeTab,
     isLoading,
     auth,
     setEditValue,
-    setActiveTab,
     setShowDeleteConfirm,
     handleEditClick,
     handleSave,
@@ -24,7 +22,7 @@ export default function Profile({ scrollContainerRef, searchTerm }) {
     handleDeleteAccount,
     handleProfilePicClick,
     handleProfilePicChange,
-    profilePictureUrl
+    profilePictureUrl,
   } = useProfile();
 
   if (!auth.isAuthenticated) {
