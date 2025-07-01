@@ -12,11 +12,10 @@ function SetupTotp() {
   useEffect(() => {
     const fetchTotpSecret = async () => {
       try {
-        //const response = await fetch('http://localhost:5000/api/get_user_totp_secret', {
           const response = await fetch(`${API_ENDPOINT}/${GET_TOTP}`,{
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Use JWT from localStorage
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
 
@@ -26,7 +25,7 @@ function SetupTotp() {
 
         const data = await response.json();
 
-        // Send totpsecret to frontend to generate QR
+        // Retrieve totpsecret from backend to generate QR
         setTotpSecret(data.totpSecret);
         setLoading(false);
       } catch(error) {

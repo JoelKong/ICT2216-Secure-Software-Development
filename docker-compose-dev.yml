@@ -1,6 +1,6 @@
 # this docker is for dev, use for testing ig before pushing to the cloud
 
-# version: "3.8"
+version: "3.8"
 
 services:
   frontend:

@@ -126,7 +126,7 @@ class AuthController:
         """Verify the OTP code entered by the user"""
         data = request.get_json()
         code = data.get("code")  # OTP entered by user
-        secret = data.get("totpSecret")  # The TOTP secret
+        secret = data.get("totpSecret")  # The TOTP secret from DB
 
         # Ensure both code and secret are provided
         if not code or not secret:
