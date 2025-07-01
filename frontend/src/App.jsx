@@ -13,6 +13,7 @@ import PaymentFailure from "./pages/payment_failure/PaymentFailure";
 import { API_ENDPOINT, FETCH_USER_ROUTE } from "./const";
 import fetchWithAuth from "./utils/fetchWithAuth";
 import { useNavigate } from "react-router-dom";
+import SetupTotp from "./components/totp/setup_totp";
 
 function App() {
   const navigate = useNavigate();
@@ -195,6 +196,14 @@ function App() {
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
                   <PaymentFailure />
+                </PrivateRoute>
+              }
+            />
+                        <Route
+              path="/setup_totp"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <SetupTotp />
                 </PrivateRoute>
               }
             />
