@@ -4,6 +4,8 @@ import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
+from app.models.users import User
+import pyotp
 from app.utils.validation import is_valid_email, is_strong_password, is_valid_username
 from flask_jwt_extended import (
     jwt_required,
