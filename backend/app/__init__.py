@@ -46,4 +46,10 @@ def create_app(env=None):
     # Log application creation
     app.logger.info(f"Application initialized with environment: {configured_env}")
     
+    # Apply HSTS headers for enhanced security
+    @app.after_request
+    def apply_security_headers(response):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+        return response
+    
     return app

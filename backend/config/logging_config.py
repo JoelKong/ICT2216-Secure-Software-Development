@@ -2,6 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from flask import request, has_request_context
+from logging.handlers import SysLogHandler
 
 class RequestFormatter(logging.Formatter):
     """Custom formatter to include request-specific information"""
@@ -62,6 +63,16 @@ def configure_logging(app):
     file_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_format)
     app.logger.addHandler(file_handler)
+    
+    #Adding Syslog handler
+    try:
+        syslog_handler = SysLogHandler(address='/dev/log')  # adjust if needed
+        syslog_handler.setLevel(log_level)
+        syslog_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        syslog_handler.setFormatter(syslog_format)
+        app.logger.addHandler(syslog_handler)
+    except Exception as e:
+        app.logger.warning(f"Syslog handler setup failed: {e}")
     
     # Set propagate to False to avoid duplicate logs
     app.logger.propagate = False
