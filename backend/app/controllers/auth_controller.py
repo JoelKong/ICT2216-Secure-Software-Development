@@ -4,6 +4,7 @@ import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
+from app.utils.validation import is_valid_email, is_strong_password, is_valid_username
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
@@ -38,23 +39,19 @@ class AuthController:
             password = raw.get("password") or ""
 
             # --- Validate email ---
-            if not re.match(EMAIL_REGEX, email):
+            if not is_valid_email(email):
                 return jsonify({"error": "Invalid email format"}), 400
 
             # --- Validate username ---
-            if not re.match(USERNAME_REGEX, username):
+            if not is_valid_username(username):
                 return jsonify({
                     "error": "Username must be 3–20 chars, letters/numbers/underscore only."
                 }), 400
 
             # --- Validate password ---
-            if not re.match(PASSWORD_REGEX, password):
-                return jsonify({
-                    "error": (
-                        "Password must be at least 8 chars, include uppercase, "
-                        "lowercase, a number, and a special character."
-                    )
-                }), 400
+            is_strong, reason = is_strong_password(password)
+            if not is_strong:
+                return jsonify({"error": reason}), 400
 
             current_app.logger.info(f"Signup attempt: {email} (username: {username})")
 
