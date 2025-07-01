@@ -153,6 +153,7 @@ class ProfileService(IProfileService):
         except Exception as e:
             current_app.logger.error(f"Upload failed: {str(e)}")
             raise
+        
     def get_profile_image(self, filename):
         """Serve profile image from uploads folder"""
         try:

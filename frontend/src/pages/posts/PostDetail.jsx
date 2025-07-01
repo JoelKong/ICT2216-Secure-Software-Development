@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
-import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE  } from "../../const";
+import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE, FETCH_POST_SUMMARY_ROUTE } from "../../const";
 import { Heart, MessageCircle } from "lucide-react";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { editPost, deletePost } from "../../utils/postHelpers";
@@ -20,6 +20,9 @@ export default function PostDetail() {
   const [likesCount, setLikesCount] = useState(0);
 
   const [showComments, setShowComments] = useState(false);
+
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const navigate = useNavigate();
 
@@ -95,6 +98,29 @@ export default function PostDetail() {
         const data = await res.json();
         setPost(data); // <-- Use data directly, not data.post
 
+        if (data?.content?.split(" ").length > 50) {
+          console.log("Post has more than 50 words. Fetching summary..."); // ✅ DEBUG
+          setSummaryLoading(true);
+          fetchWithAuth(
+            `${API_ENDPOINT}/${FETCH_POST_SUMMARY_ROUTE}/${postId}`,
+            { method: "GET" },
+            getAuthToken,
+            updateAuthToken,
+            handleLogout
+          )
+            .then((res) => res.json())
+            .then((data) => {
+              setSummary(data.summary);
+            })
+            .catch((err) => {
+              console.error("Failed to fetch summary:", err);
+              setSummary("Failed to generate summary.");
+            })
+            .finally(() => {
+              setSummaryLoading(false);
+            });
+        }
+
         // Set likes state
         setLikesCount(data.likes || 0);
 
@@ -130,6 +156,18 @@ export default function PostDetail() {
           className="w-full max-h-[400px] object-cover rounded"
         />
       )}
+
+      {post.content.split(" ").length > 50 && (
+        <div className="mt-8 p-4 border border-gray-700 rounded bg-gray-800">
+          <h2 className="text-xl font-semibold mb-2 text-white">AI Summary</h2>
+          {summaryLoading ? (
+            <p className="text-gray-400">Generating summary...</p>
+          ) : (
+            <p className="text-gray-300">{summary}</p>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center space-x-4 mt-4">
         {/* Like Button */}
         <button
