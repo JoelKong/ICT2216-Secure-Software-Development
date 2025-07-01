@@ -10,7 +10,7 @@ import os
 
 # --- Validation constants & regexes ---
 SORT_OPTIONS        = {"recent", "oldest", "popular"}
-INT_REGEX           = r"^[1-9]\d*$"          # positive integers, no leading zero
+INT_REGEX = r"^\d+$"  # Accepts 0 and all non-negative integers
 SEARCH_MAX_LENGTH   = 100                   # max chars for search query
 TITLE_MAX_LENGTH    = 100                   # max chars for post title
 CONTENT_MAX_LENGTH  = 2000                  # max chars for post content
@@ -39,7 +39,7 @@ class PostController:
 
             # Validate offset
             if not re.match(INT_REGEX, raw_offset):
-                return jsonify({"error": "offset must be a positive integer"}), 400
+                return jsonify({"error": "offset must be a non-negative integer"}), 400
             offset = int(raw_offset)
 
             # Validate limit
@@ -261,5 +261,4 @@ class PostController:
         if not re.match(FILENAME_REGEX, filename):
             return jsonify({"error": "Invalid image filename"}), 400
 
-        directory = self.post_service.get_post_image_dir()
-        return send_from_directory(directory, filename)
+        return self.post_service.get_post_image(filename)

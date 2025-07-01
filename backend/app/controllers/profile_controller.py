@@ -125,8 +125,8 @@ class ProfileController:
             return jsonify({"error": "Invalid image filename"}), 400
 
         # Assuming your service returns the directory path and you want to serve directly:
-        directory = self.profile_service.get_profile_image_dir()
-        return send_from_directory(directory, filename)
+        return self.profile_service.get_profile_image(filename)
+        
 
     @jwt_required()
     def delete_profile(self):

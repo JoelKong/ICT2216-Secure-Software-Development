@@ -45,10 +45,14 @@ export default function SimplifiedPost({
     if (loading || !hasMore) return;
     setLoading(true);
 
+    const offsetInt = Math.max(0, parseInt(offsetToFetch) || 0);
+    console.log("Fetching posts with offsetToFetch:", offsetToFetch);
+    console.log("Fetching posts with offset:", offsetInt);
+
     const params = new URLSearchParams({
       sort_by: sortBy,
-      limit,
-      offset: offsetToFetch,
+      limit: limit.toString(),
+      offset: offsetInt.toString(), // ensure it's a stringified number
     });
     if (searchTerm) params.append("search", searchTerm);
     if (userId) params.append("user_id", userId);
