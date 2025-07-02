@@ -30,4 +30,4 @@ ENV PYTHONUNBUFFERED=1
 VOLUME ["/var/log/app"]
 
 # Run gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--log-level=info", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--log-level=info", "wsgi:app"]
