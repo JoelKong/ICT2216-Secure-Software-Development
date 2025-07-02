@@ -6,6 +6,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     default-libmysqlclient-dev \
+    libmagic1 \
+    libmagic-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

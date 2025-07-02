@@ -6,11 +6,27 @@ from typing import List, Optional, Dict, Any
 from flask import current_app, send_from_directory
 import os
 import time
+import magic
+
+ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 class CommentService(ICommentService):
     def __init__(self, comment_repository: ICommentRepository = None):
         self.comment_repository = comment_repository or CommentRepository()
         self.UPLOAD_FOLDER = '/data/comment_uploads'
+
+    def _is_valid_mime(self, file) -> bool:
+        file.seek(0)
+        mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+        return mime in ALLOWED_MIME_TYPES
+
+    def _is_valid_size(self, file) -> bool:
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        return size <= MAX_FILE_SIZE
 
     def get_comments_by_post(self, post_id: int) -> List[Dict[str, Any]]:
         try:
@@ -40,6 +56,12 @@ class CommentService(ICommentService):
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
                 if '.' not in image_file.filename or image_file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
                     raise ValueError("File type not allowed")
+                
+                if not self._is_valid_mime(image_file):
+                    raise ValueError("Invalid file content")
+        
+                if not self._is_valid_size(image_file):
+                    raise ValueError("File too large")
                 
                 # Save image file
                 filename = f"user_{user_id}_comment_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
