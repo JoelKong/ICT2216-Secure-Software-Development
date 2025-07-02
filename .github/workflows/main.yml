@@ -241,7 +241,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            cd /home/${{ secrets.USERNAME }}/leonardo-app
+            cd /home/${{ secrets.USERNAME }}/leonardo-app/artifacts/backend-app
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
+
 
