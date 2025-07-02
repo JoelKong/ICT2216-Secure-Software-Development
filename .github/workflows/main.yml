@@ -222,5 +222,6 @@ jobs:
           script: |
             set -e
             cd /home/${{ secrets.USERNAME }}/leonardo-app
-            chmod +x ./scripts/deploy_prod.sh
-            ./scripts/deploy_prod.sh
+            chmod +x ./backend/scripts/deploy_prod.sh
+            ./backend/scripts/deploy_prod.sh
+
