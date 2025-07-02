@@ -23,19 +23,17 @@ jobs:
         with:
           java-version: 17
           distribution: "zulu"
-      - name: Debug Secrets (Do not log real secrets)
+      - name: Create sonar-project.properties file
         run: |
-          echo "Sonar URL set? ${{ secrets.SONAR_HOST_URL != '' }}"
-          echo "Sonar token set? ${{ secrets.SONAR_TOKEN != '' }}"
-          echo "Sonar organization set? ${{ secrets.SONAR_ORGANIZATION != '' }}"
-          echo "Sonar project key set? ${{ secrets.SONAR_PROJECT_KEY != '' }}"
+          echo "sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}" > sonar-project.properties
+          echo "sonar.organization=${{ secrets.SONAR_ORGANIZATION }}" >> sonar-project.properties
+          echo "sonar.host.url=${{ secrets.SONAR_HOST_URL }}" >> sonar-project.properties
+          echo "sonar.token=${{ secrets.SONAR_TOKEN }}" >> sonar-project.properties
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
-          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
 
   build:
     runs-on: ubuntu-latest
