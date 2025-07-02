@@ -61,6 +61,7 @@ function SetupTotp() {
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.setItem("access_token", data.access_token);
         alert("TOTP Verified!");
         navigate('/posts');
       } else {
