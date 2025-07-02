@@ -9,7 +9,8 @@ on:
       - "main"
   workflow_dispatch:
 
-#TODO: DAST (OWASP ZAP) scans
+# TODO: Add DAST (OWASP ZAP) scans later
+
 jobs:
   code-scan:
     name: Code SAST Scan
@@ -42,7 +43,6 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          # Temporary test database to run integration tests in the future
           MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_USER: user
           MYSQL_PASSWORD: password
@@ -56,6 +56,7 @@ jobs:
           --health-retries=3
     steps:
       - uses: actions/checkout@v4
+
       - name: Cache Node.js modules
         uses: actions/cache@v4
         with:
@@ -107,29 +108,26 @@ jobs:
           cd backend
           python run_tests.py
 
+      # Upload frontend build artifact (only the build output)
       - name: Upload frontend build artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist/
 
+      # Upload backend artifact - upload backend folder contents explicitly,
+      # excluding unwanted cache/log folders, keep folder structure inside 'backend'
       - name: Upload backend artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-app
           path: |
-            backend/
-            !backend/.pytest_cache/
-            !backend/htmlcov/
+            backend/**/*
+            !backend/.pytest_cache/**
+            !backend/htmlcov/**
             !backend/.coverage
-            !backend/logs/
-            !backend/__pycache__/
-            frontend/
-            !frontend/dist/
-            !frontend/node_modules/
-            docker-compose-prod.yml
-            scripts/deploy_prod.sh
-            nginx/
+            !backend/logs/**
+            !backend/__pycache__/**
 
   deploy_staging:
     needs: build
@@ -137,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - name: "Deploy to staging"
+      - name: Deploy to staging
         run: echo "Deploying to staging environment"
 
   deploy_uat:
@@ -146,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     steps:
-      - name: "Deploy to UAT"
+      - name: Deploy to UAT
         run: echo "Deploying to UAT environment"
 
   deploy_prod:
@@ -166,30 +164,39 @@ jobs:
             rm -rf ~/leonardo-app/*
             mkdir -p ~/leonardo-app
 
-      - name: Download artifacts
+      - name: Download frontend artifact
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: frontend-build
+          path: artifacts/frontend-build
 
-      - name: Upload backend artifact
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-app
+          path: artifacts/backend-app
+
+      # Upload backend files to ~/leonardo-app/backend (preserve folder structure)
+      - name: Upload backend artifact to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/backend-app/*"
-          target: "/home/${{ secrets.USERNAME }}/leonardo-app"
-          strip_components: 0  # preserve the original directory layout
+          source: artifacts/backend-app/backend/*
+          target: /home/${{ secrets.USERNAME }}/leonardo-app/backend
+          strip_components: 0
 
-      - name: Upload frontend artifact
+      # Upload frontend build files to ~/leonardo-app/frontend
+      - name: Upload frontend artifact to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/frontend-build/*"
-          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend"
-          strip_components: 2
+          source: artifacts/frontend-build/*
+          target: /home/${{ secrets.USERNAME }}/leonardo-app/frontend
+          strip_components: 0
 
       - name: Debug- Confirm file layout on EC2
         uses: appleboy/ssh-action@master
@@ -241,8 +248,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            cd /home/${{ secrets.USERNAME }}/leonardo-app/artifacts/backend-app
-            chmod +x ./scripts/deploy_prod.sh
-            ./scripts/deploy_prod.sh
-
-
+            cd /home/${{ secrets.USERNAME }}/leonardo-app/backend/scripts
+            chmod +x ./deploy_prod.sh
+            ./deploy_prod.sh
