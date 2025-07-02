@@ -77,7 +77,7 @@ class TestPostService:
         mock_file.tell = Mock(return_value=1024 * 1024 * 11)  # 11 MB file size (assuming 10MB max)
         mock_file.seek.return_value = None
         
-        assert post_service._is_file_size_valid(mock_file) is False
+        assert post_service._is_valid_size(mock_file) is False
     
     def test_get_posts_success(self, post_service, mock_post_repository):
         """Test successful post retrieval"""
@@ -144,7 +144,7 @@ class TestPostService:
         
         with patch.object(post_service, '_is_allowed_file', return_value=True), \
          patch.object(post_service, '_is_valid_mime', return_value=True), \
-         patch.object(post_service, '_is_file_size_valid', return_value=True):
+         patch.object(post_service, '_is_valid_size', return_value=True):
             result = post_service.create_post(
                 title='Test Post',
                 content='Test Content',

@@ -65,7 +65,7 @@ class TestProfileService:
         mock_file.tell = Mock(return_value=1024 * 1024 * 2)  # 2 MB file size
         mock_file.seek.return_value = None
         
-        assert post_service._is_file_size_valid(mock_file) is True
+        assert post_service._is_valid_size(mock_file) is True
     
     def test_file_size_check_invalid(self, post_service):
         """Test file size validation for files exceeding allowed size"""
@@ -74,7 +74,7 @@ class TestProfileService:
         mock_file.tell = Mock(return_value=1024 * 1024 * 11)  # 11 MB file size (assuming 10MB max)
         mock_file.seek.return_value = None
         
-        assert post_service._is_file_size_valid(mock_file) is False
+        assert post_service._is_valid_size(mock_file) is False
 
     def test_get_user_profile_success(self, profile_service, mock_user_repository):
         """Test successful user profile retrieval"""
