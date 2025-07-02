@@ -178,8 +178,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "artifacts/backend-app/*"
-          target: "/home/${{ secrets.USERNAME }}/leonardo-app/backend"
-          strip_components: 1
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app"
+          strip_components: 0  # preserve the original directory layout
 
       - name: Upload frontend artifact
         uses: appleboy/scp-action@master
@@ -191,6 +191,15 @@ jobs:
           target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend"
           strip_components: 2
 
+      - name: Debug: Confirm file layout on EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "EC2 directory listing:"
+            find /home/${{ secrets.USERNAME }}/leonardo-app -type f
 
       - name: Create .env files on production server
         uses: appleboy/ssh-action@master
@@ -215,7 +224,7 @@ jobs:
             echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
             echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
             echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.production
-            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" > backend/.env.production
+            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" >> backend/.env.production
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
             echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
@@ -233,6 +242,6 @@ jobs:
           script: |
             set -e
             cd /home/${{ secrets.USERNAME }}/leonardo-app
-            chmod +x ./backend/scripts/deploy_prod.sh
-            ./backend/scripts/deploy_prod.sh
+            chmod +x ./scripts/deploy_prod.sh
+            ./scripts/deploy_prod.sh
 
