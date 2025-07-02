@@ -11,11 +11,20 @@ import os
 # --- Validation constants & regexes ---
 SORT_OPTIONS     = {"recent", "oldest", "popular"}
 INT_REGEX        = r"^\d+$"
-USERNAME_REGEX   = r"^[A-Za-z0-9_]{3,20}$"
-BIO_MAX_LENGTH   = 200
 ALLOWED_EXTS     = {"png", "jpg", "jpeg", "gif"}
 FILENAME_REGEX   = r"^[A-Za-z0-9_\-]+\.(?:png|jpg|jpeg|gif)$"
-
+# --- Regex patterns ---
+EMAIL_REGEX = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+# Password: ≥8 chars, at least one lowercase, one uppercase, one digit, one special
+PASSWORD_REGEX = (
+    r"^(?=.*[a-z])"      # at least one lowercase
+    r"(?=.*[A-Z])"       # at least one uppercase
+    r"(?=.*\d)"          # at least one digit
+    r"(?=.*[@$!%*#?&])"  # at least one special char
+    r".{8,}$"            # at least 8 total chars
+)
+# Username: alphanumeric + underscores, 3–20 characters
+USERNAME_REGEX = r"^[A-Za-z0-9_]{3,20}$"
 
 class ProfileController:
     def __init__(self, profile_service: IProfileService = None):
@@ -43,13 +52,15 @@ class ProfileController:
         """Handle PUT request to update user profile with validation."""
         try:
             user_id = get_jwt_identity()
-            raw = request.get_json() or {}
+            data = request.get_json()
+            if not data:
+                return jsonify({"error": "No data provided"}), 400
 
-            # Whitelist fields
-            username = raw.get("username")
-            bio      = raw.get("bio")
+            username = data.get("username")
+            email = data.get("email")
+            password = data.get("password")
 
-            if username is None and bio is None:
+            if not any([username, email, password]):
                 return jsonify({"error": "No fields to update"}), 400
 
             # Validate username
@@ -60,24 +71,29 @@ class ProfileController:
                         "error": "Username must be 3–20 chars: letters, digits, or underscores."
                     }), 400
 
-            # Validate bio
-            if bio is not None:
-                bio = bio.strip()
-                if len(bio) > BIO_MAX_LENGTH:
+            
+            if email is not None:
+                email = email.strip()
+                if not re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email):
+                    return jsonify({"error": "Invalid email format."}), 400
+                
+            # --- Validate password ---
+            if password is not None:
+                if not re.match(PASSWORD_REGEX, password):
                     return jsonify({
-                        "error": f"Bio must be ≤ {BIO_MAX_LENGTH} characters."
+                        "error": (
+                            "Password must be at least 8 characters long, and include 1 uppercase, "
+                            "1 lowercase, 1 digit, and 1 special character."
+                        )
                     }), 400
 
             current_app.logger.info(f"Updating profile for user: {user_id}")
-            updated, error = self.profile_service.update_profile(
-                user_id,
-                {"username": username, "bio": bio}
-            )
+            updated_user, error = self.profile_service.update_profile(user_id, data)
             if error:
                 return jsonify({"error": error}), 400
 
             return jsonify({
-                "user": updated,
+                "user": updated_user,
                 "message": "Profile updated successfully"
             }), 200
 
