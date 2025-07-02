@@ -10,7 +10,7 @@ from openai import OpenAI
 import os
 
 # --- Validation constants & regexes ---
-SORT_OPTIONS        = {"recent", "oldest", "popular"}
+SORT_OPTIONS        = {"recent", "likes", "comments"}
 INT_REGEX = r"^\d+$"  # Accepts 0 and all non-negative integers
 SEARCH_MAX_LENGTH   = 100                   # max chars for search query
 TITLE_MAX_LENGTH    = 100                   # max chars for post title
