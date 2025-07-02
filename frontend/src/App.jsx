@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import PostDetail from "./pages/posts/PostDetail";
 import CreatePost from "./pages/posts/CreatePost";
 import EditPost from "./pages/posts/EditPost";
-
+import SetupTotp from "./components/totp/setup_totp";
 
 function App() {
   const navigate = useNavigate();
@@ -235,6 +235,14 @@ function App() {
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
                   <PaymentFailure />
+                </PrivateRoute>
+              }
+            />
+                        <Route
+              path="/setup_totp"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <SetupTotp />
                 </PrivateRoute>
               }
             />

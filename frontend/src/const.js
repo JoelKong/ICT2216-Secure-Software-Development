@@ -28,3 +28,7 @@ export const FETCH_USER_ROUTE = "api/profile";
 // Payment-related endpoints - ensure server checks authentication and session validity
 export const STRIPE_CHECKOUT_ROUTE = "api/upgrade-membership";
 export const VITE_STRIPE_SESSION_VERIFICATION_ROUTE = "api/verify-session";
+
+//OTP   
+export const VERIFY_OTP = "api/verify_totp";
+export const GET_TOTP = "api/get_user_totp_secret";
