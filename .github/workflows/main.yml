@@ -168,7 +168,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: "artifacts/backend-app/"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app"
-          strip_components: 1
+          overwrite: true
 
       - name: Upload frontend build to production server
         uses: appleboy/scp-action@master
@@ -178,7 +178,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: "artifacts/frontend-build/"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend/dist"
-          strip_components: 1
+          overwrite: true
 
       - name: Create .env files on production server
         uses: appleboy/ssh-action@master
