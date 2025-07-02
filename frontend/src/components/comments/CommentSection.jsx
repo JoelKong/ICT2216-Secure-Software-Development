@@ -61,8 +61,31 @@ export default function CommentSection({ postId }) {
   }, [postId]);
 
   function handleNewComment(newComment) {
-    setComments((prev) => [...prev, newComment]);
+    setComments((prevTree) => {
+      // Flatten existing tree to flat list
+      const flatList = flattenComments(prevTree);
+
+      // Add new comment to flat list
+      flatList.push(newComment);
+
+      // Rebuild tree from updated flat list
+      return buildCommentTree(flatList);
+    });
   }
+
+  // Utility to flatten comment tree to a flat array
+  function flattenComments(tree) {
+    const flat = [];
+    function recurse(nodes) {
+      nodes.forEach(node => {
+        flat.push(node);
+        if (node.replies?.length) recurse(node.replies);
+      });
+    }
+    recurse(tree);
+    return flat;
+  }
+
 
   return (
     <div className="mt-8 space-y-4">

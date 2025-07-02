@@ -112,7 +112,7 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             success, message = self.post_service.delete_post(pid, user_id)
             if not success:
@@ -190,14 +190,15 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             post = self.post_service.get_post_detail(pid, user_id)
             if not post:
                 return jsonify({"error": "Post not found"}), 404
+
             if post["user_id"] != user_id:
                 return jsonify({"error": "Unauthorized"}), 403
-
+            
             return jsonify({
                 "post_id": post["post_id"],
                 "title": post["title"],
@@ -216,7 +217,7 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             title = (request.form.get("title") or "").strip()
             content = (request.form.get("content") or "").strip()
