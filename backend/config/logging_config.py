@@ -64,13 +64,17 @@ def configure_logging(app):
     file_handler.setFormatter(file_format)
     app.logger.addHandler(file_handler)
     
-    #Adding Syslog handler
+    # Adding Syslog handler
     try:
-        syslog_handler = SysLogHandler(address='/dev/log')  # adjust if needed
-        syslog_handler.setLevel(log_level)
-        syslog_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        syslog_handler.setFormatter(syslog_format)
-        app.logger.addHandler(syslog_handler)
+        if os.path.exists("/dev/log"):
+            syslog_handler = SysLogHandler(address='/dev/log')
+            syslog_handler.setLevel(log_level)
+            syslog_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            syslog_handler.setFormatter(syslog_format)
+            app.logger.addHandler(syslog_handler)
+            app.logger.info("Syslog handler successfully configured.")
+        else:
+            app.logger.warning("Syslog skipped: /dev/log not found.")
     except Exception as e:
         app.logger.warning(f"Syslog handler setup failed: {e}")
     
