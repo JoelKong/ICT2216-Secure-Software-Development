@@ -9,9 +9,28 @@ on:
       - "main"
   workflow_dispatch:
 
-#TODO: SAST (sonarqube) and DAST (OWASP ZAP) scans
+#TODO: DAST (OWASP ZAP) scans after build finish
 jobs:
+  code-scan:
+    name: Code SAST Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
   build:
+    needs: code-scan
     runs-on: ubuntu-latest
     services:
       mysql:
