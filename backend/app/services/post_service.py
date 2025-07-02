@@ -7,6 +7,10 @@ from flask import current_app, send_from_directory
 from typing import Dict, List, Optional, Any, Tuple
 import os
 import time
+import magic
+
+ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 class PostService(IPostService):
     def __init__(self, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
@@ -17,6 +21,18 @@ class PostService(IPostService):
     def _is_allowed_file(self, filename: str) -> bool:
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+    
+    def _is_valid_mime(self, file) -> bool:
+        file.seek(0)
+        mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+        return mime in ALLOWED_MIME_TYPES
+
+    def _is_valid_size(self, file) -> bool:
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        return size <= MAX_FILE_SIZE
 
     def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10,
                 search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
@@ -165,6 +181,12 @@ class PostService(IPostService):
                 if not self._is_allowed_file(image_file.filename):
                     raise ValueError("File type not allowed")
                 
+                if not self._is_valid_mime(image_file):
+                    raise ValueError("Invalid file content")
+            
+                if not self._is_valid_size(image_file):
+                    raise ValueError("File too large")
+                
                 # Generate unique filename
                 filename = f"user_{user_id}_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
                 filepath = os.path.join(self.UPLOAD_FOLDER, filename)
@@ -201,6 +223,12 @@ class PostService(IPostService):
                 # Validate file
                 if not self._is_allowed_file(image_file.filename):
                     raise ValueError("File type not allowed")
+                # Yan Cong this part not tested but should work, cause the edit not working
+                if not self._is_valid_mime(image_file):
+                    raise ValueError("Invalid file content")
+            
+                if not self._is_valid_size(image_file):
+                    raise ValueError("File too large")
 
                 # Generate new filename
                 filename = f"user_{user_id}_{int(time.time())}.{image_file.filename.rsplit('.', 1)[1].lower()}"
