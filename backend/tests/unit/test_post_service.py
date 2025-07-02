@@ -38,6 +38,46 @@ class TestPostService:
         assert post_service._is_allowed_file('script.js') is False
         assert post_service._is_allowed_file('image.txt') is False
         assert post_service._is_allowed_file('noextension') is False
+
+    def test_is_valid_mime_valid(self, profile_service):
+        """Test MIME type validation with valid file"""
+        from io import BytesIO
+        file = BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00')  # Simulated PNG file content
+        file.filename = 'test.png'
+        file.seek = lambda *args: None
+        file.read = lambda x: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'
+
+        with patch('magic.from_buffer', return_value='image/png'):
+            assert profile_service._is_valid_mime(file) is True
+
+    def test_is_valid_mime_invalid(self, profile_service):
+        """Test MIME type validation with invalid file"""
+        from io import BytesIO
+        file = BytesIO(b'FAKECONTENT')
+        file.filename = 'test.png'
+        file.seek = lambda *args: None
+        file.read = lambda x: b'FAKECONTENT'
+
+        with patch('magic.from_buffer', return_value='text/plain'):
+            assert profile_service._is_valid_mime(file) is False
+
+    def test_file_size_check_valid(self, post_service):
+        """Test file size validation for files within allowed size"""
+        mock_file = Mock()
+        mock_file.seek = Mock()
+        mock_file.tell = Mock(return_value=1024 * 1024 * 2)  # 2 MB file size
+        mock_file.seek.return_value = None
+        
+        assert post_service._is_file_size_valid(mock_file) is True
+    
+    def test_file_size_check_invalid(self, post_service):
+        """Test file size validation for files exceeding allowed size"""
+        mock_file = Mock()
+        mock_file.seek = Mock()
+        mock_file.tell = Mock(return_value=1024 * 1024 * 11)  # 11 MB file size (assuming 10MB max)
+        mock_file.seek.return_value = None
+        
+        assert post_service._is_file_size_valid(mock_file) is False
     
     def test_get_posts_success(self, post_service, mock_post_repository):
         """Test successful post retrieval"""
@@ -97,11 +137,14 @@ class TestPostService:
         # Mock image file
         mock_image = Mock()
         mock_image.filename = 'test.jpg'
+        mock_image.read.return_value = b'\xff\xd8\xff\xe0'  # JPEG header bytes
         mock_image.save = Mock()
         
         mock_post_repository.create_post.return_value = {'post_id': 1}
         
-        with patch.object(post_service, '_is_allowed_file', return_value=True):
+        with patch.object(post_service, '_is_allowed_file', return_value=True), \
+         patch.object(post_service, '_is_valid_mime', return_value=True), \
+         patch.object(post_service, '_is_file_size_valid', return_value=True):
             result = post_service.create_post(
                 title='Test Post',
                 content='Test Content',
@@ -118,8 +161,11 @@ class TestPostService:
         """Test post creation with invalid file type"""
         mock_image = Mock()
         mock_image.filename = 'test.txt'
+        mock_image.read.return_value = b'This is not really an image.'  # Not valid JPEG data
         
-        with patch.object(post_service, '_is_allowed_file', return_value=False):
+        with patch.object(post_service, '_is_allowed_file', return_value=False), \
+         patch.object(post_service, '_is_valid_mime', return_value=False), \
+         patch.object(post_service, '_is_file_size_valid', return_value=False):
             with pytest.raises(ValueError, match="File type not allowed"):
                 post_service.create_post(
                     title='Test Post',

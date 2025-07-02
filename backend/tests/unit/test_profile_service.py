@@ -35,7 +35,47 @@ class TestProfileService:
         assert profile_service._is_allowed_file('image.gif') is False
         assert profile_service._is_allowed_file('document.pdf') is False
         assert profile_service._is_allowed_file('noextension') is False
+
+    def test_is_valid_mime_valid(self, profile_service):
+        """Test MIME type validation with valid file"""
+        from io import BytesIO
+        file = BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00')  # Simulated PNG file content
+        file.filename = 'test.png'
+        file.seek = lambda *args: None
+        file.read = lambda x: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'
+
+        with patch('magic.from_buffer', return_value='image/png'):
+            assert profile_service._is_valid_mime(file) is True
+
+    def test_is_valid_mime_invalid(self, profile_service):
+        """Test MIME type validation with invalid file"""
+        from io import BytesIO
+        file = BytesIO(b'FAKECONTENT')
+        file.filename = 'test.png'
+        file.seek = lambda *args: None
+        file.read = lambda x: b'FAKECONTENT'
+
+        with patch('magic.from_buffer', return_value='text/plain'):
+            assert profile_service._is_valid_mime(file) is False
+
+    def test_file_size_check_valid(self, post_service):
+        """Test file size validation for files within allowed size"""
+        mock_file = Mock()
+        mock_file.seek = Mock()
+        mock_file.tell = Mock(return_value=1024 * 1024 * 2)  # 2 MB file size
+        mock_file.seek.return_value = None
+        
+        assert post_service._is_file_size_valid(mock_file) is True
     
+    def test_file_size_check_invalid(self, post_service):
+        """Test file size validation for files exceeding allowed size"""
+        mock_file = Mock()
+        mock_file.seek = Mock()
+        mock_file.tell = Mock(return_value=1024 * 1024 * 11)  # 11 MB file size (assuming 10MB max)
+        mock_file.seek.return_value = None
+        
+        assert post_service._is_file_size_valid(mock_file) is False
+
     def test_get_user_profile_success(self, profile_service, mock_user_repository):
         """Test successful user profile retrieval"""
         from app.models.users import User
@@ -81,14 +121,20 @@ class TestProfileService:
     def test_update_profile_picture_success(self, mock_time, mock_makedirs, profile_service, mock_user_repository):
         """Test successful profile picture update"""
         mock_time.return_value = 1234567890
+
+        fake_image_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'
         
         mock_file = Mock()
         mock_file.filename = 'profile.jpg'
         mock_file.save = Mock()
+        mock_file.read = Mock(return_value=fake_image_content)  # Fix here
+        mock_file.seek = Mock()
         
         mock_user_repository.update_profile_picture.return_value = Mock()
         
-        with patch.object(profile_service, '_is_allowed_file', return_value=True):
+        with patch.object(profile_service, '_is_allowed_file', return_value=True), \
+            patch.object(profile_service, '_is_valid_size', return_value=True), \
+            patch.object(profile_service, '_is_valid_mime', return_value=True):
             result, error = profile_service.update_profile_picture(user_id=1, file=mock_file)
             
             assert error is None
@@ -101,7 +147,9 @@ class TestProfileService:
         mock_file = Mock()
         mock_file.filename = 'document.pdf'
         
-        with patch.object(profile_service, '_is_allowed_file', return_value=False):
+        with patch.object(profile_service, '_is_allowed_file', return_value=False), \
+            patch.object(profile_service, '_is_valid_size', return_value=False), \
+            patch.object(profile_service, '_is_valid_mime', return_value=False):
             result, error = profile_service.update_profile_picture(user_id=1, file=mock_file)
             
             assert result is None
