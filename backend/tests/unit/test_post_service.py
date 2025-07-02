@@ -39,7 +39,7 @@ class TestPostService:
         assert post_service._is_allowed_file('image.txt') is False
         assert post_service._is_allowed_file('noextension') is False
 
-    def test_is_valid_mime_valid(self, profile_service):
+    def test_is_valid_mime_valid(self, post_service):
         """Test MIME type validation with valid file"""
         from io import BytesIO
         file = BytesIO(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00')  # Simulated PNG file content
@@ -48,9 +48,9 @@ class TestPostService:
         file.read = lambda x: b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00'
 
         with patch('magic.from_buffer', return_value='image/png'):
-            assert profile_service._is_valid_mime(file) is True
+            assert post_service._is_valid_mime(file) is True
 
-    def test_is_valid_mime_invalid(self, profile_service):
+    def test_is_valid_mime_invalid(self, post_service):
         """Test MIME type validation with invalid file"""
         from io import BytesIO
         file = BytesIO(b'FAKECONTENT')
@@ -59,7 +59,7 @@ class TestPostService:
         file.read = lambda x: b'FAKECONTENT'
 
         with patch('magic.from_buffer', return_value='text/plain'):
-            assert profile_service._is_valid_mime(file) is False
+            assert post_service._is_valid_mime(file) is False
 
     def test_file_size_check_valid(self, post_service):
         """Test file size validation for files within allowed size"""

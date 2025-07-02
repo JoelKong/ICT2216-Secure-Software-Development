@@ -58,23 +58,23 @@ class TestProfileService:
         with patch('magic.from_buffer', return_value='text/plain'):
             assert profile_service._is_valid_mime(file) is False
 
-    def test_file_size_check_valid(self, post_service):
+    def test_file_size_check_valid(self, profile_service):
         """Test file size validation for files within allowed size"""
         mock_file = Mock()
         mock_file.seek = Mock()
         mock_file.tell = Mock(return_value=1024 * 1024 * 2)  # 2 MB file size
         mock_file.seek.return_value = None
         
-        assert post_service._is_valid_size(mock_file) is True
+        assert profile_service._is_valid_size(mock_file) is True
     
-    def test_file_size_check_invalid(self, post_service):
+    def test_file_size_check_invalid(self, profile_service):
         """Test file size validation for files exceeding allowed size"""
         mock_file = Mock()
         mock_file.seek = Mock()
         mock_file.tell = Mock(return_value=1024 * 1024 * 11)  # 11 MB file size (assuming 10MB max)
         mock_file.seek.return_value = None
         
-        assert post_service._is_valid_size(mock_file) is False
+        assert profile_service._is_valid_size(mock_file) is False
 
     def test_get_user_profile_success(self, profile_service, mock_user_repository):
         """Test successful user profile retrieval"""
