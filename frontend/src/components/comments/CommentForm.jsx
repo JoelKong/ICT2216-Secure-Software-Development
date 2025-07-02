@@ -3,6 +3,7 @@ import { GlobalContext } from "../../utils/globalContext";
 import DrawingCanvas from "../posts/DrawingCanvas";
 import fetchWithAuth from "../../utils/fetchWithAuth";
 import { API_ENDPOINT, CREATE_COMMENT_ROUTE } from "../../const";
+import { useNavigate } from "react-router-dom";
 
 export default function CommentForm({
   postId,
@@ -16,6 +17,7 @@ export default function CommentForm({
   const [drawingData, setDrawingData] = useState(null);
   const [setIsDrawing] = useState(false);
   const [mode, setMode] = useState(null);
+  const navigate = useNavigate();
 
   function handleFileChange(e) {
     setImage(e.target.files[0]);
@@ -59,6 +61,7 @@ export default function CommentForm({
       setImage(null);
       setDrawingData(null);
       onClose?.(); // close modal if needed
+      navigate(0);
     } catch (err) {
       console.error("Comment error:", err);
       setModal({ active: true, type: "fail", message: "Comment submission failed." });
