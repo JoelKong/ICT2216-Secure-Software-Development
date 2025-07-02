@@ -4,6 +4,9 @@ import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
+from app.models.users import User
+import pyotp
+from app.utils.validation import is_valid_email, is_strong_password, is_valid_username
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
@@ -38,23 +41,19 @@ class AuthController:
             password = raw.get("password") or ""
 
             # --- Validate email ---
-            if not re.match(EMAIL_REGEX, email):
+            if not is_valid_email(email):
                 return jsonify({"error": "Invalid email format"}), 400
 
             # --- Validate username ---
-            if not re.match(USERNAME_REGEX, username):
+            if not is_valid_username(username):
                 return jsonify({
                     "error": "Username must be 3–20 chars, letters/numbers/underscore only."
                 }), 400
 
             # --- Validate password ---
-            if not re.match(PASSWORD_REGEX, password):
-                return jsonify({
-                    "error": (
-                        "Password must be at least 8 chars, include uppercase, "
-                        "lowercase, a number, and a special character."
-                    )
-                }), 400
+            is_strong, reason = is_strong_password(password)
+            if not is_strong:
+                return jsonify({"error": reason}), 400
 
             current_app.logger.info(f"Signup attempt: {email} (username: {username})")
 
@@ -138,3 +137,36 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
+    @jwt_required()
+    def get_user_totp_secret(self):
+        """Retrieve the TOTP secret"""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        print("🧠 user_id from JWT:", user_id)
+        print("🔍 user found:", user)
+        print("🔐 totp_secret:", user.totp_secret if user else "no user")
+
+        if user and user.totp_secret:
+            return jsonify({"totpSecret": user.totp_secret}), 200
+        else:
+            return jsonify({"error": "TOTP secret not found"}), 404
+
+    @jwt_required()
+    def verify_totp(self):
+        """Verify the OTP code entered by the user"""
+        data = request.get_json()
+        code = data.get("code")  # OTP entered by user
+        secret = data.get("totpSecret")  # The TOTP secret from DB
+
+        # Ensure both code and secret are provided
+        if not code or not secret:
+            return jsonify({"success": False, "error": "Missing code or secret"}), 400
+
+        # Verify the TOTP code using the secret
+        totp = pyotp.TOTP(secret)
+        is_valid = totp.verify(code)
+
+        if is_valid:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Invalid TOTP code"}), 400

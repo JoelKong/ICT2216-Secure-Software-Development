@@ -8,6 +8,7 @@ from app.utils.validation import is_valid_email, is_strong_password
 from flask_jwt_extended import create_access_token, create_refresh_token
 import datetime
 from typing import Dict, Tuple, Optional
+import pyotp
 
 class AuthService(IAuthService):
     def __init__(self, user_repository: IUserRepository = None):
@@ -48,13 +49,17 @@ class AuthService(IAuthService):
         # Hash the password
         hashed_password = generate_password_hash(data['password'])
         
+        totp = pyotp.TOTP(pyotp.random_base32())
+        totp_secret = totp.secret
+
         # Prepare user data
         user_data = {
             'username': data['username'],
             'email': data['email'],
             'password': hashed_password,
             'profile_picture': data.get('profile_picture', 'default.jpg'),
-            'membership': 'basic'
+            'membership': 'basic',
+            'totp_secret': totp_secret
         }
         
         # Create user
