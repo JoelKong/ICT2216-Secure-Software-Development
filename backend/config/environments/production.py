@@ -10,3 +10,4 @@ class ProductionConfig(BaseConfig):
     SESSION_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SECURE = True
     REMEMBER_COOKIE_HTTPONLY = True
+    LOG_DIR = '/var/log/app'

@@ -9,7 +9,7 @@ on:
       - "main"
   workflow_dispatch:
 
-#TODO: SAST (sonarqube) and DAST (OWASP ZAP) scans
+#TODO: DAST (OWASP ZAP) scans
 jobs:
   build:
     runs-on: ubuntu-latest
