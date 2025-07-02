@@ -27,6 +27,8 @@ jobs:
         run: |
           echo "Sonar URL set? ${{ secrets.SONAR_HOST_URL != '' }}"
           echo "Sonar token set? ${{ secrets.SONAR_TOKEN != '' }}"
+          echo "Sonar organization set? ${{ secrets.SONAR_ORGANIZATION != '' }}"
+          echo "Sonar project key set? ${{ secrets.SONAR_PROJECT_KEY != '' }}"
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
         env:
