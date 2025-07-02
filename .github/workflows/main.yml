@@ -191,7 +191,7 @@ jobs:
           target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend"
           strip_components: 2
 
-      - name: Debug: Confirm file layout on EC2
+      - name: Debug- Confirm file layout on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
