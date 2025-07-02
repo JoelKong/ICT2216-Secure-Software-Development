@@ -155,6 +155,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Clean EC2 target directory before upload
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "Cleaning old app files..."
+            rm -rf ~/leonardo-app/*
+            mkdir -p ~/leonardo-app
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
