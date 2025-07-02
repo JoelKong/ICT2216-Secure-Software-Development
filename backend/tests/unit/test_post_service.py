@@ -68,7 +68,7 @@ class TestPostService:
         mock_file.tell = Mock(return_value=1024 * 1024 * 2)  # 2 MB file size
         mock_file.seek.return_value = None
         
-        assert post_service._is_file_size_valid(mock_file) is True
+        assert post_service._is_valid_size(mock_file) is True
     
     def test_file_size_check_invalid(self, post_service):
         """Test file size validation for files exceeding allowed size"""
@@ -165,7 +165,7 @@ class TestPostService:
         
         with patch.object(post_service, '_is_allowed_file', return_value=False), \
          patch.object(post_service, '_is_valid_mime', return_value=False), \
-         patch.object(post_service, '_is_file_size_valid', return_value=False):
+         patch.object(post_service, '_is_valid_size', return_value=False):
             with pytest.raises(ValueError, match="File type not allowed"):
                 post_service.create_post(
                     title='Test Post',
