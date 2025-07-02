@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import App from "../../App";
 import { MemoryRouter } from "react-router-dom";
 
-// Mock constants
+// ✅ Mock constants
 jest.mock("../../const", () => ({
   API_ENDPOINT: "http://localhost:5000",
 }));
@@ -12,7 +12,13 @@ jest.mock("../../utils/upgradeMembership", () => ({
   stripe_publishable_key: "test_key",
 }));
 
-// Mock fetch for user profile
+// ✅ Mock jwt-decode to simulate totp_verified: true
+jest.mock("jwt-decode", () => () => ({
+  sub: "1",
+  totp_verified: true,
+}));
+
+// ✅ Helper to mock fetch user
 const mockFetchUser = (user = null, ok = true) => {
   global.fetch = jest.fn(() =>
     Promise.resolve({
@@ -29,7 +35,7 @@ describe("App Component", () => {
   });
 
   test("renders AuthPage when not authenticated", async () => {
-    mockFetchUser();
+    mockFetchUser(); // no user returned
     render(
       <MemoryRouter initialEntries={["/"]}>
         <App />
@@ -42,7 +48,7 @@ describe("App Component", () => {
     );
   });
 
-  test("redirects to /posts and renders HomePage when authenticated", async () => {
+  test("redirects to /posts and renders HomePage when authenticated and totp_verified", async () => {
     const user = {
       username: "testuser",
       email: "test@example.com",
@@ -51,13 +57,16 @@ describe("App Component", () => {
       created_at: "2024-01-01T00:00:00Z",
       post_limit: 2,
     };
-    localStorage.setItem("access_token", "testtoken");
-    mockFetchUser(user);
+
+    localStorage.setItem("access_token", "mock-valid-token");
+    mockFetchUser(user); // valid user returned
+
     render(
       <MemoryRouter initialEntries={["/posts"]}>
         <App />
       </MemoryRouter>
     );
+
     await waitFor(() =>
       expect(screen.getByText(/Welcome, testuser/i)).toBeInTheDocument()
     );
