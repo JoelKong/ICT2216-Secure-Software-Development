@@ -1,8 +1,10 @@
 from app.interfaces.services.IPostService import IPostService
 from app.interfaces.repositories.IPostRepository import IPostRepository
 from app.interfaces.repositories.ILikeRepository import ILikeRepository
+from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.repositories.post_repository import PostRepository
 from app.repositories.like_repository import LikeRepository
+from app.repositories.user_repository import UserRepository
 from flask import current_app, send_from_directory
 from typing import Dict, List, Optional, Any, Tuple
 import os
@@ -13,9 +15,10 @@ ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 class PostService(IPostService):
-    def __init__(self, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
+    def __init__(self, user_repository: IUserRepository = None, post_repository: IPostRepository = None, like_repository: ILikeRepository = None):
         self.post_repository = post_repository or PostRepository()
         self.like_repository = like_repository or LikeRepository()
+        self.user_repository = user_repository or UserRepository()
         self.UPLOAD_FOLDER = '/data/post_uploads'
     
     def _is_allowed_file(self, filename: str) -> bool:
@@ -264,4 +267,31 @@ class PostService(IPostService):
             return send_from_directory(self.UPLOAD_FOLDER, filename)
         except Exception as e:
             current_app.logger.error(f"Error serving file {filename}: {str(e)}")
-            raise 
+            raise
+
+    def has_reached_daily_post_limit(self, user_id: int) -> bool:
+        """Check if user has reached the daily post limit."""
+        try:
+            user = self.user_repository.get_by_id(user_id)
+            if not user:
+                current_app.logger.warning(f"Profile request for non-existent user {user_id}")
+                return None, "User not found"
+                
+            # Format response
+            user_membership = user.membership
+            # Determine daily post limit based on membership
+            if user_membership == "basic":
+                daily_post_limit = 3
+            else:
+                daily_post_limit = None  # no limit
+            
+            # If unlimited, just return success with no limit info
+            if daily_post_limit is None:
+                return False
+            else:
+                post_count = self.post_repository.count_user_posts_today(user_id)
+                return post_count >= daily_post_limit
+            
+        except Exception as e:
+            current_app.logger.error(f"Error checking post limit for user {user_id}: {str(e)}")
+            raise

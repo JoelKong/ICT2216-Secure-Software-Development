@@ -44,8 +44,12 @@ class IPostService(ABC):
         """Update a post's title, content, and optionally the image"""
         pass
 
-
     @abstractmethod
     def get_post_image(self, filename: str) -> Any:
         """Serve post image by filename"""
+        pass
+
+    @abstractmethod
+    def has_reached_daily_post_limit(self, user_id: int) -> bool:
+        """Check if user has reached the daily post limit."""
         pass
