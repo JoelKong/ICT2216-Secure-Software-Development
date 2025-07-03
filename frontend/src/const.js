@@ -15,7 +15,8 @@ export const CREATE_POST_ROUTE = "api/posts/create";
 export const EDIT_POST_ROUTE = "api/posts/edit";
 export const DELETE_POSTS_ROUTE = "api/posts/delete";
 export const LIKE_POST_ROUTE = "api/posts/like";
-export const FETCH_POST_SUMMARY_ROUTE = "api/posts/summary"
+export const FETCH_POST_SUMMARY_ROUTE = "api/posts/summary";
+export const FETCH_USER_POST_LIMIT = "api/posts/limit"
 
 // Comments
 export const FETCH_COMMENTS_ROUTE = `api/comments`;
@@ -28,3 +29,7 @@ export const FETCH_USER_ROUTE = "api/profile";
 // Payment-related endpoints - ensure server checks authentication and session validity
 export const STRIPE_CHECKOUT_ROUTE = "api/upgrade-membership";
 export const VITE_STRIPE_SESSION_VERIFICATION_ROUTE = "api/verify-session";
+
+//OTP   
+export const VERIFY_OTP = "api/verify_totp";
+export const GET_TOTP = "api/get_user_totp_secret";

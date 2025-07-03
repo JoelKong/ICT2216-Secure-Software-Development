@@ -29,3 +29,8 @@ class IPostRepository(IBaseRepository[Post]):
     def edit_post(self, post_id: int, title: str, content: str, image_url: Optional[str]) -> Optional[Post]:
         """Update the post's content and optionally the image"""
         pass
+
+    @abstractmethod
+    def count_user_posts_today(self, user_id: int) -> int:
+        """Retrieve count of posts made by user today"""
+        pass

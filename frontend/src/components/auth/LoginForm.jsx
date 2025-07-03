@@ -95,7 +95,7 @@ export default function LoginForm({ setIsSignup, setIsAuthChecked }) {
           token: data.access_token,
           user: null,
         });
-        navigate("/posts");
+        navigate("/setup_totp");
       } else {
         setModal({
           active: true,

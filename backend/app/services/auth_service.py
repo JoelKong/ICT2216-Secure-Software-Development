@@ -8,6 +8,7 @@ from app.utils.validation import is_valid_email, is_strong_password
 from flask_jwt_extended import create_access_token, create_refresh_token
 import datetime
 from typing import Dict, Tuple, Optional
+import pyotp
 
 class AuthService(IAuthService):
     def __init__(self, user_repository: IUserRepository = None):
@@ -48,13 +49,17 @@ class AuthService(IAuthService):
         # Hash the password
         hashed_password = generate_password_hash(data['password'])
         
+        totp = pyotp.TOTP(pyotp.random_base32())
+        totp_secret = totp.secret
+
         # Prepare user data
         user_data = {
             'username': data['username'],
             'email': data['email'],
             'password': hashed_password,
             'profile_picture': data.get('profile_picture', 'default.jpg'),
-            'membership': 'basic'
+            'membership': 'basic',
+            'totp_secret': totp_secret
         }
         
         # Create user
@@ -79,16 +84,25 @@ class AuthService(IAuthService):
         current_app.logger.info(f"Successful login for user: {user.username}")
         return user, None
     
-    def generate_tokens(self, user_id: int) -> Dict[str, str]:
+    def generate_tokens(self, user_id: int, totp_verified: bool = False) -> Dict[str, str]:
         """Generate access and refresh tokens"""
         # Convert user_id to string
         str_user_id = str(user_id)
-        
-        # Create access token with 15-minute expiry
-        access_token = create_access_token(
-            identity=str_user_id,
-            expires_delta=datetime.timedelta(minutes=15)
-        )
+        additional_claims = {"totp_verified": totp_verified}
+
+        if not totp_verified:
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=3),
+                additional_claims=additional_claims
+            )
+        else:
+            # Create access token with 15-minute expiry
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=15),
+                additional_claims=additional_claims
+            )
         
         # Create refresh token with 30-day expiry
         refresh_token = create_refresh_token(
