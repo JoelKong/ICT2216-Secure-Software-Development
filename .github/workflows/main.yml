@@ -15,6 +15,16 @@ jobs:
     needs: build
     name: DAST OWASP ZAP Scan
     steps:
+      - name: Start frontend dev server
+        run: |
+          cd frontend
+          npm ci
+          npm run dev &
+        timeout-minutes: 2
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5173
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
