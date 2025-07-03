@@ -1,7 +1,7 @@
 # backend/app/controllers/post_controller.py
 
 import re
-from flask import request, jsonify, current_app, send_from_directory
+from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.interfaces.services.IPostService import IPostService
@@ -10,7 +10,7 @@ from openai import OpenAI
 import os
 
 # --- Validation constants & regexes ---
-SORT_OPTIONS        = {"recent", "oldest", "popular"}
+SORT_OPTIONS        = {"recent", "likes", "comments"}
 INT_REGEX = r"^\d+$"  # Accepts 0 and all non-negative integers
 SEARCH_MAX_LENGTH   = 100                   # max chars for search query
 TITLE_MAX_LENGTH    = 100                   # max chars for post title
@@ -20,7 +20,7 @@ FILENAME_REGEX      = r"^[A-Za-z0-9_\-]+\.(?:png|jpg|jpeg|gif)$"
 
 
 class PostController:
-    def __init__(self, post_service: IPostService = None):
+    def __init__(self, post_service: IPostService = None,):
         self.post_service = post_service or PostService()
 
     @jwt_required()
@@ -112,7 +112,7 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             success, message = self.post_service.delete_post(pid, user_id)
             if not success:
@@ -190,14 +190,15 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             post = self.post_service.get_post_detail(pid, user_id)
             if not post:
                 return jsonify({"error": "Post not found"}), 404
+
             if post["user_id"] != user_id:
                 return jsonify({"error": "Unauthorized"}), 403
-
+            
             return jsonify({
                 "post_id": post["post_id"],
                 "title": post["title"],
@@ -216,7 +217,7 @@ class PostController:
             if not re.match(INT_REGEX, str(post_id)):
                 return jsonify({"error": "Invalid post ID"}), 400
             pid = int(post_id)
-            user_id = get_jwt_identity()
+            user_id = int(get_jwt_identity())
 
             title = (request.form.get("title") or "").strip()
             content = (request.form.get("content") or "").strip()
@@ -267,30 +268,22 @@ class PostController:
     @jwt_required()
     def summarize_post(self, post_id):
         try:
-            current_app.logger.info(f"[AI SUMMARY] Requested for post_id={post_id}")
-
             user_id = get_jwt_identity()
-            current_app.logger.info(f"[AI SUMMARY] JWT Identity resolved: user_id={user_id}")
 
             post = PostService().get_post_detail(post_id, user_id)
             if not post:
-                current_app.logger.warning(f"[AI SUMMARY] Post not found: post_id={post_id}")
                 return jsonify({"error": "Post not found"}), 404
 
             content = post["content"]
             word_count = len(content.split())
-            current_app.logger.info(f"[AI SUMMARY] Word count for post {post_id}: {word_count}")
 
             if word_count <= 50:
-                current_app.logger.info(f"[AI SUMMARY] Post too short to summarize.")
                 return jsonify({"summary": "Post content too short to summarize."}), 200
 
             client = OpenAI(api_key=os.environ.get("OPENAI_SECRET_KEY"))
             if not client:
-                current_app.logger.error("[AI SUMMARY] Missing OpenAI API key!")
                 return jsonify({"error": "Server misconfigured for OpenAI"}), 500
 
-            current_app.logger.info(f"[AI SUMMARY] Calling OpenAI API for post_id={post_id}")
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -302,9 +295,25 @@ class PostController:
             )
 
             summary = response.choices[0].message.content
-            current_app.logger.info(f"[AI SUMMARY] Summary generated for post_id={post_id}")
             return jsonify({"summary": summary}), 200
 
         except Exception as e:
             current_app.logger.error(f"[AI SUMMARY] Exception: {e}")
             return jsonify({"error": "Failed to summarize post."}), 500
+        
+    @jwt_required()
+    def get_user_post_limit(self):
+        try:
+            user_id = int(get_jwt_identity())
+            # If unlimited, just return success with no limit info
+            # Use PostService method to check if limit reached
+            post_service = PostService()
+            has_reached_limit = post_service.has_reached_daily_post_limit(user_id)
+
+            return jsonify({
+                "has_reached_limit": has_reached_limit
+            }), 200
+
+        except Exception as e:
+            current_app.logger.error(f"Error getting user post limit: {str(e)}")
+            return jsonify({"error": "Failed to retrieve post limit"}), 500

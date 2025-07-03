@@ -164,6 +164,12 @@ class AuthController:
         is_valid = totp.verify(code)
 
         if is_valid:
-            return jsonify({"success": True}), 200
+            # Generate a new access token with totp_verified = True
+            user_id = int(get_jwt_identity())
+            new_tokens = self.auth_service.generate_tokens(user_id, totp_verified=True)
+            return jsonify({
+                "message": "TOTP Verified!",
+                "access_token": new_tokens["access_token"]
+            }), 200
         else:
             return jsonify({"success": False, "error": "Invalid TOTP code"}), 400
