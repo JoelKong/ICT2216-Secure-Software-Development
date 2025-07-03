@@ -14,7 +14,6 @@ else:
 # Create app with environment configuration
 app = create_app(env)
 
-app.config['LOG_DIR'] = os.getenv("LOG_PATH", os.path.join(os.getcwd(), "logs"))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)

@@ -6,6 +6,7 @@ def init_app_config(app, provided_env=None):
     # Use provided environment if available, fallback to environment variable
     env = provided_env or os.getenv('FLASK_ENV', 'development')
     
+    app.config['LOG_DIR'] = os.getenv("LOG_PATH", os.path.join(os.getcwd(), "logs"))
     # Import here to avoid circular imports
     from .settings import get_config
     
