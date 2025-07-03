@@ -142,9 +142,6 @@ class AuthController:
         """Retrieve the TOTP secret"""
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
-        print("🧠 user_id from JWT:", user_id)
-        print("🔍 user found:", user)
-        print("🔐 totp_secret:", user.totp_secret if user else "no user")
 
         if user and user.totp_secret:
             return jsonify({"totpSecret": user.totp_secret}), 200
