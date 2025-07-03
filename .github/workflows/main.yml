@@ -9,7 +9,6 @@ on:
       - "main"
   workflow_dispatch:
 
-#TODO: DAST (OWASP ZAP) scans
 jobs:
   zap_scan:
     runs-on: ubuntu-latest
@@ -36,7 +35,6 @@ jobs:
           name: zap-report
           path: owasp-zap-report.html
 
-jobs:
   code-scan:
     name: Code SAST Scan
     runs-on: ubuntu-latest
