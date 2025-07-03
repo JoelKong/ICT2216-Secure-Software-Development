@@ -94,6 +94,8 @@ export default function useProfile() {
         return;
       }
 
+      console.log("Sending updated field to backend:", updatedField);
+
       const res = await fetchWithAuth(
         `${API_ENDPOINT}/${FETCH_USER_ROUTE}`,
         {

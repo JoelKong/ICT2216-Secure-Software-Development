@@ -1,7 +1,7 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
-import { API_ENDPOINT, CREATE_POST_ROUTE } from "../../const";
+import { API_ENDPOINT, CREATE_POST_ROUTE, FETCH_USER_POST_LIMIT } from "../../const";
 import { useNavigate } from "react-router-dom";
 import DrawingCanvas from "./DrawingCanvas";
 
@@ -17,6 +17,42 @@ export default function CreatePostForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const drawingCanvasRef = useRef(null);
+
+  useEffect(() => {
+    async function checkPostLimit() {
+      try {
+        const res = await fetchWithAuth(
+          `${API_ENDPOINT}/${FETCH_USER_POST_LIMIT}`,
+          { method: "GET" },
+          getAuthToken,
+          updateAuthToken,
+          handleLogout
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to check post limit");
+        }
+        if (data.has_reached_limit) {
+          setModal({
+            active: true,
+            type: "fail",
+            message: "You have reached your daily post limit.",
+          });
+          navigate("/posts");  // Redirect here when limit reached
+        }
+      } catch (err) {
+        console.error("Error checking post limit:", err);
+        setModal({
+          active: true,
+          type: "fail",
+          message: "Unable to verify post limit. Redirecting to posts...",
+        });
+        navigate("/posts");  // Redirect here on error
+      }
+    }
+    checkPostLimit();
+  }, [getAuthToken, updateAuthToken, handleLogout, setModal, navigate]);
+
 
   async function handleSubmit(e) {
     e.preventDefault();

@@ -84,16 +84,25 @@ class AuthService(IAuthService):
         current_app.logger.info(f"Successful login for user: {user.username}")
         return user, None
     
-    def generate_tokens(self, user_id: int) -> Dict[str, str]:
+    def generate_tokens(self, user_id: int, totp_verified: bool = False) -> Dict[str, str]:
         """Generate access and refresh tokens"""
         # Convert user_id to string
         str_user_id = str(user_id)
-        
-        # Create access token with 15-minute expiry
-        access_token = create_access_token(
-            identity=str_user_id,
-            expires_delta=datetime.timedelta(minutes=15)
-        )
+        additional_claims = {"totp_verified": totp_verified}
+
+        if not totp_verified:
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=3),
+                additional_claims=additional_claims
+            )
+        else:
+            # Create access token with 15-minute expiry
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=15),
+                additional_claims=additional_claims
+            )
         
         # Create refresh token with 30-day expiry
         refresh_token = create_refresh_token(
