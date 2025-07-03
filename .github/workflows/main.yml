@@ -160,7 +160,18 @@ jobs:
         with:
           path: artifacts
 
-      - name: Upload backend app to production server
+      - name: Clean EC2 target directory before upload
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "Cleaning old app files..."
+            rm -rf ~/leonardo-app/*
+            mkdir -p ~/leonardo-app
+
+      - name: Upload backend artifact
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -168,17 +179,17 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           source: "artifacts/backend-app/"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app"
-          strip_components: 1
+          strip_components: 2
 
-      - name: Upload frontend build to production server
+      - name: Upload frontend artifact
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/frontend-build/"
-          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend/dist"
-          strip_components: 1
+          source: "artifacts/frontend-build/*"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend"
+          strip_components: 2
 
       - name: Create .env files on production server
         uses: appleboy/ssh-action@master
