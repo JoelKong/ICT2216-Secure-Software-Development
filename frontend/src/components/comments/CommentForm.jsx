@@ -11,7 +11,8 @@ export default function CommentForm({
   onSuccess,
   onClose,
 }) {
-  const { getAuthToken, updateAuthToken, handleLogout, setModal } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout, setModal } =
+    useContext(GlobalContext);
   const [content, setContent] = useState("");
   const [image, setImage] = useState(null);
   const [drawingData, setDrawingData] = useState(null);
@@ -52,7 +53,11 @@ export default function CommentForm({
       const data = await res.json();
 
       if (!res.ok) {
-        setModal({ active: true, type: "fail", message: data.error || "Failed to post comment" });
+        setModal({
+          active: true,
+          type: "fail",
+          message: data.error || "Failed to post comment",
+        });
         return;
       }
 
@@ -64,7 +69,11 @@ export default function CommentForm({
       navigate(0);
     } catch (err) {
       console.error("Comment error:", err);
-      setModal({ active: true, type: "fail", message: "Comment submission failed." });
+      setModal({
+        active: true,
+        type: "fail",
+        message: "Comment submission failed.",
+      });
     }
   }
 
@@ -78,7 +87,7 @@ export default function CommentForm({
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-2 right-2 text-gray-500 hover:text-black"
+            className="absolute top-2 right-2 text-gray-500 hover:text-black cursor-pointer"
           >
             ✕
           </button>
@@ -94,7 +103,9 @@ export default function CommentForm({
           />
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium">Comment Image (optional):</label>
+            <label className="block text-sm font-medium">
+              Comment Image (optional):
+            </label>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -103,8 +114,11 @@ export default function CommentForm({
                   setDrawingData(null);
                   setImage(null);
                 }}
-                className={`px-3 py-1 rounded border ${mode === "upload" ? "bg-blue-600 text-white" : "bg-white text-black"
-                  }`}
+                className={`px-3 py-1 cursor-pointer rounded border ${
+                  mode === "upload"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-black"
+                }`}
               >
                 Upload
               </button>
@@ -115,8 +129,11 @@ export default function CommentForm({
                   setDrawingData(null);
                   setImage(null);
                 }}
-                className={`px-3 py-1 rounded border ${mode === "draw" ? "bg-blue-600 text-white" : "bg-white text-black"
-                  }`}
+                className={`px-3 py-1 cursor-pointer rounded border ${
+                  mode === "draw"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-black"
+                }`}
               >
                 Draw
               </button>
@@ -140,7 +157,7 @@ export default function CommentForm({
 
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded hover:bg-blue-700"
           >
             Submit
           </button>

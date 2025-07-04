@@ -1,5 +1,3 @@
-# backend/app/controllers/auth_controller.py
-
 import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
@@ -14,7 +12,6 @@ from flask_jwt_extended import (
     unset_jwt_cookies
 )
 
-# --- Regex patterns ---
 EMAIL_REGEX = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 # Password: ≥8 chars, at least one lowercase, one uppercase, one digit, one special
 PASSWORD_REGEX = (
@@ -57,7 +54,6 @@ class AuthController:
 
             current_app.logger.info(f"Signup attempt: {email} (username: {username})")
 
-            # Delegate to service for any further business logic
             payload = {"email": email, "username": username, "password": password}
             is_valid, message = self.auth_service.validate_signup_data(payload)
             if not is_valid:
@@ -93,10 +89,6 @@ class AuthController:
             # Validate email format
             if not re.match(EMAIL_REGEX, email):
                 return jsonify({"error": "Invalid email format"}), 400
-
-            # (Optionally) validate password complexity again, or skip
-            # if not re.match(PASSWORD_REGEX, password):
-            #     return jsonify({"error": "Invalid password format"}), 400
 
             user, error = self.auth_service.login(email, password)
             if error:
@@ -137,6 +129,7 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
+        
     @jwt_required()
     def get_user_totp_secret(self):
         """Retrieve the TOTP secret"""
@@ -152,8 +145,8 @@ class AuthController:
     def verify_totp(self):
         """Verify the OTP code entered by the user"""
         data = request.get_json()
-        code = data.get("code")  # OTP entered by user
-        secret = data.get("totpSecret")  # The TOTP secret from DB
+        code = data.get("code")
+        secret = data.get("totpSecret")
 
         # Ensure both code and secret are provided
         if not code or not secret:

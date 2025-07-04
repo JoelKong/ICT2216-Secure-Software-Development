@@ -2,7 +2,12 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
-import { API_ENDPOINT, FETCH_POSTS_ROUTE, LIKE_POST_ROUTE, FETCH_POST_SUMMARY_ROUTE } from "../../const";
+import {
+  API_ENDPOINT,
+  FETCH_POSTS_ROUTE,
+  LIKE_POST_ROUTE,
+  FETCH_POST_SUMMARY_ROUTE,
+} from "../../const";
 import { Heart, MessageCircle } from "lucide-react";
 import checkRateLimit from "../../utils/checkRateLimit";
 import { editPost, deletePost } from "../../utils/postHelpers";
@@ -11,7 +16,15 @@ import CommentSection from "../../components/comments/CommentSection";
 
 export default function PostDetail() {
   const { postId } = useParams();
-  const { getAuthToken, updateAuthToken, handleLogout, auth, setModal, rateLimit, setRateLimit } = useContext(GlobalContext);
+  const {
+    getAuthToken,
+    updateAuthToken,
+    handleLogout,
+    auth,
+    setModal,
+    rateLimit,
+    setRateLimit,
+  } = useContext(GlobalContext);
 
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,10 +151,13 @@ export default function PostDetail() {
   }, [postId]);
 
   if (loading) return <div className="text-center text-white">Loading...</div>;
-  if (!post) return <div className="text-center text-white">Post not found.</div>;
+  if (!post)
+    return <div className="text-center text-white">Post not found.</div>;
 
   const postImageUrl = post?.image
-    ? `${API_ENDPOINT}/api/posts${post.image.startsWith('/') ? post.image : '/' + post.image}`
+    ? `${API_ENDPOINT}/api/posts${
+        post.image.startsWith("/") ? post.image : "/" + post.image
+      }`
     : null;
 
   return (
@@ -174,7 +190,7 @@ export default function PostDetail() {
           onClick={toggleLike}
           aria-label="Like post"
           className={`flex items-center space-x-1 cursor-pointer ${
-            liked ? "text-red-500" : "text-gray-500"
+            liked ? "text-red-500" : "text-white-500"
           } hover:text-red-500`}
         >
           <Heart className={`h-6 w-6 ${liked ? "fill-current" : ""}`} />
@@ -183,12 +199,12 @@ export default function PostDetail() {
 
         {/* Comment Button*/}
         <button
-          className="flex items-center space-x-1 cursor-pointer text-gray-500 hover:text-blue-500"
+          className="flex items-center space-x-1 cursor-pointer text-white hover:text-blue-300"
           aria-label="Comment button"
           onClick={() => setShowComments((prev) => !prev)}
         >
           <MessageCircle className="h-6 w-6" />
-          <span>{post.comments || 0}</span>
+          <span className="pr-4">{post.comments || 0}</span>
           {showComments ? "Hide Comments" : "Show Comments"}
         </button>
 
@@ -196,13 +212,13 @@ export default function PostDetail() {
         {auth.user && auth.user.user_id === post.user_id && (
           <>
             <button
-              className="ml-4 px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              className="ml-4 px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 cursor-pointer"
               onClick={() => handleEditPost(post.post_id)}
             >
               Edit
             </button>
             <button
-              className="ml-2 px-3 py-1 bg-red-400 text-black rounded hover:bg-red-500"
+              className="ml-2 px-3 py-1 bg-red-400 text-black rounded hover:bg-red-500 cursor-pointer"
               onClick={() => handleDeletePost(post.post_id)}
             >
               Delete

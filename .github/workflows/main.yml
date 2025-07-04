@@ -241,7 +241,7 @@ jobs:
       - name: Create frontend .env file for build for VITE variables
         run: |
           echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" > leonardo-app/frontend/.env.production
-          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > leonardo-app/frontend/.env.production
+          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" >> leonardo-app/frontend/.env.production
 
       - name: Install frontend dependencies and build
         run: |
@@ -260,14 +260,25 @@ jobs:
             rm -rf ~/leonardo-app/*
             mkdir -p ~/leonardo-app
 
-      - name: Upload application files to server
+      - name: Upload source code artifact
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "leonardo-app/"
+          source: "leonardo-app/**"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app"
+          strip_components: 1
+
+      - name: Update frontend-dist artifact
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "leonardo-app/frontend/dist/**"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend/dist"
+          strip_components: 3
 
       - name: Create .env files and finalize deployment on production server
         uses: appleboy/ssh-action@master
@@ -278,9 +289,6 @@ jobs:
           script: |
             set -e
             PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
-            mkdir -p $PROJECT_DIR/backend
-            mkdir -p $PROJECT_DIR/scripts
-            mkdir -p $PROJECT_DIR/nginx
             cd $PROJECT_DIR
 
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
@@ -296,6 +304,8 @@ jobs:
             echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
             echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
+            echo "OPENAI_SECRET_KEY=${{ secrets.OPENAI_SECRET_KEY }}" >> backend/.env.production
+
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
       

@@ -1,5 +1,3 @@
-# backend/app/controllers/post_controller.py
-
 import re
 from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -306,7 +304,6 @@ class PostController:
         try:
             user_id = int(get_jwt_identity())
             # If unlimited, just return success with no limit info
-            # Use PostService method to check if limit reached
             post_service = PostService()
             has_reached_limit = post_service.has_reached_daily_post_limit(user_id)
 

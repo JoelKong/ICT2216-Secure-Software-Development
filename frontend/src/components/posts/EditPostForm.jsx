@@ -8,7 +8,8 @@ import DrawingCanvas from "./DrawingCanvas";
 export default function EditPostForm() {
   const { postId } = useParams();
   const navigate = useNavigate();
-  const { getAuthToken, updateAuthToken, handleLogout, setModal } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout, setModal } =
+    useContext(GlobalContext);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -40,12 +41,18 @@ export default function EditPostForm() {
         setContent(data.content);
         setExistingImage(
           data.image
-            ? `${API_ENDPOINT}/api/posts${data.image.startsWith("/") ? data.image : "/" + data.image}`
+            ? `${API_ENDPOINT}/api/posts${
+                data.image.startsWith("/") ? data.image : "/" + data.image
+              }`
             : null
         );
       } catch (err) {
         console.error(err);
-        setModal({ active: true, type: "fail", message: "Failed to load post data." });
+        setModal({
+          active: true,
+          type: "fail",
+          message: "Failed to load post data.",
+        });
       }
     }
     fetchPost();
@@ -106,7 +113,10 @@ export default function EditPostForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-white rounded space-y-4 max-w-2xl mx-auto">
+    <form
+      onSubmit={handleSubmit}
+      className="p-6 bg-white rounded space-y-4 max-w-2xl mx-auto"
+    >
       <h2 className="text-2xl font-bold">Edit Post</h2>
 
       <input
@@ -134,7 +144,7 @@ export default function EditPostForm() {
           <button
             type="button"
             onClick={() => setChangeImage(true)}
-            className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500"
+            className="bg-yellow-400 text-black px-3 py-1 rounded hover:bg-yellow-500 cursor-pointer"
           >
             Change Image
           </button>
@@ -195,8 +205,8 @@ export default function EditPostForm() {
               height={300}
               backgroundColor="#fff"
               onSave={(dataUrl) => {
-                setSavedDrawing(dataUrl);  // Save the dataURL for preview and submission
-                setUploadedImage(null);    // Clear uploaded image if any
+                setSavedDrawing(dataUrl); // Save the dataURL for preview and submission
+                setUploadedImage(null); // Clear uploaded image if any
               }}
             />
           )}
@@ -204,7 +214,7 @@ export default function EditPostForm() {
           {/* Cancel image change */}
           <button
             type="button"
-            className="mt-4 bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+            className="mt-4 bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400 cursor-pointer mr-4"
             onClick={() => {
               setChangeImage(false);
               setImageMode("upload");
@@ -220,7 +230,7 @@ export default function EditPostForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 cursor-pointer"
       >
         {isSubmitting ? "Saving..." : "Update Post"}
       </button>
