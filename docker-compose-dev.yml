@@ -81,14 +81,6 @@ services:
     networks:
       - leonardo-network
 
-  sonarqube:
-    image: sonarqube:latest
-    container_name: sonarqube
-    ports:
-      - "9000:9000"
-    networks:
-      - leonardo-network
-
 #   nginx:                                      # THIS IS THE LAB ONE
 #     image: nginx:latest
 #     container_name: nginx-proxy

@@ -1,13 +1,4 @@
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html
-    networks:
-      - app-network
-
   backend:
     build: ./backend
     env_file:
@@ -18,7 +9,18 @@ services:
       - profile_uploads_data:/data/uploads
       - comment_uploads_data:/data/comment_uploads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for MySQL to be ready...'
+        until nc -z db 3306; do
+          sleep 3
+        done
+        echo 'MySQL is up - running migrations and starting backend'
+        python migrate.py &&
+        gunicorn --bind 0.0.0.0:5000 --log-level=info wsgi:app
+      "
     networks:
       - app-network
 
@@ -30,6 +32,11 @@ services:
       - ./.env.production
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
@@ -42,16 +49,7 @@ services:
     volumes:
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
-      - frontend
       - backend
-    networks:
-      - app-network
-
-  sonarqube:
-    image: sonarqube:latest
-    container_name: sonarqube
-    ports:
-      - "9000:9000"
     networks:
       - app-network
 
