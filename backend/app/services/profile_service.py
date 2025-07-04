@@ -145,7 +145,7 @@ class ProfileService(IProfileService):
             if user and user.profile_picture:
                 try:
                     # Extract filename from the stored path
-                    old_filename = user.profile_picture.split('/')[-1]  # Gets 'filename.jpg' from '/uploads/filename.jpg'
+                    old_filename = user.profile_picture.split('/')[-1] 
                     old_filepath = os.path.join(self.UPLOAD_FOLDER, old_filename)
                     
                     # Delete the old file if it exists
@@ -154,7 +154,6 @@ class ProfileService(IProfileService):
                         current_app.logger.info(f"Deleted old profile picture: {old_filepath}")
                 except Exception as e:
                     current_app.logger.error(f"Error deleting old profile picture: {str(e)}")
-                    # Don't fail the entire operation if deletion fails
             
             # Generate a unique filename to avoid collisions
             filename = f"user_{user_id}_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}"
@@ -194,15 +193,6 @@ class ProfileService(IProfileService):
             user = self.user_repository.get_by_id(user_id)
             if not user:
                 return False, "User not found"
-                
-            # # Delete profile picture if exists
-            # if user.profile_picture:
-            #     try:
-            #         filepath = os.path.join(self.UPLOAD_FOLDER, user.profile_picture.split('/')[-1])
-            #         if os.path.exists(filepath):
-            #             os.remove(filepath)
-            #     except OSError as e:
-            #         current_app.logger.error(f"Failed to delete profile picture: {str(e)}")
             
             # Delete user from database
             self.user_repository.delete(user)

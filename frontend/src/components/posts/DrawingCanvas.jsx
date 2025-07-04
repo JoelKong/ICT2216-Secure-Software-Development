@@ -191,6 +191,7 @@ const DrawingCanvas = forwardRef(
             Brush Color:{" "}
             <input
               type="color"
+              className="cursor-pointer"
               value={isEraser ? backgroundColor : brushColor}
               disabled={isEraser}
               onChange={(e) => setBrushColor(e.target.value)}

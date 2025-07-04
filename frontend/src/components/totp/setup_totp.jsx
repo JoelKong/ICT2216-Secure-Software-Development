@@ -84,7 +84,7 @@ function SetupTotp() {
       {totpSecret ? (
         <>
           <p className="font-bold mb-4 text-xl">
-            Scan the QR code with your authenticator authenticator:
+            Scan the QR code with your desired authenticator:
           </p>
           <QRCodeCanvas
             value={`otpauth://totp/MyApp?secret=${totpSecret}`}

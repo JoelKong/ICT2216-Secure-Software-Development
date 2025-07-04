@@ -121,7 +121,7 @@ class ProfileController:
                 }), 400
 
             current_app.logger.info(f"User {user_id} uploading profile picture: {filename}")
-            # Delegate actual saving to service
+
             url, error = self.profile_service.update_profile_picture(user_id, file)
             if error:
                 return jsonify({"error": error}), 400

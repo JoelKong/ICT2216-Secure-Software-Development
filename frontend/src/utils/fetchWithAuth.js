@@ -34,7 +34,9 @@ export default async function fetchWithAuth(
     const requestOptions = {
       ...options,
       headers: {
-        ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }), // Default, can be overridden by options.headers
+        ...(options.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }), // Default, can be overridden by options.headers
         ...options.headers,
       },
     };
@@ -59,6 +61,7 @@ export default async function fetchWithAuth(
             `${API_ENDPOINT}/${REFRESH_ROUTE}`,
             {
               method: "POST",
+              credentials: "include",
               // Cookies (including the HttpOnly refresh token) are sent automatically by the browser
               // if the backend is configured correctly with CORS (supports_credentials=True).
             }
