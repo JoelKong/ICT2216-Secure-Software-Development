@@ -247,5 +247,7 @@ jobs:
             echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
             echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
+            echo "OPENAI_SECRET_KEY=${{ secrets.OPENAI_SECRET_KEY }}" >> backend/.env.production
+
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
