@@ -168,6 +168,7 @@ jobs:
           - name: ZAP HTML report
             uses: actions/upload-artifact@v4
             with:
+              token: ${{ secrets.GITHUB_TOKEN }}
               name: zap-report
               path: owasp-zap-report.html
 
