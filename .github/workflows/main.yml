@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 
 #TODO: DAST (OWASP ZAP) scans
+
 jobs:
   code-scan:
     name: Code SAST Scan
@@ -128,7 +129,7 @@ jobs:
             !frontend/dist/
             !frontend/node_modules/
             docker-compose-prod.yml
-            scripts/deploy_prod.sh
+            scripts/
             nginx/
 
   deploy_staging:
@@ -155,11 +156,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
       - name: Clean EC2 target directory before upload
         uses: appleboy/ssh-action@master
         with:
@@ -171,13 +167,18 @@ jobs:
             rm -rf ~/leonardo-app/*
             mkdir -p ~/leonardo-app
 
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
       - name: Upload backend artifact
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/backend-app/"
+          source: "artifacts/backend-app/**"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app"
           strip_components: 2
 
@@ -214,7 +215,7 @@ jobs:
             echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
             echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
             echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.production
-            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" > backend/.env.production
+            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" >> backend/.env.production
             echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
             echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
