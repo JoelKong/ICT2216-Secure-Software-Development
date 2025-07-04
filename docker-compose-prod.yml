@@ -52,14 +52,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
-    command: >
-      sh -c "
-        while [ ! -f /etc/letsencrypt/live/theleonardodrhere.onthewifi.com/fullchain.pem ]; do
-          echo 'Waiting for certificate...'
-          sleep 5;
-        done;
-        nginx -g 'daemon off;'
-      "
+    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     depends_on:
       - backend
     networks:
@@ -76,7 +69,8 @@ services:
         certbot certonly --webroot -w /var/www/certbot --email 2302072@sit.singaporetech.edu.sg
         --agree-tos --no-eff-email --rsa-key-size 4096 --expand --force-renewal 
         -d theleonardodrhere.onthewifi.com 
-        -d www.theleonardodrhere.onthewifi.com
+        -d www.theleonardodrhere.onthewifi.com &&
+        echo 'Certificates obtained. Nginx will reload automatically.'
       "
     depends_on:
       - nginx
