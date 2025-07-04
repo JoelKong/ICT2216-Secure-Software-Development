@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 env = os.getenv('FLASK_ENV', 'development')
 env_file = f".env.{env}"
 
+print("DEBUG: SQLALCHEMY_DATABASE_URI =", os.getenv("SQLALCHEMY_DATABASE_URI"))
+
+
 if os.path.exists(env_file):
     load_dotenv(env_file)
 else:
