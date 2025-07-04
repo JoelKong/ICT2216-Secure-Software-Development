@@ -44,10 +44,10 @@ jobs:
         image: mysql:8.0
         env:
           # Temporary test database to run integration tests in the future
-          MYSQL_ROOT_PASSWORD: rootpassword
-          MYSQL_USER: user
-          MYSQL_PASSWORD: password
-          MYSQL_DATABASE: leonardo
+          MYSQL_ROOT_PASSWORD: secrets.TEMP_MYSQL_ROOT_PASSWORD
+          MYSQL_USER: secrets.TEMP_MYSQL_USER
+          MYSQL_PASSWORD: secrets.TEMP_MYSQL_PASSWORD
+          MYSQL_DATABASE: secrets.TEMP_MYSQL_DATABASE
         ports:
           - 3306:3306
         options: >-
@@ -108,13 +108,15 @@ jobs:
           cd backend
           python run_tests.py
 
-      - name: Upload frontend build artifact
+      - name: Compile frontend-build artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist/
 
-      - name: Upload backend artifact
+      - name: Compile backend-app artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: backend-app
@@ -173,7 +175,6 @@ jobs:
           path: artifacts
 
       - name: Upload backend artifact
-        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -184,7 +185,6 @@ jobs:
           strip_components: 2
 
       - name: Upload frontend artifact
-        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
