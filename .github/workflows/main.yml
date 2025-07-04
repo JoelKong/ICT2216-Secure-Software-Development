@@ -165,7 +165,7 @@ jobs:
       - name: Create frontend .env file for build for VITE variables
         run: |
           echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" > leonardo-app/frontend/.env.production
-          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > leonardo-app/frontend/.env.production
+          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" >> leonardo-app/frontend/.env.production
 
       - name: Install frontend dependencies and build
         run: |
