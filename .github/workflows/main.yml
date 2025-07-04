@@ -158,21 +158,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download source-code artifact
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.9"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install frontend dependencies & start dev server
+          name: source-code
+          path: leonardo-app
+          
+      - name:  Docker compose start
         run: |
-          cd frontend
-          npm ci
-          npm run dev &
+          cd leonardo-app
+          docker-compose -f docker-compose-dev.yml up -d
         timeout-minutes: 2
 
       - name: ZAP Scan
