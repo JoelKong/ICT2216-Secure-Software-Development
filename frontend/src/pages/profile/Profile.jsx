@@ -149,9 +149,7 @@ export default function Profile({
                       <div className="space-y-4 text-right flex flex-col items-end pr-5">
                         {["Username", "Email", "Password", "", "", ""].map(
                           (label, idx) =>
-                            ["Username", "Email", "Password"].includes(
-                              label
-                            ) ? (
+                            ["Username", "Password"].includes(label) ? (
                               <button
                                 key={label}
                                 className="text-gray-500 hover:text-gray-700 cursor-pointer"

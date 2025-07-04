@@ -190,7 +190,7 @@ export default function PostDetail() {
           onClick={toggleLike}
           aria-label="Like post"
           className={`flex items-center space-x-1 cursor-pointer ${
-            liked ? "text-red-500" : "text-gray-500"
+            liked ? "text-red-500" : "text-white-500"
           } hover:text-red-500`}
         >
           <Heart className={`h-6 w-6 ${liked ? "fill-current" : ""}`} />
@@ -199,7 +199,7 @@ export default function PostDetail() {
 
         {/* Comment Button*/}
         <button
-          className="flex items-center space-x-1 cursor-pointer text-white hover:text-blue-500"
+          className="flex items-center space-x-1 cursor-pointer text-white hover:text-blue-300"
           aria-label="Comment button"
           onClick={() => setShowComments((prev) => !prev)}
         >
@@ -212,13 +212,13 @@ export default function PostDetail() {
         {auth.user && auth.user.user_id === post.user_id && (
           <>
             <button
-              className="ml-4 px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              className="ml-4 px-3 py-1 bg-yellow-400 text-black rounded hover:bg-yellow-500 cursor-pointer"
               onClick={() => handleEditPost(post.post_id)}
             >
               Edit
             </button>
             <button
-              className="ml-2 px-3 py-1 bg-red-400 text-black rounded hover:bg-red-500"
+              className="ml-2 px-3 py-1 bg-red-400 text-black rounded hover:bg-red-500 cursor-pointer"
               onClick={() => handleDeletePost(post.post_id)}
             >
               Delete

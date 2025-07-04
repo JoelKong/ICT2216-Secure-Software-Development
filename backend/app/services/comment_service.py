@@ -52,7 +52,7 @@ class CommentService(ICommentService):
         try:
             image_url = None
             if image_file and image_file.filename:
-                # Validate file extension if needed (optional)
+
                 allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
                 if '.' not in image_file.filename or image_file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
                     raise ValueError("File type not allowed")

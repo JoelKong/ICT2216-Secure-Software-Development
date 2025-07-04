@@ -1,5 +1,3 @@
-# this docker is for dev, use for testing ig before pushing to the cloud
-
 version: "3.8"
 
 services:
@@ -14,7 +12,7 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-    command: sh -c "npm install && npm run dev" #this command shldnt be here in prod, npm run build instead in dockerfile
+    command: sh -c "npm install && npm run dev"
     networks:
       - leonardo-network
 
@@ -54,7 +52,6 @@ services:
       - .env.development
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      # MYSQL_USER: ${MYSQL_USER} // only use if not using root user
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
     ports:
@@ -63,53 +60,6 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - leonardo-network
-
-  nginx:
-    build:
-      context: ./nginx
-    ports:
-      - "80:80"
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./index.html:/var/www/html/index.html
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt # encryption stuff?
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - leonardo-network
-
-#   nginx:                                      # THIS IS THE LAB ONE
-#     image: nginx:latest
-#     container_name: nginx-proxy
-#     restart: unless-stopped
-#     ports:
-#       - "80:80"
-#     volumes:
-#       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-#       - ./index.html:/var/www/html/index.html
-#     networks:
-#       lab-webproxy:
-#         ipv4_address: 10.11.0.6
-
-# networks:
-#   lab-webproxy:
-#     driver: bridge
-#     ipam:
-#       config:
-#         - subnet: 10.11.0.0/16
-#           gateway: 10.11.0.1
-
-# wtf is this
-
-# certbot:
-#   image: certbot/certbot
-#   volumes:
-#     - ./certbot/www:/var/www/certbot
-#     - ./certbot/conf:/etc/letsencrypt
-#   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
   leonardo-network:

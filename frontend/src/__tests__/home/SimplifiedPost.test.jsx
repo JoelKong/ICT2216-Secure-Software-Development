@@ -148,48 +148,6 @@ describe("SimplifiedPost Component", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
   });
 
-  // TODO: sometimes work sometimes dont
-  // test("calls toggleLike when like button is clicked", async () => {
-  //   global.fetch
-  //     .mockResolvedValueOnce({
-  //       ok: true,
-  //       json: () =>
-  //         Promise.resolve({
-  //           posts: [
-  //             {
-  //               post_id: 1,
-  //               title: "Test Post",
-  //               content: "Test Content",
-  //               username: "testuser",
-  //               likes: 0,
-  //               comments: 0,
-  //               created_at: new Date().toISOString(),
-  //               updated_at: new Date().toISOString(),
-  //             },
-  //           ],
-  //           liked_post_ids: [],
-  //         }),
-  //     })
-  //     .mockResolvedValueOnce({
-  //       ok: true,
-  //       json: () => Promise.resolve({ likes: 1 }),
-  //     });
-
-  //   renderWithContext(
-  //     <SimplifiedPost
-  //       scrollContainerRef={{ current: document.createElement("div") }}
-  //     />
-  //   );
-
-  //   // Wait for post to render
-  //   const likeButton = await screen.findByRole("button", {
-  //     name: /like post/i,
-  //   });
-  //   fireEvent.click(likeButton);
-
-  //   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
-  // });
-
   test("shows edit and delete buttons on profile page", async () => {
     global.fetch.mockResolvedValueOnce({
       ok: true,
@@ -223,49 +181,4 @@ describe("SimplifiedPost Component", () => {
     expect(await screen.findByText("Edit Post")).toBeInTheDocument();
     expect(screen.getByText("Delete Post")).toBeInTheDocument();
   });
-
-  // TODO: sometimes work sometimes dont
-  // test("calls delete post and shows modal on confirm", async () => {
-  //   global.fetch
-  //     .mockResolvedValueOnce({
-  //       ok: true,
-  //       json: () =>
-  //         Promise.resolve({
-  //           posts: [
-  //             {
-  //               post_id: 1,
-  //               title: "Test Post",
-  //               content: "Test Content",
-  //               username: "testuser",
-  //               likes: 0,
-  //               comments: 0,
-  //               created_at: new Date().toISOString(),
-  //               updated_at: new Date().toISOString(),
-  //             },
-  //           ],
-  //           liked_post_ids: [],
-  //         }),
-  //     })
-  //     .mockResolvedValueOnce({
-  //       ok: true,
-  //       json: () => Promise.resolve({ message: "Post deleted successfully" }),
-  //     });
-
-  //   window.confirm = jest.fn(() => true);
-
-  //   const setModal = jest.fn();
-  //   renderWithContext(
-  //     <SimplifiedPost
-  //       scrollContainerRef={{ current: document.createElement("div") }}
-  //       userId={1}
-  //     />,
-  //     { setModal }
-  //   );
-
-  //   const deleteBtn = await screen.findByText("Delete Post");
-  //   fireEvent.click(deleteBtn);
-
-  //   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
-  //   expect(setModal).toHaveBeenCalled();
-  // });
 });
