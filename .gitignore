@@ -35,4 +35,4 @@ uploads/
 
 .coverage
 
-.github\workflows\main.yml
+.github/workflows/main.yml
