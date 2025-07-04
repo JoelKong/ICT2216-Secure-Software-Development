@@ -57,7 +57,7 @@ services:
       - frontend
       - backend
     networks:
-      - leonardo-network
+      - app-network
 
   certbot:
     image: certbot/certbot
