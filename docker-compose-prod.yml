@@ -45,11 +45,10 @@ services:
     container_name: nginx-proxy
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
-      - frontend
       - backend
     networks:
       - app-network
