@@ -49,7 +49,6 @@ services:
     volumes:
       - ./frontend/dist:/usr/share/nginx/html
     depends_on:
-      - frontend
       - backend
     networks:
       - app-network
