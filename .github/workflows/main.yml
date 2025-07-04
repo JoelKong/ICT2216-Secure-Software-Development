@@ -165,12 +165,6 @@ jobs:
               target: 'http://localhost:5173'
               cmd_options: '-a'
 
-          - name: ZAP HTML report
-            uses: actions/upload-artifact@v4
-            with:
-              token: ${{ secrets.GITHUB_TOKEN }}
-              name: zap-report
-              path: owasp-zap-report.html
 
   deploy_staging:
     needs: build
