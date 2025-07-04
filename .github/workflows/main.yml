@@ -40,6 +40,14 @@ jobs:
 
       - name: Set up environment variables
         run: |
+          echo "FLASK_ENV=${{ secrets.FLASK_ENV }}"
+          echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}"
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}"
+          echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}"
+          echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}"
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}"
+          echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}"
+          echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}"
           echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
           echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" >> backend/.env.production
           echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
@@ -56,10 +64,6 @@ jobs:
           python main.py &
         timeout-minutes: 2
 
-      - name: Wait for frontend and backend to be ready
-        run: |
-          npm install -g wait-on
-          wait-on http://localhost:5173 http://localhost:5000
 
       - name: ZAP Scan
         uses: zaproxy/action-full-scan@v0.12.0
