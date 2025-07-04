@@ -21,7 +21,7 @@ services:
         python migrate.py &&
         gunicorn --bind 0.0.0.0:5000 --log-level=info wsgi:app
       "
-      
+
     networks:
       - app-network
 
@@ -52,7 +52,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./index.html:/var/www/html/index.html
       - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt # encryption stuff?
+      - ./certbot/conf:/etc/letsencrypt
     depends_on:
       - frontend
       - backend
@@ -71,7 +71,6 @@ services:
       -d http://theleonardodrhere.onthewifi.com/ 
       -d www.theleonardodrhere.onthewifi.com/ && nginx -s reload
       "
-    #entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 networks:
   app-network:

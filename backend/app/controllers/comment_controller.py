@@ -1,12 +1,9 @@
-# backend/app/controllers/comment_controller.py
-
 import re
 from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.services.comment_service import CommentService
 from app.interfaces.services.ICommentService import ICommentService
-# Imported resuable validation function
 from app.utils.validation import is_valid_id
 
 # --- Validation constants & regexes ---
@@ -74,7 +71,6 @@ class CommentController:
                         "error": f"Invalid image type; must be one of {', '.join(ALLOWED_IMAGE_EXTS)}."
                     }), 400
 
-            # Delegate creation to service
             comment = self.comment_service.create_comment(
                 post_id=post_id,
                 user_id=user_id,
@@ -88,17 +84,14 @@ class CommentController:
             }), 201
 
         except ValueError as ve:
-            # service layer can raise ValueError for e.g. non-existent post
             return jsonify({"error": str(ve)}), 400
         except Exception as e:
             current_app.logger.error(f"Error creating comment: {e}")
             return jsonify({"error": "Internal server error"}), 500
 
     def get_comment_image(self, filename):
-        """GET /comments/images/<filename>"""
         # Validate filename to prevent path traversal
         if not re.match(FILENAME_REGEX, filename):
             return jsonify({"error": "Invalid image filename"}), 400
 
-        # Delegate file serving to service (could use send_from_directory)
         return self.comment_service.get_comment_image(filename)
