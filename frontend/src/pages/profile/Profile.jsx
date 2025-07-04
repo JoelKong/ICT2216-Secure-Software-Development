@@ -5,7 +5,12 @@ import {
 } from "../../components/profile/ProfileModalForm";
 import useProfile from "../../components/profile/ProfileFunctions";
 
-export default function Profile({ scrollContainerRef, searchTerm, activeTab, setActiveTab }) {
+export default function Profile({
+  scrollContainerRef,
+  searchTerm,
+  activeTab,
+  setActiveTab,
+}) {
   const {
     profile,
     editingField,
@@ -43,7 +48,7 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
         {/* Sidebar Tabs */}
         <div className="w-full md:w-48 flex md:flex-col space-x-4 md:space-x-0 md:space-y-2 border-b md:border-b-0 md:border-r pb-2 md:pb-0 md:pr-4">
           <button
-            className={`py-2 px-4 text-left font-medium rounded ${
+            className={`py-2 px-4 text-left font-medium rounded cursor-pointer ${
               activeTab === "profile"
                 ? "bg-blue-100 text-blue-600 font-semibold"
                 : "text-gray-600 hover:bg-gray-100"
@@ -53,7 +58,7 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
             Profile
           </button>
           <button
-            className={`py-2 px-4 text-left font-medium rounded ${
+            className={`py-2 px-4 text-left font-medium rounded cursor-pointer ${
               activeTab === "posts"
                 ? "bg-blue-100 text-blue-600 font-semibold"
                 : "text-gray-600 hover:bg-gray-100"
@@ -71,7 +76,7 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
               <div className="bg-white rounded-lg shadow-md p-6 w-full overflow-auto">
                 <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-10">
                   <div className="relative">
-                    <div 
+                    <div
                       className="cursor-pointer w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden"
                       onClick={handleProfilePicClick}
                     >
@@ -85,7 +90,11 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
                             e.target.parentElement.innerHTML = `
                               <div class="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-inner">
                                 <span class="text-3xl font-medium text-gray-600">
-                                  ${profile?.username?.charAt(0).toUpperCase() || 'U'}
+                                  ${
+                                    profile?.username
+                                      ?.charAt(0)
+                                      .toUpperCase() || "U"
+                                  }
                                 </span>
                               </div>
                             `;
@@ -94,7 +103,7 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
                       ) : (
                         <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center shadow-inner">
                           <span className="text-3xl font-medium text-gray-600">
-                            {profile?.username?.charAt(0).toUpperCase() || 'U'}
+                            {profile?.username?.charAt(0).toUpperCase() || "U"}
                           </span>
                         </div>
                       )}
@@ -112,7 +121,13 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
                     <h1 className="text-2xl font-bold mb-4">General</h1>
                     <div className="grid grid-cols-3 gap-4 w-full">
                       <div className="space-y-4 text-left">
-                        {["Username", "Email", "Password", "Membership", "Joined since"].map((label) => (
+                        {[
+                          "Username",
+                          "Email",
+                          "Password",
+                          "Membership",
+                          "Joined since",
+                        ].map((label) => (
                           <div key={label} className="font-semibold">
                             {label}
                           </div>
@@ -132,20 +147,28 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
                         ))}
                       </div>
                       <div className="space-y-4 text-right flex flex-col items-end pr-5">
-                        {["Username", "Email", "Password", "", "", ""].map((label, idx) =>
-                          ["Username", "Email", "Password"].includes(label) ? (
-                            <button
-                            key={label}
-                            className="text-gray-500 hover:text-gray-700"
-                            onClick={() => handleEditClick(label, profile[label.toLowerCase()])}
-                            title={`Edit ${label}`}
-                          >
-                            ➤
-                          </button>
-                          ) : (
-                            // empty div to maintain vertical spacing alignment
-                            <div key={idx} className="h-[1.5rem]"></div>
-                          )
+                        {["Username", "Email", "Password", "", "", ""].map(
+                          (label, idx) =>
+                            ["Username", "Email", "Password"].includes(
+                              label
+                            ) ? (
+                              <button
+                                key={label}
+                                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                onClick={() =>
+                                  handleEditClick(
+                                    label,
+                                    profile[label.toLowerCase()]
+                                  )
+                                }
+                                title={`Edit ${label}`}
+                              >
+                                ➤
+                              </button>
+                            ) : (
+                              // empty div to maintain vertical spacing alignment
+                              <div key={idx} className="h-[1.5rem]"></div>
+                            )
                         )}
                       </div>
                     </div>
@@ -156,7 +179,7 @@ export default function Profile({ scrollContainerRef, searchTerm, activeTab, set
                         <div className="font-semibold">Delete Account</div>
                         <div className="text-right">
                           <button
-                            className="text-gray-500 hover:text-gray-700 pr-5"
+                            className="text-gray-500 hover:text-gray-700 pr-5 cursor-pointer"
                             onClick={() => setShowDeleteConfirm(true)}
                             title="Delete Account"
                           >

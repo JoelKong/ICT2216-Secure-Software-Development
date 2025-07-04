@@ -67,7 +67,9 @@ const DrawingCanvas = forwardRef(
       );
 
       fabricCanvas.freeDrawingBrush.width = brushWidth;
-      fabricCanvas.freeDrawingBrush.color = isEraser ? backgroundColor : brushColor;
+      fabricCanvas.freeDrawingBrush.color = isEraser
+        ? backgroundColor
+        : brushColor;
 
       fabricRef.current = fabricCanvas;
 
@@ -92,7 +94,9 @@ const DrawingCanvas = forwardRef(
       if (!fabricRef.current) return;
       fabricRef.current.isDrawingMode = true;
       fabricRef.current.freeDrawingBrush.width = brushWidth;
-      fabricRef.current.freeDrawingBrush.color = isEraser ? backgroundColor : brushColor;
+      fabricRef.current.freeDrawingBrush.color = isEraser
+        ? backgroundColor
+        : brushColor;
     }, [brushColor, brushWidth, isEraser, backgroundColor]);
 
     // Expose methods to parent via ref
@@ -210,7 +214,7 @@ const DrawingCanvas = forwardRef(
           <button
             type="button"
             onClick={() => setIsEraser((prev) => !prev)}
-            className={`px-2 py-1 rounded ${
+            className={`px-2 py-1 rounded cursor-pointer ${
               isEraser ? "bg-red-500 text-white" : "bg-gray-300"
             }`}
           >
@@ -223,7 +227,7 @@ const DrawingCanvas = forwardRef(
             onClick={() => {
               if (ref && ref.current) ref.current.undo();
             }}
-            className="px-2 py-1 bg-yellow-400 rounded hover:bg-yellow-500"
+            className="px-2 py-1 bg-yellow-400 rounded hover:bg-yellow-500 cursor-pointer"
           >
             Undo
           </button>
@@ -234,7 +238,7 @@ const DrawingCanvas = forwardRef(
             onClick={() => {
               if (ref && ref.current) ref.current.redo();
             }}
-            className="px-2 py-1 bg-green-400 rounded hover:bg-green-500"
+            className="px-2 py-1 bg-green-400 rounded hover:bg-green-500 cursor-pointer"
           >
             Redo
           </button>
@@ -245,7 +249,7 @@ const DrawingCanvas = forwardRef(
           <button
             type="button"
             onClick={handleSaveDrawing}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer"
           >
             Save Drawing
           </button>
@@ -260,7 +264,7 @@ const DrawingCanvas = forwardRef(
             <button
               type="button"
               onClick={handleRedraw}
-              className="mt-2 bg-yellow-400 text-black px-4 py-2 rounded hover:bg-yellow-500"
+              className="mt-2 bg-yellow-400 text-black px-4 py-2 rounded cursor-pointer hover:bg-yellow-500"
             >
               Redraw
             </button>
