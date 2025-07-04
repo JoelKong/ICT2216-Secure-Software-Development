@@ -156,25 +156,7 @@ jobs:
               npm ci
               npm run dev &
             timeout-minutes: 2
-
-          - name: Set up environment variables 
-            run: |
-              echo "FLASK_ENV=development" >> backend/.env.production
-              echo "SQLALCHEMY_DATABASE_URI=sqlite:///test.db" >> backend/.env.production
-              echo "JWT_SECRET_KEY=test-key" >> backend/.env.production
-              echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=1" >> backend/.env.production
-              echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=1" >> backend/.env.production
-              echo "STRIPE_SECRET_KEY=test" >> backend/.env.production
-              echo "STRIPE_WEBHOOK_SECRET=test" >> backend/.env.production
-              echo "FRONTEND_ROUTE=http://localhost:5173" >> backend/.env.production
-              cat backend/.env.production
-          - name: Install backend dependencies & start Flask 
-            run: | 
-              cd backend 
-              pip install -r requirements.txt 
-              python main.py
-            timeout-minutes: 2
-
+            
           - name: ZAP Scan
             uses: zaproxy/action-full-scan@v0.12.0
             with:
