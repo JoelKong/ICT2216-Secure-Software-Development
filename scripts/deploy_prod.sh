@@ -6,8 +6,8 @@ echo "Starting production deployment..."
 # Create dummy certificate files if they don't exist to allow Nginx to start
 if [ ! -f "./certbot/conf/live/theleonardodrhere.onthewifi.com/fullchain.pem" ]; then
   echo "Creating dummy certificate for initial Nginx start..."
-  mkdir -p ./certbot/conf/live/theleonardodrhere.onthewifi.com
-  openssl req -x509 -nodes -newkey rsa:4096 -days 1 \
+  sudo mkdir -p ./certbot/conf/live/theleonardodrhere.onthewifi.com
+  sudo openssl req -x509 -nodes -newkey rsa:4096 -days 1 \
     -keyout ./certbot/conf/live/theleonardodrhere.onthewifi.com/privkey.pem \
     -out ./certbot/conf/live/theleonardodrhere.onthewifi.com/fullchain.pem \
     -subj "/CN=localhost"
