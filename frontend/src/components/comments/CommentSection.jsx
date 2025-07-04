@@ -6,7 +6,8 @@ import CommentThread from "./CommentThread";
 import CommentForm from "./CommentForm";
 
 export default function CommentSection({ postId }) {
-  const { getAuthToken, updateAuthToken, handleLogout } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout } =
+    useContext(GlobalContext);
   const [comments, setComments] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
@@ -35,7 +36,6 @@ export default function CommentSection({ postId }) {
 
     return roots;
   }
-
 
   async function loadComments() {
     try {
@@ -77,7 +77,7 @@ export default function CommentSection({ postId }) {
   function flattenComments(tree) {
     const flat = [];
     function recurse(nodes) {
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         flat.push(node);
         if (node.replies?.length) recurse(node.replies);
       });
@@ -86,13 +86,12 @@ export default function CommentSection({ postId }) {
     return flat;
   }
 
-
   return (
     <div className="mt-8 space-y-4">
       <h2 className="text-xl font-semibold">Comments</h2>
       <button
         onClick={() => setShowForm(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer"
       >
         Add Comment
       </button>
