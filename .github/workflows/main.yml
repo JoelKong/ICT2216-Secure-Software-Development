@@ -173,6 +173,7 @@ jobs:
           path: artifacts
 
       - name: Upload backend artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -183,6 +184,7 @@ jobs:
           strip_components: 2
 
       - name: Upload frontend artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
