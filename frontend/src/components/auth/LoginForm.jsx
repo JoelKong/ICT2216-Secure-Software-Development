@@ -52,6 +52,11 @@ export default function LoginForm({ setIsSignup, setIsAuthChecked }) {
         return;
       }
 
+      console.log("API_ENDPOINT:", API_ENDPOINT);
+      console.log("LOGIN_ROUTE:", LOGIN_ROUTE);
+      console.log("Full URL:", `${API_ENDPOINT}/${LOGIN_ROUTE}`);
+
+
       const response = await fetch(`${API_ENDPOINT}/${LOGIN_ROUTE}`, {
         method: "POST",
         headers: {
