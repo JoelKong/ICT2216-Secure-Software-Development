@@ -138,17 +138,17 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
         setModal({
           active: true,
           type: "pass",
-          message: data.message,
+          message: data.message, //might have to change
         });
         setRateLimit({ attempts: 0, cooldown: false });
-        localStorage.setItem("access_token", data.access_token);
-        setIsAuthChecked(false);
-        setAuth({
-          isAuthenticated: true,
-          token: data.access_token,
-          user: null,
-        });
-        navigate("/setup_totp");
+        // localStorage.setItem("access_token", data.access_token);
+        // setIsAuthChecked(false);
+        // setAuth({
+        //   isAuthenticated: true,
+        //   token: data.access_token,
+        //   user: null,
+        // });
+        // navigate("/setup_totp");
       } else {
         setModal({
           active: true,

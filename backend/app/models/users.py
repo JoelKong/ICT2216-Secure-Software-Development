@@ -12,6 +12,7 @@ class User(db.Model):
     membership = db.Column(ENUM('basic', 'premium'), default='basic')
     created_at = db.Column(db.DateTime, server_default=db.func.current_timestamp())
     totp_secret = db.Column(db.String(255), nullable=True)
+    email_verified = db.Column(db.Boolean, default=False)
     
     # Relationships
     posts = db.relationship('Post', backref='author', lazy=True, cascade="all, delete-orphan")

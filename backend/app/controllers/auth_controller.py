@@ -64,13 +64,18 @@ class AuthController:
                 return jsonify({"error": message}), 400
 
             user   = self.auth_service.create_user(payload)
-            tokens = self.auth_service.generate_tokens(user.user_id)
-
             response = jsonify({
-                "message": "Sign up successful! Logging in…",
-                "access_token": tokens["access_token"]
+                "message": "Sign up successful! Please Verify email."
             })
-            set_refresh_cookies(response, tokens["refresh_token"])
+            self.auth_service.send_verification_email(user)
+
+            # tokens = self.auth_service.generate_tokens(user.user_id)
+
+            # response = jsonify({
+            #     "message": "Sign up successful! Logging in…",
+            #     "access_token": tokens["access_token"]
+            # })
+            # set_refresh_cookies(response, tokens["refresh_token"])
             return response, 201
 
         except Exception as e:
@@ -101,6 +106,10 @@ class AuthController:
             user, error = self.auth_service.login(email, password)
             if error:
                 return jsonify({"error": error}), 401
+            
+            # Prevent login if email is not verified
+            if not user.email_verified:
+                return jsonify({"error": "Email not verified. Please check your inbox."}), 401
 
             tokens = self.auth_service.generate_tokens(user.user_id)
             response = jsonify({
@@ -176,3 +185,25 @@ class AuthController:
             }), 200
         else:
             return jsonify({"success": False, "error": "Invalid TOTP code"}), 400
+        
+    def verify_email(self):
+        token = request.args.get('token')
+        salt = request.args.get('salt')
+
+        current_app.logger.info(f"🧾 Received token: {token}")
+        current_app.logger.info(f"🧾 Received salt: {salt}")
+        
+        if not token or not salt:
+            return jsonify({"error": "Missing token"}), 400
+
+        success = self.auth_service.verify_email_token(token, salt)
+        if not success:
+            return jsonify({"error": "Invalid or expired token"}), 400
+
+        tokens = self.auth_service.generate_tokens(success)
+        response = jsonify({
+            "message": "Email verified successfully!",
+            "access_token": tokens["access_token"]
+        })
+        set_refresh_cookies(response, tokens["refresh_token"])
+        return response, 200
