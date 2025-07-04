@@ -34,3 +34,5 @@ certbot
 uploads/
 
 .coverage
+
+.github\workflows\main.yml
