@@ -44,10 +44,10 @@ jobs:
         image: mysql:8.0
         env:
           # Temporary test database to run integration tests in the future
-          MYSQL_ROOT_PASSWORD: secrets.TEMP_MYSQL_ROOT_PASSWORD
-          MYSQL_USER: secrets.TEMP_MYSQL_USER
-          MYSQL_PASSWORD: secrets.TEMP_MYSQL_PASSWORD
-          MYSQL_DATABASE: secrets.TEMP_MYSQL_DATABASE
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEMP_MYSQL_ROOT_PASSWORD }}
+          MYSQL_USER: ${{ secrets.TEMP_MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.TEMP_MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.TEMP_MYSQL_DATABASE }}
         ports:
           - 3306:3306
         options: >-
@@ -108,31 +108,24 @@ jobs:
           cd backend
           python run_tests.py
 
-      - name: Compile frontend-build artifact
+      - name: Compile source code artifact
         if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
-          path: frontend/dist/
-
-      - name: Compile backend-app artifact
-        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-app
+          name: source-code
           path: |
             backend/
+            frontend/
+            docker-compose-prod.yml
+            scripts/
+            nginx/
             !backend/.pytest_cache/
             !backend/htmlcov/
             !backend/.coverage
             !backend/logs/
             !backend/__pycache__/
-            frontend/
             !frontend/dist/
             !frontend/node_modules/
-            docker-compose-prod.yml
-            scripts/
-            nginx/
 
   deploy_staging:
     needs: build
@@ -158,6 +151,26 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Download source code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-code
+          path: leonardo-app
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Create frontend .env file for build for VITE variables
+        run: |
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" > leonardo-app/frontend/.env.production
+          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > frontend/.env.production
+      - name: Install frontend dependencies and build
+        run: |
+          cd leonardo-app/frontend
+          npm ci
+          npm run build
+
       - name: Clean EC2 target directory before upload
         uses: appleboy/ssh-action@master
         with:
@@ -169,32 +182,16 @@ jobs:
             rm -rf ~/leonardo-app/*
             mkdir -p ~/leonardo-app
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-
-      - name: Upload backend artifact
+      - name: Upload application files to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/backend-app/**"
+          source: "leonardo-app/"
           target: "/home/${{ secrets.USERNAME }}/leonardo-app"
-          strip_components: 2
 
-      - name: Upload frontend artifact
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/frontend-build/*"
-          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend/dist"
-          strip_components: 2
-
-      - name: Create .env files on production server
+      - name: Create .env files and finalize deployment on production server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -203,10 +200,6 @@ jobs:
           script: |
             set -e
             PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
-            mkdir -p $PROJECT_DIR/backend
-            mkdir -p $PROJECT_DIR/frontend
-            mkdir -p $PROJECT_DIR/scripts
-            mkdir -p $PROJECT_DIR/nginx
             cd $PROJECT_DIR
 
             echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
@@ -222,18 +215,5 @@ jobs:
             echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
             echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
-
-            echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" > frontend/.env.production
-            echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" >> frontend/.env.production
-
-      - name: Finalize deployment on production server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            set -e
-            cd /home/${{ secrets.USERNAME }}/leonardo-app
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
