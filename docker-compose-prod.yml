@@ -77,10 +77,10 @@ services:
     entrypoint: >
       sh -c "
         sleep 10 && 
-        certbot certonly --webroot -w /var/www/certbot --email $$CERTBOT_EMAIL
-        --agree-tos --no-eff-email --rsa-key-size 4096 --expand --force-renewal 
-        -d $$CERTBOT_DOMAIN 
-        -d www.$$CERTBOT_DOMAIN &&
+        certbot certonly --webroot -w /var/www/certbot --email $$CERTBOT_EMAIL \
+          --agree-tos --no-eff-email --rsa-key-size 4096 --expand --force-renewal \
+          -d $$CERTBOT_DOMAIN \
+          -d www.$$CERTBOT_DOMAIN && \
         echo 'Certificates obtained. Nginx will start automatically.'
       "
     depends_on:
