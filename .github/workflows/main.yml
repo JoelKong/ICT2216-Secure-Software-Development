@@ -166,7 +166,7 @@ jobs:
           
       - name:  Docker compose start
         run: |
-          docker compose -f docker-compose-dev.yml up -d
+          docker compose --env-file .env.development -f docker-compose-dev.yml up --build
         timeout-minutes: 2
 
       - name: ZAP Scan
