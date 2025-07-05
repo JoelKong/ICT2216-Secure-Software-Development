@@ -154,6 +154,30 @@ jobs:
     steps:
       - name: "Deploy to staging"
         run: echo "Deploying to staging environment"
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Download source-code artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: source-code
+          path: leonardo-app
+          
+      - name:  Docker compose start
+        run: |
+          cd leonardo-app
+          docker-compose -f docker-compose-dev.yml up -d
+        timeout-minutes: 2
+
+      - name: ZAP Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'http://localhost:5173'
+          cmd_options: '-a'
+
 
   deploy_uat:
     needs: deploy_staging
@@ -161,8 +185,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     steps:
-      - name: "Deploy to UAT"
-        run: echo "Deploying to UAT environment"
+    - name: test
+      run: echo "UAT"
 
   deploy_prod:
     needs: deploy_uat
@@ -254,3 +278,11 @@ jobs:
 
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
+      
+      - name: DAST OWASP ZAP Scan
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'http://theleonardodrhere.onthewifi.com'
+          cmd_options: '-a'

@@ -22,7 +22,8 @@ class RequestFormatter(logging.Formatter):
 def configure_logging(app):
     """Configure logging for the Flask application"""
     # Create logs directory if it doesn't exist
-    log_dir = app.config.get('LOG_DIR', '/var/log/app')
+    log_dir = app.config.get('LOG_DIR', os.path.join(os.getcwd(), 'logs'))
+
     os.makedirs(log_dir, exist_ok=True)
     
     log_level = getattr(logging, app.config.get('LOG_LEVEL', 'INFO'))
