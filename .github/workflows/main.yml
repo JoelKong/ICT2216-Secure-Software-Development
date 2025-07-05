@@ -251,8 +251,9 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "Cleaning old app files..."
-            rm -rf ~/leonardo-app/*
+            echo "Cleaning old app files, preserving certbot directory..."
+            cd ~/leonardo-app
+            sudo find . -mindepth 1 -maxdepth 1 ! -name 'certbot' -exec rm -rf {} +
             mkdir -p ~/leonardo-app
 
       - name: Upload source code artifact
@@ -290,6 +291,8 @@ jobs:
             echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env.production
             echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env.production
             echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env.production
+            echo "CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}" >> .env.production
+            echo "CERTBOT_DOMAIN=${{ secrets.CERTBOT_DOMAIN }}" >> .env.production
 
             echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
             echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
