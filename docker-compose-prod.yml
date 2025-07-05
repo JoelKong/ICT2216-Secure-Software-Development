@@ -21,7 +21,6 @@ services:
         python migrate.py &&
         gunicorn --bind 0.0.0.0:5000 --log-level=info wsgi:app
       "
-
     networks:
       - app-network
 
@@ -47,12 +46,22 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    env_file:
+      - ./.env.production
     volumes:
       - ./frontend/dist:/usr/share/nginx/html
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
-    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
+    command: >
+      sh -c "
+        until [ -f /etc/letsencrypt/live/$$CERTBOT_DOMAIN/fullchain.pem ]; do
+          echo 'Nginx is waiting for certificate...'
+          sleep 5
+        done;
+        echo 'Certificate found. Starting Nginx...';
+        nginx -g 'daemon off;'
+      "
     depends_on:
       - backend
     networks:
@@ -60,17 +69,19 @@ services:
 
   certbot:
     image: certbot/certbot
+    env_file:
+      - ./.env.production
     volumes:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     entrypoint: >
       sh -c "
         sleep 10 && 
-        certbot certonly --webroot -w /var/www/certbot --email 2302072@sit.singaporetech.edu.sg
+        certbot certonly --webroot -w /var/www/certbot --email $$CERTBOT_EMAIL
         --agree-tos --no-eff-email --rsa-key-size 4096 --expand --force-renewal 
-        -d theleonardodrhere.onthewifi.com 
-        -d www.theleonardodrhere.onthewifi.com &&
-        echo 'Certificates obtained. Nginx will reload automatically.'
+        -d $$CERTBOT_DOMAIN 
+        -d www.$$CERTBOT_DOMAIN &&
+        echo 'Certificates obtained. Nginx will start automatically.'
       "
     depends_on:
       - nginx
