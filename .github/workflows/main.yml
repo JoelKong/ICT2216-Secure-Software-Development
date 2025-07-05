@@ -199,8 +199,9 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            echo "Cleaning old app files..."
-            sudo rm -rf ~/leonardo-app/*
+            echo "Cleaning old app files, preserving certbot directory..."
+            cd ~/leonardo-app
+            sudo find . -mindepth 1 -maxdepth 1 ! -name 'certbot' -exec rm -rf {} +
             mkdir -p ~/leonardo-app
 
       - name: Upload source code artifact
