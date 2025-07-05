@@ -2,7 +2,6 @@ import { useState, useContext } from "react";
 import LoadingSpinner from "../global/LoadingSpinner";
 import { API_ENDPOINT, SIGNUP_ROUTE } from "../../const";
 import checkRateLimit from "../../utils/checkRateLimit";
-import { useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../utils/globalContext";
 
 export default function SignupForm({ setIsSignup }) {
