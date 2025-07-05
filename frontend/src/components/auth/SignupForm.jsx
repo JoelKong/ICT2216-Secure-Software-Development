@@ -5,8 +5,8 @@ import checkRateLimit from "../../utils/checkRateLimit";
 import { useNavigate } from "react-router-dom";
 import { GlobalContext } from "../../utils/globalContext";
 
-export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
-  const { setModal, rateLimit, setRateLimit, setAuth } =
+export default function SignupForm({ setIsSignup }) {
+  const { setModal, rateLimit, setRateLimit } =
     useContext(GlobalContext);
   const [signupFormData, setSignupFormData] = useState({
     email: "",
@@ -15,7 +15,6 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   const [passwordValid, setPasswordValid] = useState({
     length: false,
     uppercase: false,
@@ -141,14 +140,6 @@ export default function SignupForm({ setIsSignup, setIsAuthChecked }) {
           message: data.message, //might have to change
         });
         setRateLimit({ attempts: 0, cooldown: false });
-        // localStorage.setItem("access_token", data.access_token);
-        // setIsAuthChecked(false);
-        // setAuth({
-        //   isAuthenticated: true,
-        //   token: data.access_token,
-        //   user: null,
-        // });
-        // navigate("/setup_totp");
       } else {
         setModal({
           active: true,

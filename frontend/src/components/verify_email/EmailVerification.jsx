@@ -37,7 +37,7 @@ export default function EmailVerification({ setIsAuthChecked }) {
             message: data.error || "Verification failed.",
           });
         }
-      } catch (err) {
+      } catch {
         setModal({
           active: true,
           type: "fail",
