@@ -163,7 +163,22 @@ jobs:
         with:
           name: source-code
           path: leonardo-app
-          
+      - name: Environment build
+        run: |
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.TEMP_MYSQL_ROOT_PASSWORD }}" > .env.development
+          echo "MYSQL_USER=${{ secrets.TEMP_MYSQL_USER }}" >> .env.development
+          echo "MYSQL_PASSWORD=${{ secrets.TEMP_MYSQL_PASSWORD }}" >> .env.development
+          echo "MYSQL_DATABASE=${{ secrets.TEMP_MYSQL_DATABASE }}" >> .env.development
+
+          echo "FLASK_ENV=${{ secrets.TEMP_FLASK_ENV }}" >> backend/.env.development
+          echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.TEMP_JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.development
+          echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.TEMP_JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.development
+          echo "SQLALCHEMY_DATABASE_URI=${{ secrets.TEMP_SQLALCHEMY_DATABASE_URI }}" >> backend/.env.development
+          echo "JWT_SECRET_KEY=${{ secrets.TEMP_JWT_SECRET_KEY }}" >> backend/.env.development
+          echo "FRONTEND_ROUTE=${{ secrets.TEMP_FRONTEND_ROUTE }}" >> backend/.env.development
+          echo "STRIPE_SECRET_KEY=${{ secrets.TEMP_STRIPE_SECRET_KEY }}" >> backend/.env.development
+          echo "STRIPE_WEBHOOK_SECRET=${{ secrets.TEMP_STRIPE_WEBHOOK_SECRET }}" >> backend/.env.development
+
       - name:  Docker compose start
         run: |
           docker compose --env-file .env.development -f docker-compose-dev.yml up --build
