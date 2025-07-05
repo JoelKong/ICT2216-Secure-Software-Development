@@ -281,6 +281,13 @@ jobs:
             echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
             echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
             echo "OPENAI_SECRET_KEY=${{ secrets.OPENAI_SECRET_KEY }}" >> backend/.env.production
+            echo "MAIN_SERVER=${{ secrets.MAIN_SERVER }}" >> backend/.env.production
+            echo "MAIL_PORT=${{ secrets.MAIL_PORT }}" >> backend/.env.production
+            echo "MAIL_USE_TLS=${{ secrets.MAIL_USE_TLS }}" >> backend/.env.production
+            echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> backend/.env.production
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> backend/.env.production
+            echo "MAIL_DEFAULT_SENDER=${{ secrets.MAIL_DEFAULT_SENDER }}" >> backend/.env.production
+            echo "MAIL_SECRET_KEY=${{ secrets.MAIL_SECRET_KEY }}" >> backend/.env.production
 
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
