@@ -166,7 +166,6 @@ jobs:
           
       - name:  Docker compose start
         run: |
-          cd leonardo-app
           docker compose -f docker-compose-dev.yml up -d
         timeout-minutes: 2
 
