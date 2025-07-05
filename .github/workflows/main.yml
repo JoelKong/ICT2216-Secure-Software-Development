@@ -184,7 +184,9 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: uat
-
+    steps:
+    - name: test
+      run: echo "UAT"
 
   deploy_prod:
     needs: deploy_uat
