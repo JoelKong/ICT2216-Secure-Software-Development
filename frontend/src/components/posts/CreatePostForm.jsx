@@ -1,12 +1,17 @@
 import { useState, useContext, useRef, useEffect } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import fetchWithAuth from "../../utils/fetchWithAuth";
-import { API_ENDPOINT, CREATE_POST_ROUTE, FETCH_USER_POST_LIMIT } from "../../const";
+import {
+  API_ENDPOINT,
+  CREATE_POST_ROUTE,
+  FETCH_USER_POST_LIMIT,
+} from "../../const";
 import { useNavigate } from "react-router-dom";
 import DrawingCanvas from "./DrawingCanvas";
 
 export default function CreatePostForm() {
-  const { getAuthToken, updateAuthToken, handleLogout, setModal } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout, setModal } =
+    useContext(GlobalContext);
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -38,7 +43,7 @@ export default function CreatePostForm() {
             type: "fail",
             message: "You have reached your daily post limit.",
           });
-          navigate("/posts");  // Redirect here when limit reached
+          navigate("/posts"); // Redirect here when limit reached
         }
       } catch (err) {
         console.error("Error checking post limit:", err);
@@ -47,12 +52,11 @@ export default function CreatePostForm() {
           type: "fail",
           message: "Unable to verify post limit. Redirecting to posts...",
         });
-        navigate("/posts");  // Redirect here on error
+        navigate("/posts"); // Redirect here on error
       }
     }
     checkPostLimit();
   }, [getAuthToken, updateAuthToken, handleLogout, setModal, navigate]);
-
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -152,7 +156,7 @@ export default function CreatePostForm() {
               setImageMode("upload");
               setImage(null);
             }}
-            className="mr-2"
+            className="mr-2 cursor-pointer"
           />
           Upload Image
         </label>
@@ -175,7 +179,7 @@ export default function CreatePostForm() {
 
       {/* Conditionally show upload or drawing */}
       {imageMode === "upload" && (
-        <label className="bg-gray-200 text-black px-4 py-2 rounded cursor-pointer inline-block hover:bg-gray-300">
+        <label className="bg-gray-200 mr-4 text-black px-4 py-2 rounded cursor-pointer inline-block hover:bg-gray-300">
           Upload Image
           <input
             type="file"
@@ -202,7 +206,7 @@ export default function CreatePostForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        className="bg-blue-600 text-white cursor-pointer px-4 py-2 rounded hover:bg-blue-700 transition"
       >
         {isSubmitting ? "Posting..." : "Post"}
       </button>

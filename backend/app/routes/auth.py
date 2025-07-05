@@ -5,7 +5,6 @@ from app.extensions import limiter
 
 auth_bp = Blueprint('auth', __name__)
 
-# Create service instance
 auth_service = AuthService()
 
 # Create controller with injected service

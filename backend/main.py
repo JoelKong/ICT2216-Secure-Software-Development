@@ -6,13 +6,19 @@ from dotenv import load_dotenv
 env = os.getenv('FLASK_ENV', 'development')
 env_file = f".env.{env}"
 
+
+
+
 if os.path.exists(env_file):
     load_dotenv(env_file)
 else:
     load_dotenv()
 
+print("DEBUG: SQLALCHEMY_DATABASE_URI =", os.getenv("SQLALCHEMY_DATABASE_URI"))
+
 # Create app with environment configuration
 app = create_app(env)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000)

@@ -7,12 +7,24 @@ export default function NavBar({ setSearchTerm, activeTab }) {
   const { auth, handleLogout, getAuthToken, updateAuthToken } =
     useContext(GlobalContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
   const dropdownRef = useRef(null);
 
   // Log out on request by removing tokens from local storage and resetting auth state
   function logout() {
     handleLogout();
   }
+
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    try {
+      await upgradeMembership(getAuthToken, updateAuthToken, handleLogout);
+    } catch (error) {
+      console.error("Failed to upgrade membership:", error);
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
   // Close user dropdown when clicking outside
   useEffect(() => {
@@ -41,7 +53,7 @@ export default function NavBar({ setSearchTerm, activeTab }) {
             </a>
           </div>
 
-          {(location.pathname === "/posts" || 
+          {(location.pathname === "/posts" ||
             (location.pathname === "/profile" && activeTab === "posts")) && (
             <SearchBar setSearchTerm={setSearchTerm} />
           )}
@@ -74,16 +86,37 @@ export default function NavBar({ setSearchTerm, activeTab }) {
                 </a>
                 {auth.user.membership === "basic" && (
                   <button
-                    onClick={async () =>
-                      await upgradeMembership(
-                        getAuthToken,
-                        updateAuthToken,
-                        handleLogout
-                      )
-                    }
-                    className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    className="block px-4 py-2 w-full text-sm text-gray-700 hover:bg-gray-100 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    Upgrade to premium
+                    {isUpgrading ? (
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Upgrading...
+                      </div>
+                    ) : (
+                      "Upgrade to premium"
+                    )}
                   </button>
                 )}
                 <button

@@ -43,7 +43,7 @@ def create_app(env=None):
 
     with app.app_context():
         # Import all models to register them with SQLAlchemy
-        from app import models  # this loads models/__init__.py
+        from app import models
     
     # Import blueprints here to avoid circular imports
     from .routes.auth import auth_bp

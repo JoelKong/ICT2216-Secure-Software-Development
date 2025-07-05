@@ -1,7 +1,9 @@
 export default function formatTimestamp(timestamp) {
   // Format timestamp to relative time (e.g. "2 hours ago")
   try {
-    const actualDate = new Date(timestamp);
+    const actualDate = new Date(
+      timestamp.endsWith("Z") ? timestamp : timestamp + "Z"
+    );
     const now = new Date();
     const diffInMilliseconds = now - actualDate;
 
