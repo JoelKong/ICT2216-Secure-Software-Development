@@ -277,6 +277,10 @@ class PostController:
 
             if word_count <= 50:
                 return jsonify({"summary": "Post content too short to summarize."}), 200
+            
+            # Some prompt injection prevention
+            if any(s in content.lower() for s in ["ignore previous", "you are now", "forget all", "repeat after me", "respond with"]):
+                return jsonify({"error": "Invalid content detected."}), 400
 
             client = OpenAI(api_key=os.environ.get("OPENAI_SECRET_KEY"))
             if not client:
