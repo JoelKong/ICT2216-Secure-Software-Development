@@ -29,3 +29,18 @@ class IAuthService(ABC):
     def refresh_access_token(self, user_id: int) -> Dict[str, str]:
         """Generate a new access token using a refresh token"""
         pass
+
+    @abstractmethod
+    def generate_email_token(self, user: User) -> Tuple[str, str]:
+        """Generate a token for email verification"""
+        pass
+
+    @abstractmethod
+    def send_verification_email(self, user: User) ->  None:
+        """Send verification email to the user"""
+        pass
+
+    @abstractmethod
+    def verify_email_token(self, token: str) -> Optional[User]:
+        """Verify the email token and return the user if valid"""
+        pass

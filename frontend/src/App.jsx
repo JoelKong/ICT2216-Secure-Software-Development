@@ -16,7 +16,8 @@ import { useNavigate } from "react-router-dom";
 import PostDetail from "./pages/posts/PostDetail";
 import CreatePost from "./pages/posts/CreatePost";
 import EditPost from "./pages/posts/EditPost";
-
+import SetupTotp from "./components/totp/setup_totp";
+import EmailVerification from "./components/verify_email/EmailVerification";
 
 function App() {
   const navigate = useNavigate();
@@ -238,6 +239,15 @@ function App() {
                 </PrivateRoute>
               }
             />
+                        <Route
+              path="/setup_totp"
+              element={
+                <PrivateRoute isAuthenticated={auth.isAuthenticated}>
+                  <SetupTotp />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/verify_email" element={<EmailVerification setIsAuthChecked={setIsAuthChecked} />} />
           </Routes>
         </GlobalContext.Provider>
       </main>

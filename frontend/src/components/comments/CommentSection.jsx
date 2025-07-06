@@ -6,7 +6,8 @@ import CommentThread from "./CommentThread";
 import CommentForm from "./CommentForm";
 
 export default function CommentSection({ postId }) {
-  const { getAuthToken, updateAuthToken, handleLogout } = useContext(GlobalContext);
+  const { getAuthToken, updateAuthToken, handleLogout } =
+    useContext(GlobalContext);
   const [comments, setComments] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
@@ -36,7 +37,6 @@ export default function CommentSection({ postId }) {
     return roots;
   }
 
-
   async function loadComments() {
     try {
       const res = await fetchWithAuth(
@@ -61,7 +61,29 @@ export default function CommentSection({ postId }) {
   }, [postId]);
 
   function handleNewComment(newComment) {
-    setComments((prev) => [...prev, newComment]);
+    setComments((prevTree) => {
+      // Flatten existing tree to flat list
+      const flatList = flattenComments(prevTree);
+
+      // Add new comment to flat list
+      flatList.push(newComment);
+
+      // Rebuild tree from updated flat list
+      return buildCommentTree(flatList);
+    });
+  }
+
+  // Utility to flatten comment tree to a flat array
+  function flattenComments(tree) {
+    const flat = [];
+    function recurse(nodes) {
+      nodes.forEach((node) => {
+        flat.push(node);
+        if (node.replies?.length) recurse(node.replies);
+      });
+    }
+    recurse(tree);
+    return flat;
   }
 
   return (
@@ -69,7 +91,7 @@ export default function CommentSection({ postId }) {
       <h2 className="text-xl font-semibold">Comments</h2>
       <button
         onClick={() => setShowForm(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer"
       >
         Add Comment
       </button>

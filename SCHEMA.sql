@@ -123,7 +123,8 @@ CREATE TABLE `users` (
   `profile_picture` varchar(255) DEFAULT '',
   `membership` enum('basic','premium') DEFAULT 'basic',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `key` varchar(64) DEFAULT NULL,
+  `totp_secret` varchar(255) DEFAULT NULL,
+  `email_verified` boolean NOT NULL DEFAULT false,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)

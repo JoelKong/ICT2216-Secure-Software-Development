@@ -8,4 +8,4 @@ class DevelopmentConfig(BaseConfig):
     JWT_COOKIE_SECURE = False
     LOG_LEVEL = 'DEBUG'
     # Development-specific overrides
-    LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+    LOG_DIR = os.getenv("LOG_PATH", os.path.join(os.getcwd(), "logs"))
