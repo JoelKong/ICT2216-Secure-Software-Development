@@ -286,18 +286,23 @@ class PostController:
             if not client:
                 return jsonify({"error": "Server misconfigured for OpenAI"}), 500
 
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Summarize the following post:"},
-                    {"role": "user", "content": post["content"]}
-                ],
-                max_tokens=100,
-                temperature=0.7
-            )
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "Summarize the following post:"},
+                        {"role": "user", "content": post["content"]}
+                    ],
+                    max_tokens=100,
+                    temperature=0.7
+                )
 
-            summary = response.choices[0].message.content
-            return jsonify({"summary": summary}), 200
+                summary = response.choices[0].message.content
+                return jsonify({"summary": summary}), 200
+            
+            except Exception as e:
+                current_app.logger.error(f"[OpenAI API Error] Failed to generate summary: {e}")
+                return jsonify({"error": "Failed to summarize post."}), 500
 
         except Exception as e:
             current_app.logger.error(f"[AI SUMMARY] Exception: {e}")
