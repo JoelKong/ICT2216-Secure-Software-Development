@@ -5,7 +5,7 @@ def init_app_config(app, provided_env=None):
     """Initialize application configuration"""
     # Use provided environment if available, fallback to environment variable
     env = provided_env or os.getenv('FLASK_ENV', 'development')
-    
+
     # Import here to avoid circular imports
     from .settings import get_config
     

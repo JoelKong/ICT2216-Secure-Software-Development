@@ -7,8 +7,10 @@ export default function CommentThread({ comment }) {
   const [showReplyForm, setShowReplyForm] = useState(false);
 
   const commentImageUrl = comment?.image
-      ? `${API_ENDPOINT}/api/comments${comment.image.startsWith('/') ? comment.image : '/' + comment.image}`
-      : null;
+    ? `${API_ENDPOINT}/api/comments${
+        comment.image.startsWith("/") ? comment.image : "/" + comment.image
+      }`
+    : null;
 
   return (
     <div className="ml-4 border-l pl-4 mb-4">
@@ -24,16 +26,18 @@ export default function CommentThread({ comment }) {
         )}
         <button
           onClick={() => setShowReplyForm(true)}
-          className="text-blue-500 text-xs mt-1"
+          className="text-blue-500 text-xs mt-1 cursor-pointer"
         >
           Reply
         </button>
         {comment.replies?.length > 0 && (
           <button
             onClick={() => setShowReplies((s) => !s)}
-            className="text-blue-400 text-xs ml-2"
+            className="text-blue-400 text-xs ml-2 cursor-pointer"
           >
-            {showReplies ? "Hide Replies" : `View Replies (${comment.replies.length})`}
+            {showReplies
+              ? "Hide Replies"
+              : `View Replies (${comment.replies.length})`}
           </button>
         )}
       </div>

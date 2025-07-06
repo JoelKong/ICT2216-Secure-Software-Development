@@ -4,6 +4,10 @@ from flask_jwt_extended import JWTManager
 from .db import db
 from .extensions import limiter
 from config import init_app_config
+from flask_mail import Mail
+import os
+
+mail = Mail()
 
 def create_app(env=None):
     app = Flask(__name__)
@@ -25,9 +29,21 @@ def create_app(env=None):
     # Initialize database
     db.init_app(app)
 
+    app.config['MAIL_SECRET_KEY'] = os.getenv('MAIL_SECRET_KEY')
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'true').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+    app.config['FRONTEND_ROUTE'] = os.getenv('FRONTEND_ROUTE', 'http://localhost:5173')
+
+    # Initialize Mail
+    mail.init_app(app)
+
     with app.app_context():
         # Import all models to register them with SQLAlchemy
-        from app import models  # this loads models/__init__.py
+        from app import models
     
     # Import blueprints here to avoid circular imports
     from .routes.auth import auth_bp
@@ -45,5 +61,11 @@ def create_app(env=None):
     
     # Log application creation
     app.logger.info(f"Application initialized with environment: {configured_env}")
+    
+    # Apply HSTS headers for enhanced security
+    @app.after_request
+    def apply_security_headers(response):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+        return response
     
     return app

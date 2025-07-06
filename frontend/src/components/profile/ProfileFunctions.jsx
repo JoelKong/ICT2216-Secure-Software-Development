@@ -15,7 +15,7 @@ export default function useProfile() {
     rateLimit,
     setRateLimit,
   } = useContext(GlobalContext);
-  
+
   const [profile, setProfile] = useState(null);
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState("");
@@ -24,14 +24,14 @@ export default function useProfile() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(true);
 
-  const profilePictureUrl = profile?.profile_picture 
-  ? `${API_ENDPOINT}/${FETCH_USER_ROUTE}${profile.profile_picture}`
-  : null;
+  const profilePictureUrl = profile?.profile_picture
+    ? `${API_ENDPOINT}/${FETCH_USER_ROUTE}${profile.profile_picture}`
+    : null;
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!auth.isAuthenticated) return;
-      
+
       setIsLoading(true);
       try {
         const res = await fetchWithAuth(
@@ -55,7 +55,9 @@ export default function useProfile() {
           const errorData = await res
             .json()
             .catch(() => ({ error: "Failed to fetch profile" }));
-          throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+          throw new Error(
+            errorData.error || `HTTP error! status: ${res.status}`
+          );
         }
 
         const data = await res.json();
@@ -78,12 +80,11 @@ export default function useProfile() {
   const handleEditClick = (label, value) => {
     setEditValue(label === "Password" ? "" : value);
     setEditingField(label);
-    };
+  };
 
   const handleSave = async () => {
     const labelToKey = {
       Username: "username",
-      Email: "email",
       Password: "password",
     };
     const key = labelToKey[editingField];
@@ -93,6 +94,8 @@ export default function useProfile() {
       if (checkRateLimit(rateLimit, setRateLimit, setModal)) {
         return;
       }
+
+      console.log("Sending updated field to backend:", updatedField);
 
       const res = await fetchWithAuth(
         `${API_ENDPOINT}/${FETCH_USER_ROUTE}`,
@@ -106,7 +109,9 @@ export default function useProfile() {
         handleLogout
       );
 
-      if (handleRateLimitResponse(res, setRateLimit, setModal, "update profile")) {
+      if (
+        handleRateLimitResponse(res, setRateLimit, setModal, "update profile")
+      ) {
         return;
       }
 
@@ -159,7 +164,9 @@ export default function useProfile() {
         handleLogout
       );
 
-      if (handleRateLimitResponse(res, setRateLimit, setModal, "delete account")) {
+      if (
+        handleRateLimitResponse(res, setRateLimit, setModal, "delete account")
+      ) {
         return;
       }
 
@@ -213,7 +220,14 @@ export default function useProfile() {
         handleLogout
       );
 
-      if (handleRateLimitResponse(res, setRateLimit, setModal, "update profile picture")) {
+      if (
+        handleRateLimitResponse(
+          res,
+          setRateLimit,
+          setModal,
+          "update profile picture"
+        )
+      ) {
         return;
       }
 
@@ -227,7 +241,7 @@ export default function useProfile() {
       const data = await res.json();
       setProfile((prev) => ({
         ...prev,
-        profile_picture: data.profile_picture,
+        profile_picture: `${data.profile_picture}?t=${new Date().getTime()}`,
       }));
       setRateLimit({
         attempts: 0,

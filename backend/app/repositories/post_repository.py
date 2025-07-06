@@ -7,6 +7,7 @@ from app.interfaces.repositories.IPostRepository import IPostRepository
 from flask import current_app
 from sqlalchemy import func, distinct
 from typing import Optional
+from datetime import datetime, timezone
 
 class PostRepository(BaseRepository[Post], IPostRepository):
     def __init__(self):
@@ -136,4 +137,16 @@ class PostRepository(BaseRepository[Post], IPostRepository):
         except Exception as e:
             self.db.session.rollback()
             current_app.logger.error(f"Error updating post {post_id}: {str(e)}")
+            raise
+
+    def count_user_posts_today(self, user_id: int) -> int:
+        try:
+            today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+            count = self.db.session.query(Post).filter(
+                Post.user_id == user_id,
+                Post.created_at >= today_start
+            ).count()
+            return count
+        except Exception as e:
+            current_app.logger.error(f"Error counting posts for user {user_id}: {str(e)}")
             raise

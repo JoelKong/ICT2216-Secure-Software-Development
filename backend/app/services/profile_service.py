@@ -1,5 +1,6 @@
 import os
 import time
+import magic
 from app.interfaces.services.IProfileService import IProfileService
 from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.interfaces.repositories.IPostRepository import IPostRepository
@@ -9,6 +10,9 @@ from flask import current_app, send_from_directory
 from app.utils.validation import is_valid_email
 from typing import Dict, Tuple, Any, Optional, List
 from werkzeug.security import generate_password_hash
+
+ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png'}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 class ProfileService(IProfileService):
     def __init__(self, user_repository: IUserRepository = None, post_repository: IPostRepository = None):
@@ -20,6 +24,18 @@ class ProfileService(IProfileService):
         """Check if the file extension is allowed"""
         return '.' in filename and \
                filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg'}
+    
+    def _is_valid_mime(self, file) -> bool:
+        file.seek(0)
+        mime = magic.from_buffer(file.read(2048), mime=True)
+        file.seek(0)
+        return mime in ALLOWED_MIME_TYPES
+
+    def _is_valid_size(self, file) -> bool:
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        return size <= MAX_FILE_SIZE
     
     def get_user_profile(self, user_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """Get user profile data"""
@@ -118,12 +134,18 @@ class ProfileService(IProfileService):
             if not self._is_allowed_file(file.filename):
                 return None, "File type not allowed"
             
+            if not self._is_valid_mime(file):
+                return None, "Invalid file content (MIME type check failed)"
+        
+            if not self._is_valid_size(file):
+                return None, "File too large"
+            
             # Get the user's current profile picture if it exists
             user = self.user_repository.get_by_id(user_id)
             if user and user.profile_picture:
                 try:
                     # Extract filename from the stored path
-                    old_filename = user.profile_picture.split('/')[-1]  # Gets 'filename.jpg' from '/uploads/filename.jpg'
+                    old_filename = user.profile_picture.split('/')[-1] 
                     old_filepath = os.path.join(self.UPLOAD_FOLDER, old_filename)
                     
                     # Delete the old file if it exists
@@ -132,7 +154,6 @@ class ProfileService(IProfileService):
                         current_app.logger.info(f"Deleted old profile picture: {old_filepath}")
                 except Exception as e:
                     current_app.logger.error(f"Error deleting old profile picture: {str(e)}")
-                    # Don't fail the entire operation if deletion fails
             
             # Generate a unique filename to avoid collisions
             filename = f"user_{user_id}_{int(time.time())}.{file.filename.rsplit('.', 1)[1].lower()}"
@@ -153,6 +174,7 @@ class ProfileService(IProfileService):
         except Exception as e:
             current_app.logger.error(f"Upload failed: {str(e)}")
             raise
+        
     def get_profile_image(self, filename):
         """Serve profile image from uploads folder"""
         try:
@@ -171,15 +193,6 @@ class ProfileService(IProfileService):
             user = self.user_repository.get_by_id(user_id)
             if not user:
                 return False, "User not found"
-                
-            # # Delete profile picture if exists
-            # if user.profile_picture:
-            #     try:
-            #         filepath = os.path.join(self.UPLOAD_FOLDER, user.profile_picture.split('/')[-1])
-            #         if os.path.exists(filepath):
-            #             os.remove(filepath)
-            #     except OSError as e:
-            #         current_app.logger.error(f"Failed to delete profile picture: {str(e)}")
             
             # Delete user from database
             self.user_repository.delete(user)

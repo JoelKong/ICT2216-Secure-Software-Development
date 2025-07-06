@@ -1,9 +1,10 @@
-# backend/app/controllers/auth_controller.py
-
 import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
+from app.models.users import User
+import pyotp
+from app.utils.validation import is_valid_email, is_strong_password, is_valid_username
 from flask_jwt_extended import (
     jwt_required,
     get_jwt_identity,
@@ -11,7 +12,6 @@ from flask_jwt_extended import (
     unset_jwt_cookies
 )
 
-# --- Regex patterns ---
 EMAIL_REGEX = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 # Password: ≥8 chars, at least one lowercase, one uppercase, one digit, one special
 PASSWORD_REGEX = (
@@ -38,40 +38,40 @@ class AuthController:
             password = raw.get("password") or ""
 
             # --- Validate email ---
-            if not re.match(EMAIL_REGEX, email):
+            if not is_valid_email(email):
                 return jsonify({"error": "Invalid email format"}), 400
 
             # --- Validate username ---
-            if not re.match(USERNAME_REGEX, username):
+            if not is_valid_username(username):
                 return jsonify({
                     "error": "Username must be 3–20 chars, letters/numbers/underscore only."
                 }), 400
 
             # --- Validate password ---
-            if not re.match(PASSWORD_REGEX, password):
-                return jsonify({
-                    "error": (
-                        "Password must be at least 8 chars, include uppercase, "
-                        "lowercase, a number, and a special character."
-                    )
-                }), 400
+            is_strong, reason = is_strong_password(password)
+            if not is_strong:
+                return jsonify({"error": reason}), 400
 
             current_app.logger.info(f"Signup attempt: {email} (username: {username})")
 
-            # Delegate to service for any further business logic
             payload = {"email": email, "username": username, "password": password}
             is_valid, message = self.auth_service.validate_signup_data(payload)
             if not is_valid:
                 return jsonify({"error": message}), 400
 
             user   = self.auth_service.create_user(payload)
-            tokens = self.auth_service.generate_tokens(user.user_id)
-
             response = jsonify({
-                "message": "Sign up successful! Logging in…",
-                "access_token": tokens["access_token"]
+                "message": "Sign up successful! Please Verify email."
             })
-            set_refresh_cookies(response, tokens["refresh_token"])
+            self.auth_service.send_verification_email(user)
+
+            # tokens = self.auth_service.generate_tokens(user.user_id)
+
+            # response = jsonify({
+            #     "message": "Sign up successful! Logging in…",
+            #     "access_token": tokens["access_token"]
+            # })
+            # set_refresh_cookies(response, tokens["refresh_token"])
             return response, 201
 
         except Exception as e:
@@ -95,13 +95,13 @@ class AuthController:
             if not re.match(EMAIL_REGEX, email):
                 return jsonify({"error": "Invalid email format"}), 400
 
-            # (Optionally) validate password complexity again, or skip
-            # if not re.match(PASSWORD_REGEX, password):
-            #     return jsonify({"error": "Invalid password format"}), 400
-
             user, error = self.auth_service.login(email, password)
             if error:
                 return jsonify({"error": error}), 401
+            
+            # Prevent login if email is not verified
+            if not user.email_verified:
+                return jsonify({"error": "Email not verified. Please check your inbox."}), 401
 
             tokens = self.auth_service.generate_tokens(user.user_id)
             response = jsonify({
@@ -138,3 +138,62 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
+        
+    @jwt_required()
+    def get_user_totp_secret(self):
+        """Retrieve the TOTP secret"""
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        if user and user.totp_secret:
+            return jsonify({"totpSecret": user.totp_secret}), 200
+        else:
+            return jsonify({"error": "TOTP secret not found"}), 404
+
+    @jwt_required()
+    def verify_totp(self):
+        """Verify the OTP code entered by the user"""
+        data = request.get_json()
+        code = data.get("code")
+        secret = data.get("totpSecret")
+
+        # Ensure both code and secret are provided
+        if not code or not secret:
+            return jsonify({"success": False, "error": "Missing code or secret"}), 400
+
+        # Verify the TOTP code using the secret
+        totp = pyotp.TOTP(secret)
+        is_valid = totp.verify(code)
+
+        if is_valid:
+            # Generate a new access token with totp_verified = True
+            user_id = int(get_jwt_identity())
+            new_tokens = self.auth_service.generate_tokens(user_id, totp_verified=True)
+            return jsonify({
+                "message": "TOTP Verified!",
+                "access_token": new_tokens["access_token"]
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Invalid TOTP code"}), 400
+        
+    def verify_email(self):
+        token = request.args.get('token')
+        salt = request.args.get('salt')
+
+        current_app.logger.info(f"🧾 Received token: {token}")
+        current_app.logger.info(f"🧾 Received salt: {salt}")
+        
+        if not token or not salt:
+            return jsonify({"error": "Missing token"}), 400
+
+        success = self.auth_service.verify_email_token(token, salt)
+        if not success:
+            return jsonify({"error": "Invalid or expired token"}), 400
+
+        tokens = self.auth_service.generate_tokens(success)
+        response = jsonify({
+            "message": "Email verified successfully!",
+            "access_token": tokens["access_token"]
+        })
+        set_refresh_cookies(response, tokens["refresh_token"])
+        return response, 200

@@ -4,9 +4,8 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 
 beforeAll(() => {
+  // Suppress console logs during tests
   jest.spyOn(console, "error").mockImplementation(() => {});
-  jest.spyOn(console, "log").mockImplementation(() => {});
-  jest.spyOn(console, "warn").mockImplementation(() => {});
 });
 
 afterAll(() => {

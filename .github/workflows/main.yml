@@ -10,17 +10,63 @@ on:
   workflow_dispatch:
 
 jobs:
+  code-scan:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: "zulu"
+      - name: Create sonar-project.properties file
+        run: |
+          echo "sonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}" > sonar-project.properties
+          echo "sonar.organization=${{ secrets.SONAR_ORGANIZATION }}" >> sonar-project.properties
+          echo "sonar.host.url=${{ secrets.SONAR_HOST_URL }}" >> sonar-project.properties
+          echo "sonar.token=${{ secrets.SONAR_TOKEN }}" >> sonar-project.properties
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "The Leonardo's Discussion Room"
+          path: "."
+          format: "HTML"
+          out: "dependency-check-report"
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dependency-Check-Report
+          path: dependency-check-report
+
   build:
     runs-on: ubuntu-latest
+    needs: [code-scan, dependency-check]
     services:
       mysql:
         image: mysql:8.0
         env:
-          # Temporary test database to run integration tests in the future
-          MYSQL_ROOT_PASSWORD: rootpassword
-          MYSQL_USER: user
-          MYSQL_PASSWORD: password
-          MYSQL_DATABASE: leonardo
+          # To run e2e tests and integration tests in the future
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEMP_MYSQL_ROOT_PASSWORD }}
+          MYSQL_USER: ${{ secrets.TEMP_MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.TEMP_MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.TEMP_MYSQL_DATABASE }}
         ports:
           - 3306:3306
         options: >-
@@ -81,26 +127,24 @@ jobs:
           cd backend
           python run_tests.py
 
-      - name: Upload frontend build artifact
+      - name: Build source code artifact
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
-          path: frontend/dist/
-
-      - name: Upload backend artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-app
+          name: source-code
           path: |
             backend/
+            frontend/
+            docker-compose-prod.yml
+            scripts/
+            nginx/
             !backend/.pytest_cache/
             !backend/htmlcov/
             !backend/.coverage
             !backend/logs/
             !backend/__pycache__/
-            docker-compose-prod.yml
-            scripts/deploy_prod.sh
-            nginx/
+            !frontend/dist/
+            !frontend/node_modules/
 
   deploy_staging:
     needs: build
@@ -108,8 +152,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      - name: "Deploy to staging"
-        run: echo "Deploying to staging environment"
+      - name: test
+        run: echo "STAGING"
+
 
   deploy_uat:
     needs: deploy_staging
@@ -117,8 +162,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     steps:
-      - name: "Deploy to UAT"
-        run: echo "Deploying to UAT environment"
+      - name: test
+        run: echo "UAT"
 
   deploy_prod:
     needs: deploy_uat
@@ -126,29 +171,61 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Download frontend artifact
+      - name: Download source code artifact
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
-          path: artifacts/frontend-build
+          name: source-code
+          path: leonardo-app
 
-      - name: Download backend artifact
-        uses: actions/download-artifact@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          name: backend-app
-          path: artifacts/backend-app
+          node-version: "18"
 
-      - name: Upload artifacts to production server
+      - name: Create frontend .env file for build for VITE variables
+        run: |
+          echo "VITE_STRIPE_PUBLISHABLE_KEY=${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}" > leonardo-app/frontend/.env.production
+          echo "VITE_API_ENDPOINT=${{ secrets.VITE_API_ENDPOINT }}" >> leonardo-app/frontend/.env.production
+
+      - name: Install frontend dependencies and build
+        run: |
+          cd leonardo-app/frontend
+          npm ci
+          npm run build
+
+      - name: Clean EC2 target directory before upload
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "Cleaning old app files, preserving certbot directory..."
+            cd ~/leonardo-app
+            sudo find . -mindepth 1 -maxdepth 1 ! -name 'certbot' -exec rm -rf {} +
+            mkdir -p ~/leonardo-app
+
+      - name: Upload source code artifact
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          source: "artifacts/backend-app/*,artifacts/frontend-build/*"
-          target: "/path/to/your/project/"
-          strip_components: 2
+          source: "leonardo-app/**"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app"
+          strip_components: 1
 
-      - name: Finalize deployment on production server
+      - name: Update frontend-dist artifact
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "leonardo-app/frontend/dist/**"
+          target: "/home/${{ secrets.USERNAME }}/leonardo-app/frontend/dist"
+          strip_components: 3
+
+      - name: Create .env files and finalize deployment on production server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
@@ -156,12 +233,43 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             set -e
-            cd /path/to/your/project
+            PROJECT_DIR="/home/${{ secrets.USERNAME }}/leonardo-app"
+            cd $PROJECT_DIR
+
+            echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" > .env.production
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env.production
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env.production
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env.production
+            echo "CERTBOT_EMAIL=${{ secrets.CERTBOT_EMAIL }}" >> .env.production
+            echo "CERTBOT_DOMAIN=${{ secrets.CERTBOT_DOMAIN }}" >> .env.production
+
+            echo "FLASK_ENV=${{ secrets.FLASK_ENV }}" >> backend/.env.production
+            echo "JWT_ACCESS_TOKEN_EXPIRES_HOURS=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES_HOURS }}" >> backend/.env.production
+            echo "JWT_REFRESH_TOKEN_EXPIRES_DAYS=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES_DAYS }}" >> backend/.env.production
+            echo "SQLALCHEMY_DATABASE_URI=${{ secrets.SQLALCHEMY_DATABASE_URI }}" >> backend/.env.production
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> backend/.env.production
+            echo "FRONTEND_ROUTE=${{ secrets.FRONTEND_ROUTE }}" >> backend/.env.production
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> backend/.env.production
+            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> backend/.env.production
+            echo "OPENAI_SECRET_KEY=${{ secrets.OPENAI_SECRET_KEY }}" >> backend/.env.production
+            echo "MAIL_SERVER=${{ secrets.MAIL_SERVER }}" >> backend/.env.production
+            echo "MAIL_PORT=${{ secrets.MAIL_PORT }}" >> backend/.env.production
+            echo "MAIL_USE_TLS=${{ secrets.MAIL_USE_TLS }}" >> backend/.env.production
+            echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> backend/.env.production
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> backend/.env.production
+            echo "MAIL_DEFAULT_SENDER=${{ secrets.MAIL_DEFAULT_SENDER }}" >> backend/.env.production
+            echo "MAIL_SECRET_KEY=${{ secrets.MAIL_SECRET_KEY }}" >> backend/.env.production
+
             chmod +x ./scripts/deploy_prod.sh
             ./scripts/deploy_prod.sh
-        env:
-          VITE_API_ENDPOINT: ${{ secrets.VITE_API_ENDPOINT }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          SQLALCHEMY_DATABASE_URI: ${{ secrets.SQLALCHEMY_DATABASE_URI }}
-          FRONTEND_ROUTE: ${{ secrets.FRONTEND_ROUTE }}
+      
+      - name: ZAP-Scan-Report-Public-${{ github.run_id }}
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'ghcr.io/zaproxy/zaproxy:stable'
+          target: 'http://theleonardodrhere.onthewifi.com'
+          cmd_options: '-a'
+          artifact_name: zap-report-staging-public-${{ github.run_id }}
+
+          

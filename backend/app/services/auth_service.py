@@ -7,7 +7,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.validation import is_valid_email, is_strong_password
 from flask_jwt_extended import create_access_token, create_refresh_token
 import datetime
+from itsdangerous import URLSafeTimedSerializer
+import secrets
+from flask_mail import Message
+from app import mail
 from typing import Dict, Tuple, Optional
+import pyotp
 
 class AuthService(IAuthService):
     def __init__(self, user_repository: IUserRepository = None):
@@ -48,13 +53,17 @@ class AuthService(IAuthService):
         # Hash the password
         hashed_password = generate_password_hash(data['password'])
         
+        totp = pyotp.TOTP(pyotp.random_base32())
+        totp_secret = totp.secret
+
         # Prepare user data
         user_data = {
             'username': data['username'],
             'email': data['email'],
             'password': hashed_password,
             'profile_picture': data.get('profile_picture', 'default.jpg'),
-            'membership': 'basic'
+            'membership': 'basic',
+            'totp_secret': totp_secret
         }
         
         # Create user
@@ -79,16 +88,25 @@ class AuthService(IAuthService):
         current_app.logger.info(f"Successful login for user: {user.username}")
         return user, None
     
-    def generate_tokens(self, user_id: int) -> Dict[str, str]:
+    def generate_tokens(self, user_id: int, totp_verified: bool = False) -> Dict[str, str]:
         """Generate access and refresh tokens"""
         # Convert user_id to string
         str_user_id = str(user_id)
-        
-        # Create access token with 15-minute expiry
-        access_token = create_access_token(
-            identity=str_user_id,
-            expires_delta=datetime.timedelta(minutes=15)
-        )
+        additional_claims = {"totp_verified": totp_verified}
+
+        if not totp_verified:
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=3),
+                additional_claims=additional_claims
+            )
+        else:
+            # Create access token with 15-minute expiry
+            access_token = create_access_token(
+                identity=str_user_id,
+                expires_delta=datetime.timedelta(minutes=15),
+                additional_claims=additional_claims
+            )
         
         # Create refresh token with 30-day expiry
         refresh_token = create_refresh_token(
@@ -115,3 +133,50 @@ class AuthService(IAuthService):
         return {
             'access_token': access_token
         }
+    
+    # Send verification email to user
+    def generate_email_token(self, user: User) -> tuple[str, str]:
+        """Generate token and random salt (to be passed separately)"""
+        salt = secrets.token_urlsafe(16)  # Random salt
+        serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+        token = serializer.dumps({'user_id': user.user_id}, salt=salt)
+        return token, salt
+
+    def send_verification_email(self, user: User):
+        token, salt = self.generate_email_token(user)
+
+        current_app.logger.info(f"🔐 Generated token: {token}")
+        current_app.logger.info(f"🧂 Token salt: {salt}")
+
+        verification_url = (
+            f"{current_app.config['FRONTEND_ROUTE']}/verify_email?"
+            f"token={token}&salt={salt}"
+        )
+
+        current_app.logger.info(f"📩 Verification URL: {verification_url}")
+
+        msg = Message(
+            subject="Verify Your Email",
+            recipients=[user.email],
+            body=f"Hi {user.username},\n\nClick the link to verify your email:\n\n{verification_url}"
+        )
+        mail.send(msg)
+
+    def verify_email_token(self, token: str, salt: str, max_age: int = 3600) -> bool:
+        """Verify email token with externally passed salt"""
+        try:
+            serializer = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+            data = serializer.loads(token, salt=salt, max_age=max_age)
+            user_id = data.get("user_id")
+        except Exception as e:
+            current_app.logger.warning(f"Invalid or expired token: {e}")
+            return False
+
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            return None
+
+        if not user.email_verified:
+            self.user_repository.update(user, {"email_verified": True})
+
+        return user_id
