@@ -239,7 +239,7 @@ function App() {
                 </PrivateRoute>
               }
             />
-                        <Route
+            <Route
               path="/setup_totp"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
