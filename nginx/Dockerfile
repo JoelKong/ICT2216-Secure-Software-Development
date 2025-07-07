@@ -1,4 +1,4 @@
-FROM nginx:stable-alpine
+FROM owasp/modsecurity-crs:nginx-alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
