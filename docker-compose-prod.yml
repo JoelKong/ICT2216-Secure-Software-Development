@@ -53,7 +53,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
-      - ./modsecurity:/etc/nginx/modsecurity:ro
     command: >
       sh -c "
         until [ -f /etc/letsencrypt/live/$$CERTBOT_DOMAIN/fullchain.pem ]; do
