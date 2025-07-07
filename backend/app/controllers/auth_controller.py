@@ -24,6 +24,7 @@ PASSWORD_REGEX = (
 # Username: alphanumeric + underscores, 3–20 characters
 USERNAME_REGEX = r"^[A-Za-z0-9_]{3,20}$"
 
+ERROR_MESSAGE = "Something went wrong. Please try again."
 
 class AuthController:
     def __init__(self, auth_service: IAuthService = None):
@@ -76,7 +77,7 @@ class AuthController:
 
         except Exception as e:
             current_app.logger.error(f"Error during signup: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
+            return jsonify({"error": ERROR_MESSAGE}), 500
 
     def login(self):
         """Handle user login with basic regex validation"""
@@ -113,7 +114,7 @@ class AuthController:
 
         except Exception as e:
             current_app.logger.error(f"Error during login: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
+            return jsonify({"error": ERROR_MESSAGE}), 500
 
     @jwt_required(refresh=True)
     def refresh_token(self):
@@ -137,7 +138,7 @@ class AuthController:
 
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
+            return jsonify({"error": ERROR_MESSAGE}), 500
         
     @jwt_required()
     def get_user_totp_secret(self):
