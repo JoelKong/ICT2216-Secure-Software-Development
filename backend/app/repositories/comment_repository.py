@@ -1,5 +1,6 @@
 from .base_repository import BaseRepository
 from app.models.comments import Comment
+from app.models.users import User
 from app.interfaces.repositories.ICommentRepository import ICommentRepository
 from flask import current_app
 from typing import List, Optional
@@ -9,11 +10,23 @@ class CommentRepository(BaseRepository[Comment], ICommentRepository):
         super().__init__(Comment)
     
     def get_by_post_id(self, post_id: int) -> List[Comment]:
-        """Get all comments for a specific post"""
         try:
-            return self.model.query.filter_by(post_id=post_id).all()
+            # query with join but load Comment objects
+            results = (
+                self.db.session.query(Comment, User.username)
+                .join(User, Comment.user_id == User.user_id)
+                .filter(Comment.post_id == post_id)
+                .order_by(Comment.created_at.asc())
+                .all()
+            )
+
+            comments = []
+            for comment, username in results:
+                comment.username = username  # dynamically attach username
+                comments.append(comment)
+            return comments
         except Exception as e:
-            current_app.logger.error(f"Error getting comments by post ID: {str(e)}")
+            print(f"Error getting comments with usernames: {e}")
             raise
     
     def count_by_post_id(self, post_id: int) -> int:
