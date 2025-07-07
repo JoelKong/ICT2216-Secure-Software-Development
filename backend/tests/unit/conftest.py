@@ -25,8 +25,8 @@ def mock_flask_app():
     app = Flask(__name__)
     app.config.update({
         'TESTING': True,
-        'JWT_SECRET_KEY': 'test-secret',
-        'SECRET_KEY': 'test-secret'
+        'JWT_SECRET_KEY': secrets.token_hex(16),
+        'SECRET_KEY': secrets.token_hex(16)
     })
     return app
 
