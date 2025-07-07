@@ -47,7 +47,7 @@ class PaymentService(IPaymentService):
                 },
                 mode='payment',
                 success_url=f'{self.domain_url}/success?session_id={{CHECKOUT_SESSION_ID}}',
-                cancel_url=f'{self.domain_url}/cancel',
+                cancel_url=f'{self.domain_url}/failure',
             )
             
             current_app.logger.info(f"Created checkout session for user {user_id}: {checkout_session.id}")
