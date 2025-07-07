@@ -23,6 +23,12 @@ export default function EditPostForm() {
 
   // Fetch existing post data on mount
   useEffect(() => {
+    console.log("Effect triggered:");
+    console.log("postId:", postId);
+    console.log("getAuthToken:", getAuthToken);
+    console.log("updateAuthToken:", updateAuthToken);
+    console.log("handleLogout:", handleLogout);
+    console.log("setModal:", setModal);
     async function fetchPost() {
       try {
         const res = await fetchWithAuth(
