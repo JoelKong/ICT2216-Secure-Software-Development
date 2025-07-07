@@ -65,14 +65,6 @@ class AuthController:
                 "message": "Sign up successful! Please Verify email."
             })
             self.auth_service.send_verification_email(user)
-
-            # tokens = self.auth_service.generate_tokens(user.user_id)
-
-            # response = jsonify({
-            #     "message": "Sign up successful! Logging in…",
-            #     "access_token": tokens["access_token"]
-            # })
-            # set_refresh_cookies(response, tokens["refresh_token"])
             return response, 201
 
         except Exception as e:
@@ -180,9 +172,6 @@ class AuthController:
     def verify_email(self):
         token = request.args.get('token')
         salt = request.args.get('salt')
-
-        current_app.logger.info(f"🧾 Received token: {token}")
-        current_app.logger.info(f"🧾 Received salt: {salt}")
         
         if not token or not salt:
             return jsonify({"error": "Missing token"}), 400
