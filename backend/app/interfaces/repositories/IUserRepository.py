@@ -40,3 +40,8 @@ class IUserRepository(IBaseRepository[User]):
     def get_by_id(self, user_id: int) -> Optional[User]:
         """Get user by ID"""
         pass
+
+    @abstractmethod
+    def update_totp_verified(self, user_id: int, totp_verified: bool) -> None:
+        """Update TOTP verification status"""
+        pass

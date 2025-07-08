@@ -78,3 +78,18 @@ class UserRepository(BaseRepository[User], IUserRepository):
         except Exception as e:
             current_app.logger.error(f"Error getting user by ID: {str(e)}")
             raise
+
+    def update_totp_verified(self, user_id: int, totp_verified: bool) -> None:
+        """Update TOTP verification status"""
+        try:
+            user = self.get_by_id(user_id)
+            if not user:
+                raise ValueError("User not found")
+            
+            user.totp_verified = totp_verified
+            self.db.session.commit()
+            current_app.logger.info(f"Updated TOTP verification status for user {user_id}")
+        except Exception as e:
+            self.db.session.rollback()
+            current_app.logger.error(f"Error updating TOTP verification status: {str(e)}")
+            raise
