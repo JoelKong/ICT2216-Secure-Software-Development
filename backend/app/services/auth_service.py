@@ -142,18 +142,18 @@ class AuthService(IAuthService):
         token = serializer.dumps({'user_id': user.user_id}, salt=salt)
         return token, salt
 
-    def send_verification_email(self, user: User):
+    def send_verification_email(self, user: User) -> None:
         token, salt = self.generate_email_token(user)
 
-        current_app.logger.info(f"🔐 Generated token: {token}")
-        current_app.logger.info(f"🧂 Token salt: {salt}")
+        current_app.logger.info(f"Generated token: {token}")
+        current_app.logger.info(f"Token salt: {salt}")
 
         verification_url = (
             f"{current_app.config['FRONTEND_ROUTE']}/verify_email?"
             f"token={token}&salt={salt}"
         )
 
-        current_app.logger.info(f"📩 Verification URL: {verification_url}")
+        current_app.logger.info(f"Verification URL: {verification_url}")
 
         msg = Message(
             subject="Verify Your Email",

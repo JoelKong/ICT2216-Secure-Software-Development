@@ -27,19 +27,7 @@ class LikeRepository(BaseRepository[Like], ILikeRepository):
         except Exception as e:
             current_app.logger.error(f"Error getting user liked post IDs: {str(e)}")
             raise
-    
-    def delete_by_post_id(self, post_id: int) -> None:
-        """Delete all likes for a specific post"""
-        try:
-            likes = self.model.query.filter_by(post_id=post_id).all()
-            for like in likes:
-                self.delete(like)
-            current_app.logger.info(f"Deleted all likes for post {post_id}")
-        except Exception as e:
-            self.db.session.rollback()
-            current_app.logger.error(f"Error deleting likes by post ID: {str(e)}")
-            raise
-    
+        
     def count_likes_for_post(self, post_id: int) -> int:
         """Count likes for a specific post"""
         try:

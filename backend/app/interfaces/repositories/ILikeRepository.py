@@ -15,8 +15,8 @@ class ILikeRepository(IBaseRepository[Like]):
     def get_user_liked_post_ids(self, user_id: int, post_ids: Optional[List[int]] = None) -> List[int]:
         """Get IDs of posts liked by a specific user"""
         pass
-    
+
     @abstractmethod
-    def delete_by_post_id(self, post_id: int) -> None:
-        """Delete all likes for a specific post"""
+    def count_likes_for_post(self, post_id: int) -> int:
+        """Count likes for a specific post"""
         pass

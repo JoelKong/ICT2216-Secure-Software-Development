@@ -8,12 +8,13 @@ from flask import current_app
 from sqlalchemy import func, distinct
 from typing import Optional
 from datetime import datetime, timezone
+from typing import List
 
 class PostRepository(BaseRepository[Post], IPostRepository):
     def __init__(self):
         super().__init__(Post)
 
-    def get_posts(self, sort_by='recent', limit=10, offset=0, search=None, user_id=None):
+    def get_posts(self, sort_by='recent', limit=10, offset=0, search=None, user_id=None) -> List[Post]:
         """Get posts with filtering, sorting and pagination"""
         try:
             # Define sort criteria as tuples (primary, tiebreaker)
@@ -66,19 +67,7 @@ class PostRepository(BaseRepository[Post], IPostRepository):
             current_app.logger.error(f"Error retrieving posts: {str(e)}")
             raise
 
-    def get_user_liked_posts(self, user_id, post_ids=None):
-        """Get posts liked by a specific user"""
-        try:
-            query = Like.query.filter(Like.user_id == user_id)
-            if post_ids:
-                query = query.filter(Like.post_id.in_(post_ids))
-                
-            return query.all()
-        except Exception as e:
-            current_app.logger.error(f"Error retrieving liked posts: {str(e)}")
-            raise
-
-    def get_post_by_id(self, post_id: int):
+    def get_post_by_id(self, post_id: int) -> Optional[Post]:
         try:
             # Query Post joined with User, and count comments and likes
             query = self.db.session.query(

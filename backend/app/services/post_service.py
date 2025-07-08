@@ -5,6 +5,7 @@ from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.repositories.post_repository import PostRepository
 from app.repositories.like_repository import LikeRepository
 from app.repositories.user_repository import UserRepository
+from app.models.posts import Post
 from flask import current_app, send_from_directory
 from typing import Dict, List, Optional, Any, Tuple
 import os
@@ -37,8 +38,7 @@ class PostService(IPostService):
         file.seek(0)
         return size <= MAX_FILE_SIZE
 
-    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10,
-                search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
+    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10, search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
         try:
             posts = self.post_repository.get_posts(
                 sort_by=sort_by,
@@ -125,9 +125,6 @@ class PostService(IPostService):
                 current_app.logger.warning(f"Unauthorized delete attempt on post {post_id} by user {user_id}")
                 return False, "Unauthorized: You can only delete your own posts"
             
-            # Delete likes and comments related to this post first
-            self.like_repository.delete_by_post_id(post_id)
-            
             # Now delete the post
             self.post_repository.delete(post)
             
@@ -175,7 +172,7 @@ class PostService(IPostService):
             current_app.logger.error(f"Error getting post detail {post_id}: {str(e)}")
             raise
 
-    def create_post(self, title: str, content: str, image_file, user_id: int):
+    def create_post(self, title: str, content: str, image_file, user_id: int) -> Post:
         try:
             image_url = None
 
@@ -209,7 +206,7 @@ class PostService(IPostService):
             current_app.logger.error(f"Failed to create post: {str(e)}")
             raise
 
-    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file=None):
+    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file=None) -> Optional[Post]:
         """Update an existing post"""
         try:
             post = self.post_repository.get_by_id(post_id)
