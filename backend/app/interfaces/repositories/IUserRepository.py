@@ -30,3 +30,13 @@ class IUserRepository(IBaseRepository[User]):
     def update_membership(self, user_id: int, is_premium: bool) -> User:
         """Update user membership status"""
         pass
+
+    @abstractmethod
+    def update_profile_picture(self, user_id: int, filename: str) -> None:
+        """Update user profile picture"""
+        pass
+
+    @abstractmethod
+    def get_by_id(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        pass

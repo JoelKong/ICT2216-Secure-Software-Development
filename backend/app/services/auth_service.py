@@ -180,3 +180,11 @@ class AuthService(IAuthService):
             self.user_repository.update(user, {"email_verified": True})
 
         return user_id
+    
+    def get_user(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            current_app.logger.warning(f"User with ID {user_id} not found")
+            return None
+        return user

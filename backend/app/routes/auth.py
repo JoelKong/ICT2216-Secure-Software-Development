@@ -34,10 +34,6 @@ def refresh_token():
 def logout():
     return auth_controller.logout()
 
-@auth_bp.route('/get_user_totp_secret', methods=['GET'])
-def get_user_totp_secret():
-    return auth_controller.get_user_totp_secret()
-
 @auth_bp.route('/verify_totp', methods=['POST'])
 def verify_totp():
     return auth_controller.verify_totp()

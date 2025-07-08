@@ -71,7 +71,10 @@ class UserRepository(BaseRepository[User], IUserRepository):
             current_app.logger.error(f"Database error updating profile picture: {str(e)}")
             raise
 
-
-    
-
-    
+    def get_by_id(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        try:
+            return self.model.query.get(user_id)
+        except Exception as e:
+            current_app.logger.error(f"Error getting user by ID: {str(e)}")
+            raise
