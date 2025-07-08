@@ -100,7 +100,11 @@ export default function LoginForm({ setIsSignup, setIsAuthChecked }) {
           token: data.access_token,
           user: null,
         });
+        if (data.totp_verified) {
+        navigate("/verify_totp");
+      } else {
         navigate("/setup_totp");
+      }
       } else {
         setModal({
           active: true,

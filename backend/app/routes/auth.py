@@ -42,6 +42,10 @@ def get_user_totp_secret():
 def verify_totp():
     return auth_controller.verify_totp()
 
+@auth_bp.route('/totp_setup', methods=['GET'])
+def totp_setup():
+    return auth_controller.get_totp_setup()
+
 @auth_bp.route('/verify_email', methods=['GET'])
 def verify_email():
     return auth_controller.verify_email()
