@@ -125,9 +125,6 @@ class PostService(IPostService):
                 current_app.logger.warning(f"Unauthorized delete attempt on post {post_id} by user {user_id}")
                 return False, "Unauthorized: You can only delete your own posts"
             
-            # Delete likes and comments related to this post first
-            self.like_repository.delete_by_post_id(post_id)
-            
             # Now delete the post
             self.post_repository.delete(post)
             
