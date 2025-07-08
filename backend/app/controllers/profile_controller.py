@@ -1,5 +1,3 @@
-# backend/app/controllers/profile_controller.py
-
 import re
 from flask import request, jsonify, current_app, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity

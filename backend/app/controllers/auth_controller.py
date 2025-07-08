@@ -24,6 +24,7 @@ PASSWORD_REGEX = (
 # Username: alphanumeric + underscores, 3–20 characters
 USERNAME_REGEX = r"^[A-Za-z0-9_]{3,20}$"
 
+ERROR_MESSAGE = "Something went wrong. Please try again."
 
 class AuthController:
     def __init__(self, auth_service: IAuthService = None):
@@ -64,19 +65,11 @@ class AuthController:
                 "message": "Sign up successful! Please Verify email."
             })
             self.auth_service.send_verification_email(user)
-
-            # tokens = self.auth_service.generate_tokens(user.user_id)
-
-            # response = jsonify({
-            #     "message": "Sign up successful! Logging in…",
-            #     "access_token": tokens["access_token"]
-            # })
-            # set_refresh_cookies(response, tokens["refresh_token"])
             return response, 201
 
         except Exception as e:
             current_app.logger.error(f"Error during signup: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
+            return jsonify({"error": ERROR_MESSAGE}), 500
 
     def login(self):
         """Handle user login with basic regex validation"""
@@ -114,7 +107,7 @@ class AuthController:
 
         except Exception as e:
             current_app.logger.error(f"Error during login: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
+            return jsonify({"error": ERROR_MESSAGE}), 500
 
     @jwt_required(refresh=True)
     def refresh_token(self):
@@ -138,8 +131,8 @@ class AuthController:
 
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
-            return jsonify({"error": "Something went wrong. Please try again."}), 500
-
+            return jsonify({"error": ERROR_MESSAGE}), 500
+        
     @jwt_required()
     def get_totp_setup(self):
         """Return provisioning URI and showQr flag based on TOTP state"""
@@ -207,9 +200,6 @@ class AuthController:
     def verify_email(self):
         token = request.args.get('token')
         salt = request.args.get('salt')
-
-        current_app.logger.info(f"🧾 Received token: {token}")
-        current_app.logger.info(f"🧾 Received salt: {salt}")
         
         if not token or not salt:
             return jsonify({"error": "Missing token"}), 400

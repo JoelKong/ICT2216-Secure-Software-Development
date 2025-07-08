@@ -87,7 +87,7 @@ const DrawingCanvas = forwardRef(
         fabricCanvas.dispose();
         fabricRef.current = null;
       };
-    }, [width, height, backgroundColor, brushColor, brushWidth, isEraser]);
+    }, [width, height, backgroundColor]);
 
     // Update brush settings on changes
     useEffect(() => {

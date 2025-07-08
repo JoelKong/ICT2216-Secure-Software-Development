@@ -47,7 +47,7 @@ class PaymentService(IPaymentService):
                 },
                 mode='payment',
                 success_url=f'{self.domain_url}/success?session_id={{CHECKOUT_SESSION_ID}}',
-                cancel_url=f'{self.domain_url}/cancel',
+                cancel_url=f'{self.domain_url}/failure',
             )
             
             current_app.logger.info(f"Created checkout session for user {user_id}: {checkout_session.id}")
@@ -69,13 +69,11 @@ class PaymentService(IPaymentService):
             
             # Check payment status
             if session.payment_status != 'paid':
-                current_app.logger.warning(f"Session {session_id} is not paid")
                 return False, None, "Payment not completed"
             
             # Get user ID from session metadata
             user_id = session.metadata.get('user_id')
             if not user_id:
-                current_app.logger.error(f"No user_id found in session {session_id}")
                 return False, None, "Invalid session: user ID not found"
             
             user_id = int(user_id)
