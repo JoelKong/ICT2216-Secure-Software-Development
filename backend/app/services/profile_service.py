@@ -121,7 +121,6 @@ class ProfileService(IProfileService):
             return "Email is already in use"
         return None
 
-
     def _validate_username(self, username: str, user) -> Optional[str]:
         if len(username) < 3:
             return "Username must be at least 3 characters"
@@ -205,8 +204,7 @@ class ProfileService(IProfileService):
             current_app.logger.error(f"Error deleting user: {str(e)}")
             return False, str(e)
     
-    def get_user_posts(self, user_id: int, sort_by: str = 'recent', 
-                       limit: int = 10, offset: int = 0) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    def get_user_posts(self, user_id: int, sort_by: str = 'recent', limit: int = 10, offset: int = 0) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         """Get posts created by user"""
         try:
             # Check if user exists

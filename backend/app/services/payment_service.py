@@ -1,7 +1,7 @@
 from app.interfaces.services.IPaymentService import IPaymentService
 from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.repositories.user_repository import UserRepository
-from flask import current_app, request
+from flask import current_app
 import stripe
 import os
 from typing import Dict, Tuple, Optional, Any
