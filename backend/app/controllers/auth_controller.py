@@ -137,7 +137,7 @@ class AuthController:
     def get_totp_setup(self):
         """Return provisioning URI and showQr flag based on TOTP state"""
         user_id = int(get_jwt_identity())
-        user = User.query.get(user_id)
+        user = self.auth_service.get_user(user_id)
         if not user:
             return jsonify({"error": "User not found"}), 404
 
@@ -165,7 +165,7 @@ class AuthController:
     def verify_totp(self):
         """Verify the OTP code entered by the user"""
         user_id = int(get_jwt_identity())
-        user = User.query.filter_by(user_id=user_id).first()
+        user = self.auth_service.get_user(user_id)
 
         if user.totp_verified:
             new_tokens = self.auth_service.generate_tokens(user.user_id, totp_verified=True)

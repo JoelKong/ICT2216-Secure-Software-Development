@@ -44,3 +44,8 @@ class IAuthService(ABC):
     def verify_email_token(self, token: str) -> Optional[User]:
         """Verify the email token and return the user if valid"""
         pass
+
+    @abstractmethod
+    def get_user(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        pass
