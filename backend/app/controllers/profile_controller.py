@@ -1,10 +1,9 @@
 import re
-from flask import request, jsonify, current_app, send_from_directory
+from flask import request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from app.interfaces.services.IProfileService import IProfileService
 from app.services.profile_service import ProfileService
-import os
 
 # --- Validation constants & regexes ---
 SORT_OPTIONS     = {"recent", "oldest", "popular"}
@@ -141,7 +140,6 @@ class ProfileController:
         # Assuming your service returns the directory path and you want to serve directly:
         return self.profile_service.get_profile_image(filename)
         
-
     @jwt_required()
     def delete_profile(self):
         """Handle DELETE request for user profile."""
