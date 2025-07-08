@@ -39,6 +39,7 @@ class CommentService(ICommentService):
                     "post_id": c.post_id,
                     "parent_id": c.parent_id,
                     "user_id": c.user_id,
+                    "username": c.username,
                     "content": c.content,
                     "image": c.image,
                     "created_at": c.created_at.isoformat()

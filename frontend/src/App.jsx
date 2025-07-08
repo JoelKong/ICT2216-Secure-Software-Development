@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { GlobalContext } from "./utils/globalContext";
 import Modal from "./components/global/Modal";
 import AuthPage from "./pages/auth/AuthPage";
@@ -17,6 +17,7 @@ import PostDetail from "./pages/posts/PostDetail";
 import CreatePost from "./pages/posts/CreatePost";
 import EditPost from "./pages/posts/EditPost";
 import SetupTotp from "./components/totp/setup_totp";
+import EmailVerification from "./components/verify_email/EmailVerification";
 
 function App() {
   const navigate = useNavigate();
@@ -50,24 +51,30 @@ function App() {
 
   const [activeTab, setActiveTab] = useState("profile"); // default to 'profile'
 
-  const getAuthToken = () => localStorage.getItem("access_token");
+  const getAuthToken = useCallback(() => {
+    return localStorage.getItem("access_token");
+  }, []);
 
-  const updateAuthToken = (newToken) => {
+  const updateAuthToken = useCallback((newToken) => {
     localStorage.setItem("access_token", newToken);
     setAuth((prev) => ({
       ...prev,
       token: newToken,
       isAuthenticated: !!newToken,
     }));
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("access_token");
     setAuth({ isAuthenticated: false, token: null, user: null });
     setSearchTerm("");
     setIsAuthChecked(true);
     navigate("/");
-  };
+  }, [navigate]);
+
+  const setModalMemoized = useCallback((modalObj) => {
+    setModal(modalObj);
+  }, []);
 
   // Fetch user profile with token
   async function fetchUser() {
@@ -152,7 +159,7 @@ function App() {
             auth,
             rateLimit,
             setAuth,
-            setModal,
+            setModal: setModalMemoized,
             setRateLimit,
             getAuthToken,
             updateAuthToken,
@@ -238,7 +245,7 @@ function App() {
                 </PrivateRoute>
               }
             />
-                        <Route
+            <Route
               path="/setup_totp"
               element={
                 <PrivateRoute isAuthenticated={auth.isAuthenticated}>
@@ -246,6 +253,7 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route path="/verify_email" element={<EmailVerification setIsAuthChecked={setIsAuthChecked} />} />
           </Routes>
         </GlobalContext.Provider>
       </main>

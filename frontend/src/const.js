@@ -33,4 +33,4 @@ export const VITE_STRIPE_SESSION_VERIFICATION_ROUTE = "api/verify-session";
 
 //OTP
 export const VERIFY_OTP = "api/verify_totp";
-export const GET_TOTP = "api/get_user_totp_secret";
+export const GET_TOTP = "api/totp_setup";

@@ -133,6 +133,11 @@ export default function SimplifiedPost({
     editPost(navigate, postId);
   }
 
+  // Move this helper function outside of handleDeletePost
+  function removePostFromState(postId, setPosts) {
+    setPosts((prev) => prev.filter((post) => post.post_id !== postId));
+  }
+
   async function handleDeletePost(postId) {
     await deletePost(postId, {
       getAuthToken,
@@ -142,7 +147,7 @@ export default function SimplifiedPost({
       setRateLimit,
       setModal,
       onSuccess: () =>
-        setPosts((prev) => prev.filter((post) => post.post_id !== postId)),
+        removePostFromState(postId, setPosts),
     });
   }
 

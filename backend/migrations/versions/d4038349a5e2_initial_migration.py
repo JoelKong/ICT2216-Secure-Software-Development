@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: da7e76ee1433
+Revision ID: d4038349a5e2
 Revises: 
-Create Date: 2025-07-02 12:29:30.544717
+Create Date: 2025-07-05 09:26:11.322562
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'da7e76ee1433'
+revision = 'd4038349a5e2'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,6 +27,8 @@ def upgrade():
     sa.Column('membership', mysql.ENUM('basic', 'premium'), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('totp_secret', sa.String(length=255), nullable=True),
+    sa.Column('email_verified', sa.Boolean(), nullable=True),
+    sa.Column('totp_verified', sa.Boolean(), nullable=False, server_default=sa.false()),
     sa.PrimaryKeyConstraint('user_id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')

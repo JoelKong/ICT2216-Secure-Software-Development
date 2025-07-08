@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useRef } from "react";
 import { GlobalContext } from "../../utils/globalContext";
 import DrawingCanvas from "../posts/DrawingCanvas";
 import fetchWithAuth from "../../utils/fetchWithAuth";
@@ -18,6 +18,7 @@ export default function CommentForm({
   const [drawingData, setDrawingData] = useState(null);
   const [setIsDrawing] = useState(false);
   const [mode, setMode] = useState(null);
+  const drawingCanvasRef = useRef(null);
   const navigate = useNavigate();
 
   function handleFileChange(e) {
@@ -150,7 +151,7 @@ export default function CommentForm({
 
             {mode === "draw" && (
               <div className="mt-2">
-                <DrawingCanvas onSave={setDrawingData} />
+                <DrawingCanvas ref={drawingCanvasRef} onSave={setDrawingData} />
               </div>
             )}
           </div>
