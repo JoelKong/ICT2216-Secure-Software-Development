@@ -2,7 +2,7 @@ import re
 from flask import request, jsonify, current_app
 from app.interfaces.services.IAuthService import IAuthService
 from app.services.auth_service import AuthService
-from app.models.users import User
+from app.models.users import User, db
 import pyotp
 from app.utils.validation import is_valid_email, is_strong_password, is_valid_username
 from flask_jwt_extended import (
@@ -102,8 +102,9 @@ class AuthController:
             # Prevent login if email is not verified
             if not user.email_verified:
                 return jsonify({"error": "Email not verified. Please check your inbox."}), 401
-
-            tokens = self.auth_service.generate_tokens(user.user_id)
+            
+            totp_verified = user.totp_verified
+            tokens = self.auth_service.generate_tokens(user.user_id, totp_verified=totp_verified)
             response = jsonify({
                 "message": "Login successful",
                 "access_token": tokens["access_token"]
@@ -138,35 +139,62 @@ class AuthController:
         except Exception as e:
             current_app.logger.error(f"Error during logout: {e}")
             return jsonify({"error": "Something went wrong. Please try again."}), 500
-        
+
     @jwt_required()
-    def get_user_totp_secret(self):
-        """Retrieve the TOTP secret"""
-        user_id = get_jwt_identity()
+    def get_totp_setup(self):
+        """Return provisioning URI and showQr flag based on TOTP state"""
+        user_id = int(get_jwt_identity())
         user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-        if user and user.totp_secret:
-            return jsonify({"totpSecret": user.totp_secret}), 200
-        else:
-            return jsonify({"error": "TOTP secret not found"}), 404
+        # 1) If they’ve already verified TOTP, skip QR
+        if user.totp_verified:
+            return jsonify({
+                "message": "TOTP already verified",
+                "showQr": False,
+                "otpUrl": None
+            }), 200
 
+        # 2) Otherwise do setup
+        if not user.totp_secret:
+            return jsonify({"error": "TOTP not configured"}), 400
+
+        totp = pyotp.TOTP(user.totp_secret)
+        uri  = totp.provisioning_uri(name=user.email, issuer_name="TheleonardoDR")
+
+        return jsonify({
+            "otpUrl": uri,
+            "showQr": True
+        }), 200
+        
     @jwt_required()
     def verify_totp(self):
         """Verify the OTP code entered by the user"""
+        user_id = int(get_jwt_identity())
+        user = User.query.filter_by(user_id=user_id).first()
+
+        if user.totp_verified:
+            new_tokens = self.auth_service.generate_tokens(user.user_id, totp_verified=True)
+            return jsonify({
+                "message": "TOTP already verified",
+                "access_token": new_tokens["access_token"]
+            }), 200
+    
         data = request.get_json()
         code = data.get("code")
-        secret = data.get("totpSecret")
 
         # Ensure both code and secret are provided
-        if not code or not secret:
-            return jsonify({"success": False, "error": "Missing code or secret"}), 400
+        if not code:
+            return jsonify({"success": False, "error": "Missing code"}), 400
 
         # Verify the TOTP code using the secret
-        totp = pyotp.TOTP(secret)
+        totp = pyotp.TOTP(user.totp_secret)
         is_valid = totp.verify(code)
 
         if is_valid:
-            # Generate a new access token with totp_verified = True
+            user.totp_verified = True
+            db.session.commit()
             user_id = int(get_jwt_identity())
             new_tokens = self.auth_service.generate_tokens(user_id, totp_verified=True)
             return jsonify({

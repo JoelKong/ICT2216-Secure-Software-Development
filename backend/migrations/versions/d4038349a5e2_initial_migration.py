@@ -28,6 +28,7 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=True),
     sa.Column('totp_secret', sa.String(length=255), nullable=True),
     sa.Column('email_verified', sa.Boolean(), nullable=True),
+    sa.Column('totp_verified', sa.Boolean(), nullable=False, server_default=sa.false()),
     sa.PrimaryKeyConstraint('user_id'),
     sa.UniqueConstraint('email'),
     sa.UniqueConstraint('username')
