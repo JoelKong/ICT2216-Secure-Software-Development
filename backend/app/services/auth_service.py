@@ -188,3 +188,14 @@ class AuthService(IAuthService):
             current_app.logger.warning(f"User with ID {user_id} not found")
             return None
         return user
+    
+    def update_totp_verified(self, user_id: int, totp_verified: bool) -> None:
+        """Update TOTP verification status"""
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            current_app.logger.warning(f"User with ID {user_id} not found for TOTP update")
+            raise ValueError("User not found")
+        
+        user.totp_verified = totp_verified
+        self.user_repository.update(user, {"totp_verified": totp_verified})
+        current_app.logger.info(f"TOTP verification status updated for user {user.username}")

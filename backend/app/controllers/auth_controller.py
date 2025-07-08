@@ -186,8 +186,8 @@ class AuthController:
         is_valid = totp.verify(code)
 
         if is_valid:
-            user.totp_verified = True
-            db.session.commit()
+            self.auth_service.update_totp_verified(user_id, True)
+            current_app.logger.info(f"TOTP verified for user {user_id}")
             user_id = int(get_jwt_identity())
             new_tokens = self.auth_service.generate_tokens(user_id, totp_verified=True)
             return jsonify({
