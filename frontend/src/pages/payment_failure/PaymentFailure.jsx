@@ -37,19 +37,19 @@ export default function PaymentFailure() {
       .catch(() => navigate("/"));
   }, [sessionId, navigate]);
 
-  {
-    valid && (
-      <div className="w-screen h-screen flex justify-center items-center">
-        <div className="border-2 w-11/12 md:w-1/2 h-1/3 rounded-lg flex flex-col justify-evenly items-center bg-gray-300">
-          <p className="text-xl font-bold">Payment Failed or Cancelled</p>
-          <button
-            className="border-2 rounded-md cursor-pointer bg-blue-300 hover:bg-blue-400 p-4 text-lg font-semibold"
-            onClick={() => navigate("/")}
-          >
-            Back to Home
-          </button>
-        </div>
+  if (!valid) return null;
+
+  return (
+    <div className="w-screen h-screen flex justify-center items-center">
+      <div className="border-2 w-11/12 md:w-1/2 h-1/3 rounded-lg flex flex-col justify-evenly items-center bg-gray-300">
+        <p className="text-xl font-bold">Payment Failed or Cancelled</p>
+        <button
+          className="border-2 rounded-md cursor-pointer bg-blue-300 hover:bg-blue-400 p-4 text-lg font-semibold"
+          onClick={() => navigate("/")}
+        >
+          Back to Home
+        </button>
       </div>
-    );
-  }
+    </div>
+  );
 }
