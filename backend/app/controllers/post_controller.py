@@ -16,6 +16,9 @@ CONTENT_MAX_LENGTH  = 2000                  # max chars for post content
 ALLOWED_IMAGE_EXTS  = {"png", "jpg", "jpeg", "gif"}
 FILENAME_REGEX      = r"^[A-Za-z0-9_\-]+\.(?:png|jpg|jpeg|gif)$"
 
+INTERNAL_SERVER_ERROR = "Internal server error"
+INVALID_POST_ID_ERROR = "Invalid post ID"
+POST_NOT_FOUND_ERROR = "Post not found"
 
 class PostController:
     def __init__(self, post_service: IPostService = None,):
@@ -82,14 +85,14 @@ class PostController:
 
         except Exception as e:
             current_app.logger.error(f"Error getting posts: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def toggle_like(self, post_id):
         """POST /posts/<post_id>/like"""
         try:
             if not re.match(INT_REGEX, str(post_id)):
-                return jsonify({"error": "Invalid post ID"}), 400
+                return jsonify({"error": INVALID_POST_ID_ERROR}), 400
             pid = int(post_id)
             user_id = get_jwt_identity()
 
@@ -101,14 +104,14 @@ class PostController:
 
         except Exception as e:
             current_app.logger.error(f"Error toggling like: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def delete_post(self, post_id):
         """DELETE /posts/<post_id>"""
         try:
             if not re.match(INT_REGEX, str(post_id)):
-                return jsonify({"error": "Invalid post ID"}), 400
+                return jsonify({"error": INVALID_POST_ID_ERROR}), 400
             pid = int(post_id)
             user_id = int(get_jwt_identity())
 
@@ -120,26 +123,26 @@ class PostController:
 
         except Exception as e:
             current_app.logger.error(f"Error deleting post: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def get_post_detail(self, post_id):
         """GET /posts/<post_id>"""
         try:
             if not re.match(INT_REGEX, str(post_id)):
-                return jsonify({"error": "Invalid post ID"}), 400
+                return jsonify({"error": INVALID_POST_ID_ERROR}), 400
             pid = int(post_id)
             user_id = get_jwt_identity()
 
             detail = self.post_service.get_post_detail(pid, user_id)
             if not detail:
-                return jsonify({"error": "Post not found"}), 404
+                return jsonify({"error": POST_NOT_FOUND_ERROR}), 404
 
             return jsonify(detail), 200
 
         except Exception as e:
             current_app.logger.error(f"Error fetching post detail: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def create_post(self):
@@ -179,20 +182,20 @@ class PostController:
             return jsonify({"error": str(ve)}), 400
         except Exception as e:
             current_app.logger.error(f"Create post error: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def get_post_for_edit(self, post_id):
         """GET /posts/<post_id>/edit"""
         try:
             if not re.match(INT_REGEX, str(post_id)):
-                return jsonify({"error": "Invalid post ID"}), 400
+                return jsonify({"error": INVALID_POST_ID_ERROR}), 400
             pid = int(post_id)
             user_id = int(get_jwt_identity())
 
             post = self.post_service.get_post_detail(pid, user_id)
             if not post:
-                return jsonify({"error": "Post not found"}), 404
+                return jsonify({"error": POST_NOT_FOUND_ERROR}), 404
 
             if post["user_id"] != user_id:
                 return jsonify({"error": "Unauthorized"}), 403
@@ -206,14 +209,14 @@ class PostController:
 
         except Exception as e:
             current_app.logger.error(f"Error fetching post for edit: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     @jwt_required()
     def edit_post(self, post_id):
         """PUT /posts/<post_id> (form-data: title, content, optional image)"""
         try:
             if not re.match(INT_REGEX, str(post_id)):
-                return jsonify({"error": "Invalid post ID"}), 400
+                return jsonify({"error": INVALID_POST_ID_ERROR}), 400
             pid = int(post_id)
             user_id = int(get_jwt_identity())
 
@@ -254,7 +257,7 @@ class PostController:
             return jsonify({"error": str(ve)}), 400
         except Exception as e:
             current_app.logger.error(f"Edit post error: {e}")
-            return jsonify({"error": "Internal server error"}), 500
+            return jsonify({"error": INTERNAL_SERVER_ERROR}), 500
 
     def get_post_image(self, filename):
         """GET /posts/images/<filename>"""
@@ -270,7 +273,7 @@ class PostController:
 
             post = PostService().get_post_detail(post_id, user_id)
             if not post:
-                return jsonify({"error": "Post not found"}), 404
+                return jsonify({"error": POST_NOT_FOUND_ERROR}), 404
 
             content = post["content"]
             word_count = len(content.split())

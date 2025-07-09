@@ -142,18 +142,18 @@ class AuthService(IAuthService):
         token = serializer.dumps({'user_id': user.user_id}, salt=salt)
         return token, salt
 
-    def send_verification_email(self, user: User):
+    def send_verification_email(self, user: User) -> None:
         token, salt = self.generate_email_token(user)
 
-        current_app.logger.info(f"🔐 Generated token: {token}")
-        current_app.logger.info(f"🧂 Token salt: {salt}")
+        current_app.logger.info(f"Generated token: {token}")
+        current_app.logger.info(f"Token salt: {salt}")
 
         verification_url = (
             f"{current_app.config['FRONTEND_ROUTE']}/verify_email?"
             f"token={token}&salt={salt}"
         )
 
-        current_app.logger.info(f"📩 Verification URL: {verification_url}")
+        current_app.logger.info(f"Verification URL: {verification_url}")
 
         msg = Message(
             subject="Verify Your Email",
@@ -180,3 +180,22 @@ class AuthService(IAuthService):
             self.user_repository.update(user, {"email_verified": True})
 
         return user_id
+    
+    def get_user(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            current_app.logger.warning(f"User with ID {user_id} not found")
+            return None
+        return user
+    
+    def update_totp_verified(self, user_id: int, totp_verified: bool) -> None:
+        """Update TOTP verification status"""
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            current_app.logger.warning(f"User with ID {user_id} not found for TOTP update")
+            raise ValueError("User not found")
+        
+        user.totp_verified = totp_verified
+        self.user_repository.update(user, {"totp_verified": totp_verified})
+        current_app.logger.info(f"TOTP verification status updated for user {user.username}")

@@ -13,10 +13,6 @@ class ICommentService(ABC):
         pass
 
     @abstractmethod
-    def get_comment_by_id(self, comment_id: int) -> Optional[Comment]:
-        pass
-
-    @abstractmethod
     def get_comment_image(self, filename: str) -> Any:
         """Serve comment image by filename"""
         pass

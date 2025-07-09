@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import PostDetail from "./pages/posts/PostDetail";
 import CreatePost from "./pages/posts/CreatePost";
 import EditPost from "./pages/posts/EditPost";
-import SetupTotp from "./components/totp/setup_totp";
+import SetupTotp from "./components/totp/SetupTotp";
 import EmailVerification from "./components/verify_email/EmailVerification";
 
 function App() {

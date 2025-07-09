@@ -13,6 +13,7 @@ from werkzeug.security import generate_password_hash
 
 ALLOWED_MIME_TYPES = {'image/jpeg', 'image/png'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+USER_NOT_FOUND_ERROR = "User not found"
 
 class ProfileService(IProfileService):
     def __init__(self, user_repository: IUserRepository = None, post_repository: IPostRepository = None):
@@ -44,7 +45,7 @@ class ProfileService(IProfileService):
             user = self.user_repository.get_by_id(user_id)
             if not user:
                 current_app.logger.warning(f"Profile request for non-existent user {user_id}")
-                return None, "User not found"
+                return None, USER_NOT_FOUND_ERROR
                 
             # Format response
             user_data = {
@@ -70,38 +71,25 @@ class ProfileService(IProfileService):
             user = self.user_repository.get_by_id(user_id)
             if not user:
                 current_app.logger.warning(f"Profile update attempt for non-existent user {user_id}")
-                return None, "User not found"
+                return None, USER_NOT_FOUND_ERROR
             
             # Validate data
             profile_data = {}
             if 'email' in data:
-                email = data['email']
-                if not is_valid_email(email):
-                    return None, "Invalid email format"
-                
-                # Check if email is already in use by another user
-                if email != user.email and self.user_repository.check_email_exists(email):
-                    return None, "Email is already in use"
-                
-                profile_data['email'] = email
+                error = self._validate_email(data['email'], user)
+                if error:
+                    return None, error
+                profile_data['email'] = data['email']
             
             if 'username' in data:
-                username = data['username']
-                if len(username) < 3:
-                    return None, "Username must be at least 3 characters"
-                
-                # Check if username is already in use by another user
-                if username != user.username and self.user_repository.check_username_exists(username):
-                    return None, "Username is already in use"
-                
-                profile_data['username'] = username
+                error = self._validate_username(data['username'], user)
+                if error:
+                    return None, error
+                profile_data['username'] = data['username']
 
             if 'password' in data:
                 hashed_password = generate_password_hash(data['password'])
                 profile_data['password'] = hashed_password
-            
-            # if 'profile_picture' in data:
-            #     profile_data['profile_picture'] = data['profile_picture']
             
             # Update user profile
             updated_user = self.user_repository.update(user, profile_data)
@@ -125,6 +113,20 @@ class ProfileService(IProfileService):
         except Exception as e:
             current_app.logger.error(f"Error updating profile: {str(e)}")
             raise
+
+    def _validate_email(self, email: str, user) -> Optional[str]:
+        if not is_valid_email(email):
+            return "Invalid email format"
+        if email != user.email and self.user_repository.check_email_exists(email):
+            return "Email is already in use"
+        return None
+
+    def _validate_username(self, username: str, user) -> Optional[str]:
+        if len(username) < 3:
+            return "Username must be at least 3 characters"
+        if username != user.username and self.user_repository.check_username_exists(username):
+            return "Username is already in use"
+        return None
 
     def update_profile_picture(self, user_id: int, file) -> Tuple[Optional[str], Optional[str]]:
         try:
@@ -192,7 +194,7 @@ class ProfileService(IProfileService):
         try:
             user = self.user_repository.get_by_id(user_id)
             if not user:
-                return False, "User not found"
+                return False, USER_NOT_FOUND_ERROR
             
             # Delete user from database
             self.user_repository.delete(user)
@@ -202,15 +204,14 @@ class ProfileService(IProfileService):
             current_app.logger.error(f"Error deleting user: {str(e)}")
             return False, str(e)
     
-    def get_user_posts(self, user_id: int, sort_by: str = 'recent', 
-                       limit: int = 10, offset: int = 0) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    def get_user_posts(self, user_id: int, sort_by: str = 'recent', limit: int = 10, offset: int = 0) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         """Get posts created by user"""
         try:
             # Check if user exists
             user = self.user_repository.get_by_id(user_id)
             if not user:
                 current_app.logger.warning(f"Posts request for non-existent user {user_id}")
-                return [], "User not found"
+                return [], USER_NOT_FOUND_ERROR
             
             # Get posts from repository
             posts = self.post_repository.get_posts(

@@ -85,13 +85,6 @@ class CommentService(ICommentService):
             current_app.logger.error(f"Error creating comment: {str(e)}")
             raise
 
-    def get_comment_by_id(self, comment_id: int) -> Optional[Comment]:
-        try:
-            return self.comment_repository.get_comment_by_id(comment_id)
-        except Exception as e:
-            current_app.logger.error(f"Error fetching comment by id {comment_id}: {str(e)}")
-            raise
-
     def get_comment_image(self, filename):
         """Serve comment image from comment_uploads folder"""
         try:

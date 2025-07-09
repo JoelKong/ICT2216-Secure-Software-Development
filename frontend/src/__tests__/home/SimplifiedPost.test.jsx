@@ -50,6 +50,31 @@ const renderWithContext = (
   );
 };
 
+// Helper for delayed fetch response for loading state test
+const delayedFetchResponse = () =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        ok: true,
+        json: async () => ({
+          posts: [
+            {
+              post_id: 1,
+              title: "Test Post",
+              content: "Test Content",
+              username: "testuser",
+              likes: 0,
+              comments: 0,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ],
+          liked_post_ids: [],
+        }),
+      });
+    }, 100);
+  });
+
 describe("SimplifiedPost Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -61,43 +86,13 @@ describe("SimplifiedPost Component", () => {
   });
 
   test("renders loading state", async () => {
-    global.fetch.mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                ok: true,
-                json: () =>
-                  Promise.resolve({
-                    posts: [
-                      {
-                        post_id: 1,
-                        title: "Test Post",
-                        content: "Test Content",
-                        username: "testuser",
-                        likes: 0,
-                        comments: 0,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      },
-                    ],
-                    liked_post_ids: [],
-                  }),
-              }),
-            100 // Mock fetch delay
-          )
-        )
-    );
+    global.fetch.mockImplementation(() => delayedFetchResponse());
+
     renderWithContext(
-      <SimplifiedPost
-        scrollContainerRef={{ current: document.createElement("div") }}
-      />
+      <SimplifiedPost scrollContainerRef={{ current: document.createElement("div") }} />
     );
-    // `fetchPosts` is called inside a setTimeout(..., 50) in useEffect.
-    // `findByText` will wait for the "Loading..." text to appear.
+
     expect(await screen.findByText(/Loading.../i)).toBeInTheDocument();
-    // Ensure fetch was actually called
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
   });
 

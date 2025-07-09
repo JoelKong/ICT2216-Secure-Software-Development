@@ -11,13 +11,12 @@ class IPostService(ABC):
         pass
 
     @abstractmethod
-    def get_posts(self, sort_by: str = 'recent', page: int = 1, 
-                  search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
+    def get_posts(self, sort_by: str = 'recent', offset: int = 0, limit: int = 10, search: Optional[str] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
         """Get posts with pagination, filtering and sorting"""
         pass
     
     @abstractmethod
-    def toggle_like(self, post_id: int, user_id: int) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    def toggle_like(self, post_id: int, user_id: int) -> Tuple[Dict[str, Any], Optional[str]]:
         """Toggle like status for a post"""
         pass
     
@@ -40,7 +39,7 @@ class IPostService(ABC):
         pass
 
     @abstractmethod
-    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file: Optional[Any] = None) -> Optional[Post]:
+    def edit_post(self, post_id: int, user_id: int, title: str, content: str, image_file=None) -> Optional[Post]:
         """Update a post's title, content, and optionally the image"""
         pass
 

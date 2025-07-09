@@ -2,6 +2,7 @@ import pytest
 import sys
 import os
 from unittest.mock import Mock, patch
+import secrets
 
 # Add the backend directory to the Python path
 backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -12,8 +13,8 @@ def mock_environment():
     """Mock environment variables for all tests"""
     os.environ.update({
         'FLASK_ENV': 'testing',
-        'SECRET_KEY': 'test-secret-key',
-        'JWT_SECRET_KEY': 'test-jwt-secret',
+        'SECRET_KEY': secrets.token_hex(16),
+        'JWT_SECRET_KEY': secrets.token_hex(16),
         'DATABASE_URL': 'sqlite:///:memory:',
     })
 
@@ -24,8 +25,8 @@ def mock_flask_app():
     app = Flask(__name__)
     app.config.update({
         'TESTING': True,
-        'JWT_SECRET_KEY': 'test-secret',
-        'SECRET_KEY': 'test-secret'
+        'JWT_SECRET_KEY': secrets.token_hex(16),
+        'SECRET_KEY': secrets.token_hex(16)
     })
     return app
 

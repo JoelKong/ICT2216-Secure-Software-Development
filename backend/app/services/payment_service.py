@@ -1,7 +1,7 @@
 from app.interfaces.services.IPaymentService import IPaymentService
 from app.interfaces.repositories.IUserRepository import IUserRepository
 from app.repositories.user_repository import UserRepository
-from flask import current_app, request
+from flask import current_app
 import stripe
 import os
 from typing import Dict, Tuple, Optional, Any
@@ -69,13 +69,11 @@ class PaymentService(IPaymentService):
             
             # Check payment status
             if session.payment_status != 'paid':
-                current_app.logger.warning(f"Session {session_id} is not paid")
                 return False, None, "Payment not completed"
             
             # Get user ID from session metadata
             user_id = session.metadata.get('user_id')
             if not user_id:
-                current_app.logger.error(f"No user_id found in session {session_id}")
                 return False, None, "Invalid session: user ID not found"
             
             user_id = int(user_id)
