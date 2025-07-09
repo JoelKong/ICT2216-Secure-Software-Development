@@ -7,6 +7,8 @@ class BaseConfig:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "default-jwt-secret-for-dev")
     JWT_TOKEN_LOCATION = ["headers", "cookies"]
     JWT_COOKIE_SAMESITE = "Lax"
+    JWT_COOKIE_SECURE = True #For development change this to false no https on development
+    JWT_COOKIE_HTTPONLY = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES_HOURS", 1)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", 1)))
     
